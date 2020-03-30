@@ -23,6 +23,7 @@ varDef
     :   type varDefOne (',' varDefOne)* ';'
     ;
 
+
 constructDef
     :   ID '(' formalParas? ')' block
     ;
@@ -63,7 +64,9 @@ statement
     |   varDef                                              #varDef_state
     |   IF '(' cond=expr ')' statement (ELSE statement)?    #if_state
     |   WHILE '(' cond=expr ')' statement                   #while_state
-    |   FOR '(' init=expr? ';' cond=expr? ';' update=expr? ')'
+    |   FOR '(' for_init? ';'
+        cond=expr? ';'
+        for_update? ')'
         statement                                           #for_state
     |   RETURN expr? ';'                                    #return_state
     |   BREAK ';'                                           #break_state
@@ -72,6 +75,14 @@ statement
     |   expr ';'                                            #expr_state
     ;
 
+for_init    //package into a block finally
+    :   type varDefOne (',' varDefOne)*     //varDefnode->blocknode
+    |   expr (',' expr)*    //must be '=' exprnode->bloknode
+    ;
+
+for_update
+    :   expr (',' expr)*
+    ;
 
 expr:   expr op=('++' | '--')                               #postfix_expr
     |   <assoc=right> NEW creator                           #new_expr   //a direct expr or a function name
