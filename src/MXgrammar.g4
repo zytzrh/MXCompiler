@@ -85,7 +85,7 @@ for_update
     ;
 
 expr:   expr op=('++' | '--')                               #postfix_expr
-    |   <assoc=right> NEW creator                           #new_expr   //a direct expr or a function name
+    |   <assoc=right> NEW newType                           #new_expr   //a direct expr or a function name
     |   expr '.' ID                                         #member_expr
     |   func_name=expr '(' exprs? ')'                       #funcCall_expr // the former expr must be a func name including new int
     |   expr '[' index=expr ']'                             #subscript_expr
@@ -113,24 +113,24 @@ exprs
     :   expr (',' expr)*
     ;
 
-creator
-    :   nonArray     ('[' expr ']')*('[' ']')+('[' expr ']')+   #wrong_creator
-    |   nonArray     ('[' expr ']')+('[' ']')*                  #array_creator
+newType
+    :   nonArray     ('[' expr ']')*('[' ']')+('[' expr ']')+   #wrong_newType
+    |   nonArray     ('[' expr ']')+('[' ']')*                  #array_newType
 //    |   nonArray     '(' ')'                                    #class_creator
-    |   nonArray                                                #naive_creator
+    |   nonArray                                                #normal_newType
     ;
 
 constant
-    :   BoolLITERAL
-    |   IntegerLITERAL
-    |   StringLITERAL
+    :   Bool_constant
+    |   Int_constant
+    |   String_constant
     |   NULL
     ;
 
 
-BoolLITERAL: TRUE | FALSE;
-IntegerLITERAL: '0' | [1-9][0-9]*;
-StringLITERAL: '"' (ESC|.)*? '"';
+Int_constant: '0' | [1-9][0-9]*;
+Bool_constant: TRUE | FALSE;
+String_constant: '"' (ESC|.)*? '"';
 fragment
 ESC: '\\"' | '\\n' | '\\\\';    //Only used by other lexical rules
 
