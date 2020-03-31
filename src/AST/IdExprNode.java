@@ -8,6 +8,6 @@ public class IdExprNode extends ExprNode {
 
     public IdExprNode(String text, Location location) {
         super(text, location);
-        id = text;
+        this.id = text;
     }
 }

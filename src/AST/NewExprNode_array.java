@@ -10,7 +10,7 @@ public class NewExprNode_array extends ExprNode {
     //private int dim;
     private ArrayList<ExprNode> lenPerDim;
 
-    public NewExprNode_array(String text, Location location, ArrayTypeNode baseType, int dim, ArrayList<ExprNode> lenPerDim) {
+    public NewExprNode_array(String text, Location location, ArrayTypeNode baseType, ArrayList<ExprNode> lenPerDim) {
         super(text, location);
         this.baseType = baseType;
         //this.dim = dim;

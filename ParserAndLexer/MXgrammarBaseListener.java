@@ -399,6 +399,18 @@ public class MXgrammarBaseListener implements MXgrammarListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterAssign_expr(MXgrammarParser.Assign_exprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAssign_expr(MXgrammarParser.Assign_exprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterPostfix_expr(MXgrammarParser.Postfix_exprContext ctx) { }
 	/**
 	 * {@inheritDoc}

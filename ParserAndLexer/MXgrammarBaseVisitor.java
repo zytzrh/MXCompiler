@@ -240,6 +240,13 @@ public class MXgrammarBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitAssign_expr(MXgrammarParser.Assign_exprContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitPostfix_expr(MXgrammarParser.Postfix_exprContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

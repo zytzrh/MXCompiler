@@ -221,6 +221,13 @@ public interface MXgrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNew_expr(MXgrammarParser.New_exprContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code assign_expr}
+	 * labeled alternative in {@link MXgrammarParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssign_expr(MXgrammarParser.Assign_exprContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code postfix_expr}
 	 * labeled alternative in {@link MXgrammarParser#expr}.
 	 * @param ctx the parse tree

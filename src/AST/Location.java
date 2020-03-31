@@ -10,7 +10,7 @@ public class Location {
     public int getColumn(){
         return this.column;
     }
-    private Location(int line, int column){
+    public Location(int line, int column){
         this.line = line;
         this.column = column;
     }
@@ -21,6 +21,6 @@ public class Location {
     }
 
     public String toString(){
-        return "Loc->" + "Line:" + this.line + "Column:" + this.column;
+        return "Loc->" + "Line:" + this.line + " Column:" + this.column + " ";
     }
 }

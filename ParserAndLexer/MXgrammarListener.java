@@ -365,6 +365,18 @@ public interface MXgrammarListener extends ParseTreeListener {
 	 */
 	void exitNew_expr(MXgrammarParser.New_exprContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code assign_expr}
+	 * labeled alternative in {@link MXgrammarParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssign_expr(MXgrammarParser.Assign_exprContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code assign_expr}
+	 * labeled alternative in {@link MXgrammarParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssign_expr(MXgrammarParser.Assign_exprContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code postfix_expr}
 	 * labeled alternative in {@link MXgrammarParser#expr}.
 	 * @param ctx the parse tree

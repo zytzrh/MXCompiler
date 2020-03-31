@@ -88,16 +88,16 @@ expr
     :   THIS                                                #this_expr
     |   constant                                            #const_expr
     |   ID                                                  #id_expr
-    //1.func_name 2.variable
+    // 1.func_name 2.variable
     |   expr op=('++' | '--')                               #postfix_expr
-//    |   <assoc=right> NEW newType                           #new_expr
     |   newType                                             #new_expr
-    //a direct expr or a function name
+    // a direct expr or a function name
     |   expr '.' ID                                         #member_expr
-    //check the whether the type of expr has a member named ID
+    // check the whether the type of expr has a member named ID(it may be implemented as a func_name)
     |   func_name=expr '(' exprs? ')'                       #funcCall_expr
     // the former expr must be a func_name(ID or expr.ID or NEW new Type)
-    |   expr '[' index=expr ']'                             #subscript_expr
+    |   array_name=expr '[' index=expr ']'                  #subscript_expr
+    // check expr must be array type
     |   <assoc=right> op=('++' | '--') expr                 #prefix_expr
     |   <assoc=right> op=( '+' | '-' ) expr                 #prefix_expr
     |   <assoc=right> op=( '!' | '~' ) expr                 #prefix_expr
@@ -111,12 +111,10 @@ expr
     |   lhs=expr op='|' rhs=expr                            #binary_expr
     |   lhs=expr op='&&' rhs=expr                           #binary_expr
     |   lhs=expr op='||' rhs=expr                           #binary_expr
-    |   <assoc=right> lhs=expr op='=' rhs=expr              #binary_expr
-    //must right associative
+    // check type
+    |   <assoc=right> lhs=expr op='=' rhs=expr              #assign_expr
+    // must right associative check type
     |   '(' expr ')'                                        #sub_expr
-//    |   THIS                                                #this_expr
-//    |   constant                                            #const_expr
-//    |   ID                                                  #id_expr
     ;
 
 exprs

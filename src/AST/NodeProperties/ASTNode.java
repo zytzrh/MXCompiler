@@ -1,7 +1,8 @@
 package AST.NodeProperties;
 
 import AST.Location;
-import AST.Scope;
+import AST.Scope.Scope;
+
 
 abstract public class ASTNode{
     private String  text;   // for output
