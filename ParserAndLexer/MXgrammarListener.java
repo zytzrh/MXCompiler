@@ -423,41 +423,41 @@ public interface MXgrammarListener extends ParseTreeListener {
 	 */
 	void exitExprs(MXgrammarParser.ExprsContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code wrong_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Enter a parse tree produced by the {@code wrong_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 */
-	void enterWrong_creator(MXgrammarParser.Wrong_creatorContext ctx);
+	void enterWrong_newType(MXgrammarParser.Wrong_newTypeContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code wrong_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Exit a parse tree produced by the {@code wrong_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 */
-	void exitWrong_creator(MXgrammarParser.Wrong_creatorContext ctx);
+	void exitWrong_newType(MXgrammarParser.Wrong_newTypeContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code array_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Enter a parse tree produced by the {@code array_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 */
-	void enterArray_creator(MXgrammarParser.Array_creatorContext ctx);
+	void enterArray_newType(MXgrammarParser.Array_newTypeContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code array_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Exit a parse tree produced by the {@code array_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 */
-	void exitArray_creator(MXgrammarParser.Array_creatorContext ctx);
+	void exitArray_newType(MXgrammarParser.Array_newTypeContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code naive_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Enter a parse tree produced by the {@code normal_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 */
-	void enterNaive_creator(MXgrammarParser.Naive_creatorContext ctx);
+	void enterNormal_newType(MXgrammarParser.Normal_newTypeContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code naive_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Exit a parse tree produced by the {@code normal_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 */
-	void exitNaive_creator(MXgrammarParser.Naive_creatorContext ctx);
+	void exitNormal_newType(MXgrammarParser.Normal_newTypeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MXgrammarParser#constant}.
 	 * @param ctx the parse tree

@@ -459,37 +459,37 @@ public class MXgrammarBaseListener implements MXgrammarListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterWrong_creator(MXgrammarParser.Wrong_creatorContext ctx) { }
+	@Override public void enterWrong_newType(MXgrammarParser.Wrong_newTypeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitWrong_creator(MXgrammarParser.Wrong_creatorContext ctx) { }
+	@Override public void exitWrong_newType(MXgrammarParser.Wrong_newTypeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterArray_creator(MXgrammarParser.Array_creatorContext ctx) { }
+	@Override public void enterArray_newType(MXgrammarParser.Array_newTypeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitArray_creator(MXgrammarParser.Array_creatorContext ctx) { }
+	@Override public void exitArray_newType(MXgrammarParser.Array_newTypeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterNaive_creator(MXgrammarParser.Naive_creatorContext ctx) { }
+	@Override public void enterNormal_newType(MXgrammarParser.Normal_newTypeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitNaive_creator(MXgrammarParser.Naive_creatorContext ctx) { }
+	@Override public void exitNormal_newType(MXgrammarParser.Normal_newTypeContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

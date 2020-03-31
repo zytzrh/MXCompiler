@@ -255,26 +255,26 @@ public interface MXgrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExprs(MXgrammarParser.ExprsContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code wrong_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Visit a parse tree produced by the {@code wrong_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitWrong_creator(MXgrammarParser.Wrong_creatorContext ctx);
+	T visitWrong_newType(MXgrammarParser.Wrong_newTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code array_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Visit a parse tree produced by the {@code array_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitArray_creator(MXgrammarParser.Array_creatorContext ctx);
+	T visitArray_newType(MXgrammarParser.Array_newTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code naive_creator}
-	 * labeled alternative in {@link MXgrammarParser#creator}.
+	 * Visit a parse tree produced by the {@code normal_newType}
+	 * labeled alternative in {@link MXgrammarParser#newType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNaive_creator(MXgrammarParser.Naive_creatorContext ctx);
+	T visitNormal_newType(MXgrammarParser.Normal_newTypeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MXgrammarParser#constant}.
 	 * @param ctx the parse tree

@@ -275,21 +275,21 @@ public class MXgrammarBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitWrong_creator(MXgrammarParser.Wrong_creatorContext ctx) { return visitChildren(ctx); }
+	@Override public T visitWrong_newType(MXgrammarParser.Wrong_newTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitArray_creator(MXgrammarParser.Array_creatorContext ctx) { return visitChildren(ctx); }
+	@Override public T visitArray_newType(MXgrammarParser.Array_newTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitNaive_creator(MXgrammarParser.Naive_creatorContext ctx) { return visitChildren(ctx); }
+	@Override public T visitNormal_newType(MXgrammarParser.Normal_newTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

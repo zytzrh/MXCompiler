@@ -84,10 +84,19 @@ for_update
     :   expr (',' expr)*
     ;
 
-expr:   expr op=('++' | '--')                               #postfix_expr
-    |   <assoc=right> NEW newType                           #new_expr   //a direct expr or a function name
+expr
+    :   THIS                                                #this_expr
+    |   constant                                            #const_expr
+    |   ID                                                  #id_expr
+    //1.func_name 2.variable
+    |   expr op=('++' | '--')                               #postfix_expr
+//    |   <assoc=right> NEW newType                           #new_expr
+    |   newType                                             #new_expr
+    //a direct expr or a function name
     |   expr '.' ID                                         #member_expr
-    |   func_name=expr '(' exprs? ')'                       #funcCall_expr // the former expr must be a func name including new int
+    //check the whether the type of expr has a member named ID
+    |   func_name=expr '(' exprs? ')'                       #funcCall_expr
+    // the former expr must be a func_name(ID or expr.ID or NEW new Type)
     |   expr '[' index=expr ']'                             #subscript_expr
     |   <assoc=right> op=('++' | '--') expr                 #prefix_expr
     |   <assoc=right> op=( '+' | '-' ) expr                 #prefix_expr
@@ -102,11 +111,12 @@ expr:   expr op=('++' | '--')                               #postfix_expr
     |   lhs=expr op='|' rhs=expr                            #binary_expr
     |   lhs=expr op='&&' rhs=expr                           #binary_expr
     |   lhs=expr op='||' rhs=expr                           #binary_expr
-    |   <assoc=right> lhs=expr op='=' rhs=expr              #binary_expr    //must right associative
+    |   <assoc=right> lhs=expr op='=' rhs=expr              #binary_expr
+    //must right associative
     |   '(' expr ')'                                        #sub_expr
-    |   THIS                                                #this_expr
-    |   constant                                            #const_expr
-    |   ID                                                  #id_expr
+//    |   THIS                                                #this_expr
+//    |   constant                                            #const_expr
+//    |   ID                                                  #id_expr
     ;
 
 exprs
@@ -114,10 +124,10 @@ exprs
     ;
 
 newType
-    :   nonArray     ('[' expr ']')*('[' ']')+('[' expr ']')+   #wrong_newType
-    |   nonArray     ('[' expr ']')+('[' ']')*                  #array_newType
+    :   NEW nonArray     ('[' expr ']')*('[' ']')+('[' expr ']')+   #wrong_newType
+    |   NEW nonArray     ('[' expr ']')+('[' ']')*                  #array_newType
 //    |   nonArray     '(' ')'                                    #class_creator
-    |   nonArray                                                #normal_newType
+    |   NEW nonArray                                                #normal_newType
     ;
 
 constant
