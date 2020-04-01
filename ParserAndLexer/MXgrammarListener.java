@@ -141,135 +141,149 @@ public interface MXgrammarListener extends ParseTreeListener {
 	 */
 	void exitBlock(MXgrammarParser.BlockContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code block_stat}
+	 * Enter a parse tree produced by the {@code block_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterBlock_stat(MXgrammarParser.Block_statContext ctx);
+	void enterBlock_st(MXgrammarParser.Block_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code block_stat}
+	 * Exit a parse tree produced by the {@code block_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitBlock_stat(MXgrammarParser.Block_statContext ctx);
+	void exitBlock_st(MXgrammarParser.Block_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code varDef_state}
+	 * Enter a parse tree produced by the {@code varDef_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterVarDef_state(MXgrammarParser.VarDef_stateContext ctx);
+	void enterVarDef_st(MXgrammarParser.VarDef_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code varDef_state}
+	 * Exit a parse tree produced by the {@code varDef_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitVarDef_state(MXgrammarParser.VarDef_stateContext ctx);
+	void exitVarDef_st(MXgrammarParser.VarDef_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code if_state}
+	 * Enter a parse tree produced by the {@code if_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterIf_state(MXgrammarParser.If_stateContext ctx);
+	void enterIf_st(MXgrammarParser.If_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code if_state}
+	 * Exit a parse tree produced by the {@code if_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitIf_state(MXgrammarParser.If_stateContext ctx);
+	void exitIf_st(MXgrammarParser.If_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code while_state}
+	 * Enter a parse tree produced by the {@code while_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterWhile_state(MXgrammarParser.While_stateContext ctx);
+	void enterWhile_st(MXgrammarParser.While_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code while_state}
+	 * Exit a parse tree produced by the {@code while_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitWhile_state(MXgrammarParser.While_stateContext ctx);
+	void exitWhile_st(MXgrammarParser.While_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code for_state}
+	 * Enter a parse tree produced by the {@code for_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterFor_state(MXgrammarParser.For_stateContext ctx);
+	void enterFor_st(MXgrammarParser.For_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code for_state}
+	 * Exit a parse tree produced by the {@code for_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitFor_state(MXgrammarParser.For_stateContext ctx);
+	void exitFor_st(MXgrammarParser.For_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code return_state}
+	 * Enter a parse tree produced by the {@code return_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterReturn_state(MXgrammarParser.Return_stateContext ctx);
+	void enterReturn_st(MXgrammarParser.Return_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code return_state}
+	 * Exit a parse tree produced by the {@code return_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitReturn_state(MXgrammarParser.Return_stateContext ctx);
+	void exitReturn_st(MXgrammarParser.Return_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code break_state}
+	 * Enter a parse tree produced by the {@code break_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterBreak_state(MXgrammarParser.Break_stateContext ctx);
+	void enterBreak_st(MXgrammarParser.Break_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code break_state}
+	 * Exit a parse tree produced by the {@code break_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitBreak_state(MXgrammarParser.Break_stateContext ctx);
+	void exitBreak_st(MXgrammarParser.Break_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code continue_state}
+	 * Enter a parse tree produced by the {@code continue_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterContinue_state(MXgrammarParser.Continue_stateContext ctx);
+	void enterContinue_st(MXgrammarParser.Continue_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code continue_state}
+	 * Exit a parse tree produced by the {@code continue_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitContinue_state(MXgrammarParser.Continue_stateContext ctx);
+	void exitContinue_st(MXgrammarParser.Continue_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code empty_state}
+	 * Enter a parse tree produced by the {@code empty_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterEmpty_state(MXgrammarParser.Empty_stateContext ctx);
+	void enterEmpty_st(MXgrammarParser.Empty_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code empty_state}
+	 * Exit a parse tree produced by the {@code empty_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitEmpty_state(MXgrammarParser.Empty_stateContext ctx);
+	void exitEmpty_st(MXgrammarParser.Empty_stContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code expr_state}
+	 * Enter a parse tree produced by the {@code expr_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterExpr_state(MXgrammarParser.Expr_stateContext ctx);
+	void enterExpr_st(MXgrammarParser.Expr_stContext ctx);
 	/**
-	 * Exit a parse tree produced by the {@code expr_state}
+	 * Exit a parse tree produced by the {@code expr_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitExpr_state(MXgrammarParser.Expr_stateContext ctx);
+	void exitExpr_st(MXgrammarParser.Expr_stContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MXgrammarParser#for_init}.
+	 * Enter a parse tree produced by the {@code for_init_withDef}
+	 * labeled alternative in {@link MXgrammarParser#for_init}.
 	 * @param ctx the parse tree
 	 */
-	void enterFor_init(MXgrammarParser.For_initContext ctx);
+	void enterFor_init_withDef(MXgrammarParser.For_init_withDefContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link MXgrammarParser#for_init}.
+	 * Exit a parse tree produced by the {@code for_init_withDef}
+	 * labeled alternative in {@link MXgrammarParser#for_init}.
 	 * @param ctx the parse tree
 	 */
-	void exitFor_init(MXgrammarParser.For_initContext ctx);
+	void exitFor_init_withDef(MXgrammarParser.For_init_withDefContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code for_init_withoutDef}
+	 * labeled alternative in {@link MXgrammarParser#for_init}.
+	 * @param ctx the parse tree
+	 */
+	void enterFor_init_withoutDef(MXgrammarParser.For_init_withoutDefContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code for_init_withoutDef}
+	 * labeled alternative in {@link MXgrammarParser#for_init}.
+	 * @param ctx the parse tree
+	 */
+	void exitFor_init_withoutDef(MXgrammarParser.For_init_withoutDefContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MXgrammarParser#for_update}.
 	 * @param ctx the parse tree

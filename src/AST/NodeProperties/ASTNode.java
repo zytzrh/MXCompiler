@@ -16,10 +16,11 @@ abstract public class ASTNode{
         this.text = text;
     }
 
-    //About Location
     public Location getLocation(){ return this.location;};
 
     public void setLocation(Location location){ this.location = location;}
-    //
 
+    public String getText() {
+        return this.text;
+    }
 }

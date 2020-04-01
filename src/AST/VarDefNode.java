@@ -1,17 +1,14 @@
 package AST;
 
-import AST.NodeProperties.*;
-import org.w3c.dom.Text;
+import AST.NodeProperties.DefUnitNode;
 
+import java.util.ArrayList;
 
 public class VarDefNode extends DefUnitNode {
-    private String id;
-    private TypeNode type;
-    private ExprNode initValue;
+    private ArrayList<VarDefOneNode> varDefs;
 
-    public VarDefNode(String text, Location location, String id, ExprNode initValue){    //without initial type
+    public VarDefNode(String text, Location location, ArrayList<VarDefOneNode> varDefs) {
         super(text, location);
-        this.id = id;
-        this.initValue = initValue;
+        this.varDefs = varDefs;
     }
 }

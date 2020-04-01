@@ -8,11 +8,11 @@ program
 defUnit
     :   classDef
     |   funcDef
-    |   varDef
+    |   varDef ';'
     ;
 
 classDef
-    :   CLASS ID '{' (varDef | funcDef | constructDef)* '}' ';'         //varDef must be only declaration
+    :   CLASS ID '{' (varDef ';'| funcDef | constructDef)* '}' ';'         //varDef must be only declaration
     ;
 
 funcDef:
@@ -20,7 +20,7 @@ funcDef:
     ;
 
 varDef
-    :   type varDefOne (',' varDefOne)* ';'
+    :   type varDefOne (',' varDefOne)*
     ;
 
 
@@ -60,24 +60,25 @@ block
     ;
 
 statement
-    :   block                                               #block_stat
-    |   varDef                                              #varDef_state
-    |   IF '(' cond=expr ')' statement (ELSE statement)?    #if_state
-    |   WHILE '(' cond=expr ')' statement                   #while_state
+    :   block                                               #block_st
+    |   varDef ';'                                          #varDef_st
+    |   IF '(' cond=expr ')' then_st=statement
+        (ELSE else_st=statement)?                           #if_st
+    |   WHILE '(' cond=expr ')' statement                   #while_st
     |   FOR '(' for_init? ';'
         cond=expr? ';'
         for_update? ')'
-        statement                                           #for_state
-    |   RETURN expr? ';'                                    #return_state
-    |   BREAK ';'                                           #break_state
-    |   CONTINUE ';'                                        #continue_state
-    |   ';'                                                 #empty_state
-    |   expr ';'                                            #expr_state
+        statement                                           #for_st
+    |   RETURN expr? ';'                                    #return_st
+    |   BREAK ';'                                           #break_st
+    |   CONTINUE ';'                                        #continue_st
+    |   ';'                                                 #empty_st
+    |   expr ';'                                            #expr_st
     ;
 
 for_init    //package into a block finally
-    :   type varDefOne (',' varDefOne)*     //varDefnode->blocknode
-    |   expr (',' expr)*    //must be '=' exprnode->bloknode
+    :   varDef                                               #for_init_withDef//VarDefnode->StatementNode->BlockNode
+    |   expr (',' expr)*                                     #for_init_withoutDef//many ExprNode->many StatementNode->BlockNode
     ;
 
 for_update

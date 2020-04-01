@@ -107,77 +107,84 @@ public class MXgrammarBaseVisitor<T> extends AbstractParseTreeVisitor<T> impleme
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBlock_stat(MXgrammarParser.Block_statContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBlock_st(MXgrammarParser.Block_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitVarDef_state(MXgrammarParser.VarDef_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitVarDef_st(MXgrammarParser.VarDef_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIf_state(MXgrammarParser.If_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIf_st(MXgrammarParser.If_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitWhile_state(MXgrammarParser.While_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitWhile_st(MXgrammarParser.While_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitFor_state(MXgrammarParser.For_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitFor_st(MXgrammarParser.For_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitReturn_state(MXgrammarParser.Return_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitReturn_st(MXgrammarParser.Return_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitBreak_state(MXgrammarParser.Break_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitBreak_st(MXgrammarParser.Break_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitContinue_state(MXgrammarParser.Continue_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitContinue_st(MXgrammarParser.Continue_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitEmpty_state(MXgrammarParser.Empty_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitEmpty_st(MXgrammarParser.Empty_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitExpr_state(MXgrammarParser.Expr_stateContext ctx) { return visitChildren(ctx); }
+	@Override public T visitExpr_st(MXgrammarParser.Expr_stContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitFor_init(MXgrammarParser.For_initContext ctx) { return visitChildren(ctx); }
+	@Override public T visitFor_init_withDef(MXgrammarParser.For_init_withDefContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitFor_init_withoutDef(MXgrammarParser.For_init_withoutDefContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

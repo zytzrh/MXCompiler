@@ -171,133 +171,145 @@ public class MXgrammarBaseListener implements MXgrammarListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterBlock_stat(MXgrammarParser.Block_statContext ctx) { }
+	@Override public void enterBlock_st(MXgrammarParser.Block_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitBlock_stat(MXgrammarParser.Block_statContext ctx) { }
+	@Override public void exitBlock_st(MXgrammarParser.Block_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterVarDef_state(MXgrammarParser.VarDef_stateContext ctx) { }
+	@Override public void enterVarDef_st(MXgrammarParser.VarDef_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitVarDef_state(MXgrammarParser.VarDef_stateContext ctx) { }
+	@Override public void exitVarDef_st(MXgrammarParser.VarDef_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterIf_state(MXgrammarParser.If_stateContext ctx) { }
+	@Override public void enterIf_st(MXgrammarParser.If_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitIf_state(MXgrammarParser.If_stateContext ctx) { }
+	@Override public void exitIf_st(MXgrammarParser.If_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterWhile_state(MXgrammarParser.While_stateContext ctx) { }
+	@Override public void enterWhile_st(MXgrammarParser.While_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitWhile_state(MXgrammarParser.While_stateContext ctx) { }
+	@Override public void exitWhile_st(MXgrammarParser.While_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFor_state(MXgrammarParser.For_stateContext ctx) { }
+	@Override public void enterFor_st(MXgrammarParser.For_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitFor_state(MXgrammarParser.For_stateContext ctx) { }
+	@Override public void exitFor_st(MXgrammarParser.For_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterReturn_state(MXgrammarParser.Return_stateContext ctx) { }
+	@Override public void enterReturn_st(MXgrammarParser.Return_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitReturn_state(MXgrammarParser.Return_stateContext ctx) { }
+	@Override public void exitReturn_st(MXgrammarParser.Return_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterBreak_state(MXgrammarParser.Break_stateContext ctx) { }
+	@Override public void enterBreak_st(MXgrammarParser.Break_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitBreak_state(MXgrammarParser.Break_stateContext ctx) { }
+	@Override public void exitBreak_st(MXgrammarParser.Break_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterContinue_state(MXgrammarParser.Continue_stateContext ctx) { }
+	@Override public void enterContinue_st(MXgrammarParser.Continue_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitContinue_state(MXgrammarParser.Continue_stateContext ctx) { }
+	@Override public void exitContinue_st(MXgrammarParser.Continue_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterEmpty_state(MXgrammarParser.Empty_stateContext ctx) { }
+	@Override public void enterEmpty_st(MXgrammarParser.Empty_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitEmpty_state(MXgrammarParser.Empty_stateContext ctx) { }
+	@Override public void exitEmpty_st(MXgrammarParser.Empty_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExpr_state(MXgrammarParser.Expr_stateContext ctx) { }
+	@Override public void enterExpr_st(MXgrammarParser.Expr_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitExpr_state(MXgrammarParser.Expr_stateContext ctx) { }
+	@Override public void exitExpr_st(MXgrammarParser.Expr_stContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFor_init(MXgrammarParser.For_initContext ctx) { }
+	@Override public void enterFor_init_withDef(MXgrammarParser.For_init_withDefContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitFor_init(MXgrammarParser.For_initContext ctx) { }
+	@Override public void exitFor_init_withDef(MXgrammarParser.For_init_withDefContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterFor_init_withoutDef(MXgrammarParser.For_init_withoutDefContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFor_init_withoutDef(MXgrammarParser.For_init_withoutDefContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

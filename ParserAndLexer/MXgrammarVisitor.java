@@ -90,81 +90,89 @@ public interface MXgrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBlock(MXgrammarParser.BlockContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code block_stat}
+	 * Visit a parse tree produced by the {@code block_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBlock_stat(MXgrammarParser.Block_statContext ctx);
+	T visitBlock_st(MXgrammarParser.Block_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code varDef_state}
+	 * Visit a parse tree produced by the {@code varDef_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVarDef_state(MXgrammarParser.VarDef_stateContext ctx);
+	T visitVarDef_st(MXgrammarParser.VarDef_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code if_state}
+	 * Visit a parse tree produced by the {@code if_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIf_state(MXgrammarParser.If_stateContext ctx);
+	T visitIf_st(MXgrammarParser.If_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code while_state}
+	 * Visit a parse tree produced by the {@code while_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitWhile_state(MXgrammarParser.While_stateContext ctx);
+	T visitWhile_st(MXgrammarParser.While_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code for_state}
+	 * Visit a parse tree produced by the {@code for_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFor_state(MXgrammarParser.For_stateContext ctx);
+	T visitFor_st(MXgrammarParser.For_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code return_state}
+	 * Visit a parse tree produced by the {@code return_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitReturn_state(MXgrammarParser.Return_stateContext ctx);
+	T visitReturn_st(MXgrammarParser.Return_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code break_state}
+	 * Visit a parse tree produced by the {@code break_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitBreak_state(MXgrammarParser.Break_stateContext ctx);
+	T visitBreak_st(MXgrammarParser.Break_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code continue_state}
+	 * Visit a parse tree produced by the {@code continue_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitContinue_state(MXgrammarParser.Continue_stateContext ctx);
+	T visitContinue_st(MXgrammarParser.Continue_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code empty_state}
+	 * Visit a parse tree produced by the {@code empty_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitEmpty_state(MXgrammarParser.Empty_stateContext ctx);
+	T visitEmpty_st(MXgrammarParser.Empty_stContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code expr_state}
+	 * Visit a parse tree produced by the {@code expr_st}
 	 * labeled alternative in {@link MXgrammarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpr_state(MXgrammarParser.Expr_stateContext ctx);
+	T visitExpr_st(MXgrammarParser.Expr_stContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MXgrammarParser#for_init}.
+	 * Visit a parse tree produced by the {@code for_init_withDef}
+	 * labeled alternative in {@link MXgrammarParser#for_init}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFor_init(MXgrammarParser.For_initContext ctx);
+	T visitFor_init_withDef(MXgrammarParser.For_init_withDefContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code for_init_withoutDef}
+	 * labeled alternative in {@link MXgrammarParser#for_init}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFor_init_withoutDef(MXgrammarParser.For_init_withoutDefContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MXgrammarParser#for_update}.
 	 * @param ctx the parse tree
