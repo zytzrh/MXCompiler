@@ -8,6 +8,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.io.*;
 
 public class Main {
+
+
+
     public static void main(String[] args) throws FileNotFoundException {
         ExceptionListener exceptionListener = new ExceptionListener();
         CharStream input;
@@ -31,6 +34,10 @@ public class Main {
 
         ASTBuilder astBuilder = new ASTBuilder(exceptionListener);
         astBuilder.visit(tree);
-
+        if(exceptionListener.getErrorNum() != 0){
+            System.out.println("Building AST found error");
+            throw new RuntimeException();
+        }
     }
+
 }

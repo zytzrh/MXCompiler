@@ -11,4 +11,8 @@ public class VarDefNode extends DefUnitNode {
         super(text, location);
         this.varDefs = varDefs;
     }
+
+    public ArrayList<VarDefOneNode> getVarDefs() {
+        return this.varDefs;
+    }
 }

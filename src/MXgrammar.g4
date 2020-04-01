@@ -9,6 +9,7 @@ defUnit
     :   classDef
     |   funcDef
     |   varDef ';'
+    |   ';'
     ;
 
 classDef

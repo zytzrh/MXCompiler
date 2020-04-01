@@ -1,8 +1,5 @@
 import AST.*;
-import AST.NodeProperties.ASTNode;
-import AST.NodeProperties.ExprNode;
-import AST.NodeProperties.StatementNode;
-import AST.NodeProperties.TypeNode;
+import AST.NodeProperties.*;
 import ExceptionHandle.ExceptionListener;
 
 import java.util.ArrayList;
@@ -54,7 +51,7 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
     public ASTNode visitConst_expr(MXgrammarParser.Const_exprContext ctx) {
         Location location = Location.getTokenLoc(ctx.getStart());
         String text = ctx.getText();
-        System.out.println(text);
+        //System.out.println(text);
         return new ThisExprNode(text, location);
     }
 
@@ -404,7 +401,69 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
 
     /*class***************************************************************/
 
+    @Override
+    public ASTNode visitConstructDef(MXgrammarParser.ConstructDefContext ctx) {
+        Location location = Location.getTokenLoc(ctx.getStart());
+        String text = ctx.getText();
+        String classTypeId = ctx.ID().getText();
+        ArrayList<FormalParaNode> paras = new ArrayList<FormalParaNode>();
+        for(var formalPara : ctx.formalPara()){
+            paras.add((FormalParaNode) visit(formalPara));
+        }
+        BlockNode func_body = (BlockNode) visit(ctx.block());
+        return new ConstructDefNode(text, location, classTypeId, paras, func_body);
+    }
 
+    @Override
+    public ASTNode visitClassDef(MXgrammarParser.ClassDefContext ctx) {
+        Location location = Location.getTokenLoc(ctx.getStart());
+        String text = ctx.getText();
+        String class_name = ctx.ID().getText();
+        ArrayList<VarDefOneNode> varMembers = new ArrayList<VarDefOneNode>();
+        ArrayList<FuncDefNode> funcMembers = new ArrayList<FuncDefNode>();
+        ConstructDefNode constructor = null;    //default is null
+        for(var varDef : ctx.varDef()){
+            VarDefNode varDefNode = (VarDefNode) visit(varDef);
+            varMembers.addAll(varDefNode.getVarDefs());     //check var has no rename***********************************
+        }
+        for(var funcDef : ctx.funcDef()){
+            funcMembers.add((FuncDefNode) visit(funcDef));
+        }
+        for(var constructDef : ctx.constructDef()){
+            if(constructor != null)
+                exceptionListener.errorOut(visit(constructDef).getLocation(),
+                        "Duplicate declarations of class constructor");
+            constructor = (ConstructDefNode) visit(constructDef);
+        }
+        if(constructor != null && !constructor.getClassTypeId().equals(class_name))
+            exceptionListener.errorOut(location, "Constructor define error");
+        return new ClassDefNode(text, location, class_name, varMembers, funcMembers, constructor);
+    }
 
+    /*global****************************************************************/
+
+    @Override
+    public ASTNode visitDefUnit(MXgrammarParser.DefUnitContext ctx) {
+        if(ctx.classDef() != null){
+            return visit(ctx.classDef());
+        }else if(ctx.funcDef() != null){
+            return visit(ctx.funcDef());
+        }else if(ctx.varDef() != null){
+            return visit(ctx.varDef());
+        }else{
+            return null;
+        }
+    }
+
+    @Override
+    public ASTNode visitProgram(MXgrammarParser.ProgramContext ctx) {
+        Location location = Location.getTokenLoc(ctx.getStart());
+        String text = ctx.getText();
+        ArrayList<DefUnitNode> defUnits = new ArrayList<>();
+        for(var defUnit : ctx.defUnit()){
+            defUnits.add((DefUnitNode) visit(defUnit));
+        }
+        return new ProgramNode(text, location, defUnits);
+    }
 }
 

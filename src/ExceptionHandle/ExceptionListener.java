@@ -11,11 +11,18 @@ public class ExceptionListener extends BaseErrorListener {
         errorNum = 0;
     }
     public void errorOut(Location location, String msg){
+        errorNum++;
         System.out.println(String.format("Error %d ", errorNum) + location.toString() + msg);
     }
 
     @Override
-    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine,
+                            String msg, RecognitionException e) {
+        errorNum++;
         errorOut(new Location(line, charPositionInLine), "(Antlr Auto)"+msg);
+    }
+
+    public int getErrorNum(){
+        return this.errorNum;
     }
 }
