@@ -322,6 +322,21 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
     }
 
     @Override
+    public ASTNode visitFor_update(MXgrammarParser.For_updateContext ctx) {
+        Location location = Location.getTokenLoc(ctx.getStart());
+        String text = ctx.getText();
+        ArrayList<StatementNode> statements = new ArrayList<>();
+        for(var expr : ctx.expr()){
+            ExprNode exprNode = (ExprNode) visit(expr);
+            //package into a statementNode
+            ExprStNode exprStNode = new ExprStNode(exprNode.getText(), exprNode.getLocation(), exprNode);
+            //package into a block
+            statements.add(exprStNode);
+        }
+        return new BlockNode(text, location, statements);
+    }
+
+    @Override
     public ASTNode visitReturn_st(MXgrammarParser.Return_stContext ctx) {
         Location location = Location.getTokenLoc(ctx.getStart());
         String text = ctx.getText();
@@ -359,6 +374,36 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
         ExprNode expr = (ExprNode) visit(ctx.expr());
         return new ExprStNode(text, location, expr);
     }
+
+    /*function*********************************************************/
+
+    @Override
+    public ASTNode visitFuncDef(MXgrammarParser.FuncDefContext ctx) {
+        Location location = Location.getTokenLoc(ctx.getStart());
+        String text = ctx.getText();
+        TypeNode returnType = null;
+        if(ctx.type() != null)  //not void
+            returnType = (TypeNode) visit(ctx.type());
+        String func_name = ctx.ID().getText();
+        ArrayList<FormalParaNode> paras = new ArrayList<FormalParaNode>();
+        for(var formalPara : ctx.formalPara()){
+            paras.add((FormalParaNode) visit(formalPara));
+        }
+        BlockNode func_body = (BlockNode) visit(ctx.block());
+        return new FuncDefNode(text, location, returnType, paras, func_name, func_body);
+    }
+
+    @Override
+    public ASTNode visitFormalPara(MXgrammarParser.FormalParaContext ctx) {
+        Location location = Location.getTokenLoc(ctx.getStart());
+        String text = ctx.getText();
+        String id = ctx.ID().getText();
+        TypeNode paraType = (TypeNode) visit(ctx.type());
+        return new FormalParaNode(text, location, paraType, id);
+    }
+
+    /*class***************************************************************/
+
 
 
 }

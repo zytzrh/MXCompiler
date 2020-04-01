@@ -101,16 +101,6 @@ public interface MXgrammarListener extends ParseTreeListener {
 	 */
 	void exitNonArray(MXgrammarParser.NonArrayContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link MXgrammarParser#formalParas}.
-	 * @param ctx the parse tree
-	 */
-	void enterFormalParas(MXgrammarParser.FormalParasContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link MXgrammarParser#formalParas}.
-	 * @param ctx the parse tree
-	 */
-	void exitFormalParas(MXgrammarParser.FormalParasContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link MXgrammarParser#formalPara}.
 	 * @param ctx the parse tree
 	 */

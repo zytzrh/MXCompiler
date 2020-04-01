@@ -123,18 +123,6 @@ public class MXgrammarBaseListener implements MXgrammarListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterFormalParas(MXgrammarParser.FormalParasContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitFormalParas(MXgrammarParser.FormalParasContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterFormalPara(MXgrammarParser.FormalParaContext ctx) { }
 	/**
 	 * {@inheritDoc}

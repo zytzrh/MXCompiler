@@ -16,7 +16,7 @@ classDef
     ;
 
 funcDef:
-    (type | VOID) ID '(' formalParas? ')' block
+    (type | VOID) ID '(' (formalPara (',' formalPara)*)? ')' block
     ;
 
 varDef
@@ -25,7 +25,7 @@ varDef
 
 
 constructDef
-    :   ID '(' formalParas? ')' block
+    :   ID '(' (formalPara (',' formalPara)*)? ')' block
     ;
 
 type
@@ -42,12 +42,12 @@ nonArray
     ;
 
 
-formalParas       //return a critical node
-    :   formalPara (',' formalPara)*
-    ;
+//formalParas       //return a critical node
+//    :   formalPara (',' formalPara)*
+//    ;
 
 formalPara
-    :   type ID
+    :   type ID     //the only exclusive since ID hasn't interpreted as expr yet.
     ;
 
 varDefOne

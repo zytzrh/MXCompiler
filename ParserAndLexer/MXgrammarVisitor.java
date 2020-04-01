@@ -66,12 +66,6 @@ public interface MXgrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNonArray(MXgrammarParser.NonArrayContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MXgrammarParser#formalParas}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFormalParas(MXgrammarParser.FormalParasContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MXgrammarParser#formalPara}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
