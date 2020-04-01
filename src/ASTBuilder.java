@@ -18,12 +18,20 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
     public ASTNode visitArrayType(MXgrammarParser.ArrayTypeContext ctx) {
         Location location = Location.getTokenLoc(ctx.getStart());
         String text = ctx.getText();
-        TypeNode baseType = (TypeNode) visit(ctx.type());
-        int new_dim = 1;
-        if(baseType instanceof  ArrayTypeNode){
-            new_dim = ((ArrayTypeNode) baseType).getDim() + 1;
+        TypeNode type = (TypeNode) visit(ctx.type());
+        NonArrayTypeNode baseType = null;
+        int dim = 0;
+        if(type instanceof NonArrayTypeNode){
+            baseType = (NonArrayTypeNode) type;
+            dim = 1;
+        }else if(type instanceof ArrayTypeNode){
+            baseType = ((ArrayTypeNode) type).getBaseType();
+            dim = ((ArrayTypeNode) type).getDim() + 1;
+        }else{
+            exceptionListener.errorOut(location, "Unknown Error");
         }
-        return new ArrayTypeNode(text, location, new_dim, baseType);
+
+        return new ArrayTypeNode(text, location, dim, baseType);
     }
 
     @Override
@@ -89,18 +97,17 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
     public ASTNode visitArray_newType(MXgrammarParser.Array_newTypeContext ctx) {
         Location location = Location.getTokenLoc(ctx.getStart());
         String text = ctx.getText();
-        NonArrayTypeNode arrayBaseType = new NonArrayTypeNode(ctx.nonArray().getText(), location);
+        NonArrayTypeNode baseType = new NonArrayTypeNode(ctx.nonArray().getText(), location);
         int dim = 0;
         for(var child : ctx.children)
             if(child.getText().equals("["))
                 dim++;
-        ArrayTypeNode baseType = new ArrayTypeNode(text, location, dim, arrayBaseType);
 
         ArrayList<ExprNode> lenPerDim = new ArrayList<>();
         for(var expr : ctx.expr())
             lenPerDim.add((ExprNode) visit(expr));
 
-        return new NewExprNode_array(text, location, baseType, lenPerDim);
+        return new NewExprNode_array(text, location, baseType, dim, lenPerDim);
     }
 
     @Override

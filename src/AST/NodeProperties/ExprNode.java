@@ -1,11 +1,11 @@
 package AST.NodeProperties;
 
 import AST.Location;
-import ExprType.ExprType;
+import Type.Type;
 
 abstract public class ExprNode extends ASTNode{
     private Boolean lvalue;
-    private ExprType exprType;
+    private Type exprType;
     public ExprNode(String text, Location location) {
         super(text, location);
     }

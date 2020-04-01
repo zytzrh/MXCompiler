@@ -124,6 +124,7 @@ exprs
 newType
     :   NEW nonArray     ('[' expr ']')*('[' ']')+('[' expr ']')+   #wrong_newType
     |   NEW nonArray     ('[' expr ']')+('[' ']')*                  #array_newType
+    //  do not call constructor yet?
 //    |   nonArray     '(' ')'                                    #class_creator
     |   NEW nonArray                                                #normal_newType
     ;
