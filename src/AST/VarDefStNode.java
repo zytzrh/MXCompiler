@@ -1,8 +1,7 @@
 package AST;
 
+import AST.Location.Location;
 import AST.NodeProperties.StatementNode;
-
-import java.util.ArrayList;
 
 public class VarDefStNode extends StatementNode {
     private VarDefNode varDef;

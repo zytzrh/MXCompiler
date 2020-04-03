@@ -6,10 +6,10 @@
         <PerGrammarGenerationSettings>
           <option name="fileName" value="$PROJECT_DIR$/src/MXgrammar.g4" />
           <option name="autoGen" value="true" />
-          <option name="outputDir" value="D:\Code\Compiler\mynext2\ParserAndLexer" />
+          <option name="outputDir" value="D:\Code\Compiler\mynext2\src\" />
           <option name="libDir" value="" />
           <option name="encoding" value="" />
-          <option name="pkg" value="" />
+          <option name="pkg" value="ParserAndLexer" />
           <option name="language" value="" />
           <option name="generateVisitor" value="true" />
         </PerGrammarGenerationSettings>

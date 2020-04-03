@@ -1,7 +1,9 @@
 package AST.NodeProperties;
 
-import AST.Location;
+import AST.Location.Location;
 import AST.Scope.Scope;
+import AST.Visit.ASTVisitor;
+import ExceptionHandle.CompileError;
 
 
 abstract public class ASTNode{
@@ -22,5 +24,9 @@ abstract public class ASTNode{
 
     public String getText() {
         return this.text;
+    }
+
+    public void accept(ASTVisitor visitor) throws CompileError {
+        throw new CompileError(null, "no possible error");
     }
 }

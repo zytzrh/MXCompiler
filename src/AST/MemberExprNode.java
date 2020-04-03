@@ -1,7 +1,7 @@
 package AST;
 
+import AST.Location.Location;
 import AST.NodeProperties.ExprNode;
-import org.stringtemplate.v4.ST;
 
 public class MemberExprNode extends ExprNode {
     private ExprNode expr;

@@ -1,6 +1,9 @@
 package AST;
 
+import AST.Location.Location;
 import AST.NodeProperties.*;
+import AST.Visit.ASTVisitor;
+import ExceptionHandle.CompileError;
 
 public class ArrayTypeNode extends TypeNode {
     private int dim;
@@ -29,5 +32,11 @@ public class ArrayTypeNode extends TypeNode {
 //        }
 //        return false;
 //    }
+
+
+    @Override
+    public void accept(ASTVisitor visitor) throws CompileError {
+        visitor.visit(this);
+    }
 
 }

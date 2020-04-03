@@ -1,12 +1,17 @@
+package AST.Visit;
+
 import AST.*;
+import AST.Location.Location;
 import AST.NodeProperties.*;
+
 import ExceptionHandle.ExceptionListener;
+import ParserAndLexer.*;
 
 import java.util.ArrayList;
 
-public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
+public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode> {
 
-    ExceptionListener exceptionListener;
+    private ExceptionListener exceptionListener;
     public ASTBuilder(ExceptionListener exceptionListener){
         this.exceptionListener = exceptionListener;
     }
@@ -218,7 +223,7 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
         TypeNode type = (TypeNode) visit(ctx.type());
         for(var varDef : ctx.varDefOne()){
             VarDefOneNode varDefOneNode = (VarDefOneNode) visit(varDef);
-            varDefOneNode.setType(type);
+            varDefOneNode.setTypeNode(type);
             varDefs.add(varDefOneNode);
         }
         return new VarDefNode(text, location, varDefs);
@@ -436,7 +441,7 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode>{
             constructor = (ConstructDefNode) visit(constructDef);
         }
         if(constructor != null && !constructor.getClassTypeId().equals(class_name))
-            exceptionListener.errorOut(location, "Constructor define error");
+            exceptionListener.errorOut(location, "Constructor name error");
         return new ClassDefNode(text, location, class_name, varMembers, funcMembers, constructor);
     }
 

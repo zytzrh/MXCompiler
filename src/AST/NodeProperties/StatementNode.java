@@ -1,6 +1,6 @@
 package AST.NodeProperties;
 
-import AST.Location;
+import AST.Location.Location;
 
 public abstract class StatementNode extends ASTNode {
 

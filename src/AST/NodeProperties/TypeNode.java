@@ -1,11 +1,22 @@
 package AST.NodeProperties;
 
-import AST.Location;
+import AST.Location.Location;
+import Type.Type;
 
 abstract public class TypeNode extends ASTNode{
+     Type type;
+
     public TypeNode(String text, Location location) {
         super(text, location);
     }
 
-//    abstract public boolean equal(TypeNode other);
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    //    abstract public boolean equal(TypeNode other);
 }

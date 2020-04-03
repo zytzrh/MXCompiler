@@ -1,5 +1,6 @@
 package AST;
 
+import AST.Location.Location;
 import AST.NodeProperties.ExprNode;
 
 public class PostfixExprNode extends ExprNode{

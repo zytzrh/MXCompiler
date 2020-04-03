@@ -1,7 +1,7 @@
 package AST;
 
+import AST.Location.Location;
 import AST.NodeProperties.ExprNode;
-import AST.NodeProperties.TypeNode;
 
 import java.util.ArrayList;
 

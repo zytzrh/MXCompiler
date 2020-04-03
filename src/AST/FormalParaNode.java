@@ -1,16 +1,25 @@
 package AST;
 
+import AST.Location.Location;
 import AST.NodeProperties.ASTNode;
 import AST.NodeProperties.TypeNode;
 
 public class FormalParaNode extends ASTNode {
     private TypeNode paraType;
-    private String id;
+    private String paraName;
 
 
-    public FormalParaNode(String text, Location location, TypeNode paraType, String id) {
+    public FormalParaNode(String text, Location location, TypeNode paraType, String paraName) {
         super(text, location);
         this.paraType = paraType;
-        this.id = id;
+        this.paraName = paraName;
+    }
+
+    public TypeNode getParaType() {
+        return paraType;
+    }
+
+    public String getParaName() {
+        return paraName;
     }
 }

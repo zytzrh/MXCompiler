@@ -90,10 +90,10 @@ expr
     :   THIS                                                #this_expr
     |   constant                                            #const_expr
     |   ID                                                  #id_expr
-    // 1.func_name 2.variable
+    // 1.func_name 2.variable   (not the same typically
     |   expr op=('++' | '--')                               #postfix_expr
     |   newType                                             #new_expr
-    // a direct expr or a function name
+    // a direct expr or a function name(cannot decide yet)
     |   expr '.' ID                                         #member_expr
     // check the whether the type of expr has a member named ID(it may be implemented as a func_name)
     |   func_name=expr '(' exprs? ')'                       #funcCall_expr

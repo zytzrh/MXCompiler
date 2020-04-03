@@ -1,9 +1,12 @@
+import AST.ProgramNode;
+import AST.Visit.ASTBuilder;
+import ExceptionHandle.CompileError;
 import ExceptionHandle.ExceptionListener;
-import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import ParserAndLexer.*;
 
 import java.io.*;
 
@@ -11,7 +14,7 @@ public class Main {
 
 
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) throws CompileError {
         ExceptionListener exceptionListener = new ExceptionListener();
         CharStream input;
         try{
@@ -20,7 +23,7 @@ public class Main {
             input = CharStreams.fromStream(is);
         } catch (Exception e) {
             System.out.println("file open failed");
-            throw new RuntimeException();
+            throw new CompileError();
         }
         MXgrammarLexer lexer = new MXgrammarLexer(input);
         lexer.removeErrorListeners();
@@ -33,11 +36,13 @@ public class Main {
         //System.out.println(tree.toStringTree(parser)); // print tree as text
 
         ASTBuilder astBuilder = new ASTBuilder(exceptionListener);
-        astBuilder.visit(tree);
+        ProgramNode programNode = (ProgramNode) astBuilder.visit(tree);
         if(exceptionListener.getErrorNum() != 0){
             System.out.println("Building AST found error");
-            throw new RuntimeException();
+            throw new CompileError();
         }
+        SemanticCheck semanticCheck = new SemanticCheck(exceptionListener);
+        programNode.accept(semanticCheck);
     }
 
 }

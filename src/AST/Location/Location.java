@@ -1,4 +1,4 @@
-package AST;
+package AST.Location;
 import org.antlr.v4.runtime.Token;
 
 public class Location {
@@ -22,5 +22,9 @@ public class Location {
 
     public String toString(){
         return "Loc->" + "Line:" + this.line + " Column:" + this.column + " ";
+    }
+
+    public static Location unknownLocation(){
+        return new Location(0,0);
     }
 }
