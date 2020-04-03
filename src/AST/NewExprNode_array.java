@@ -2,6 +2,8 @@ package AST;
 
 import AST.Location.Location;
 import AST.NodeProperties.ExprNode;
+import AST.Visit.ASTVisitor;
+import ExceptionHandle.CompileError;
 
 import java.util.ArrayList;
 
@@ -17,4 +19,32 @@ public class NewExprNode_array extends ExprNode {
         this.lenPerDim = lenPerDim;
     }
 
+    @Override
+    public void accept(ASTVisitor visitor) throws CompileError {
+        visitor.visit(this);
+    }
+
+    public NonArrayTypeNode getBaseType() {
+        return baseType;
+    }
+
+    public void setBaseType(NonArrayTypeNode baseType) {
+        this.baseType = baseType;
+    }
+
+    public int getDim() {
+        return dim;
+    }
+
+    public void setDim(int dim) {
+        this.dim = dim;
+    }
+
+    public ArrayList<ExprNode> getLenPerDim() {
+        return lenPerDim;
+    }
+
+    public void setLenPerDim(ArrayList<ExprNode> lenPerDim) {
+        this.lenPerDim = lenPerDim;
+    }
 }

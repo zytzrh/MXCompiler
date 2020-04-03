@@ -57,7 +57,7 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode> {
         Location location = Location.getTokenLoc(ctx.getStart());
         String text = ctx.getText();
         //System.out.println(text);
-        return new ThisExprNode(text, location);
+        return new ConstExprNode(text, location);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode> {
     public ASTNode visitId_expr(MXgrammarParser.Id_exprContext ctx) {
         Location location = Location.getTokenLoc(ctx.getStart());
         String text = ctx.getText();
-        return new ThisExprNode(text, location);
+        return new IdExprNode(text, location);
     }
 
     @Override

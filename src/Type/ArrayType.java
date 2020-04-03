@@ -72,4 +72,24 @@ public class ArrayType implements Type {
     public void setConstructor(Function constructor) {
 
     }
+
+    public NonArrayType getBaseNonArrayType() {
+        return baseNonArrayType;
+    }
+
+    public void setBaseNonArrayType(NonArrayType baseNonArrayType) {
+        this.baseNonArrayType = baseNonArrayType;
+    }
+
+    public void setDim(int dim) {
+        this.dim = dim;
+    }
+
+    public Function getSizeFunction() {
+        return sizeFunction;
+    }
+
+    public void setSizeFunction(Function sizeFunction) {
+        this.sizeFunction = sizeFunction;
+    }
 }

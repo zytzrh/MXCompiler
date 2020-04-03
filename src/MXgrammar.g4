@@ -88,6 +88,7 @@ for_update
 
 expr
     :   THIS                                                #this_expr
+    // lvalue but not assignable
     |   constant                                            #const_expr
     |   ID                                                  #id_expr
     // 1.func_name 2.variable   (not the same typically

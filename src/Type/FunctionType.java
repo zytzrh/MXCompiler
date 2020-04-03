@@ -8,7 +8,7 @@ public class FunctionType implements Type {
 
     @Override
     public boolean equal(Type other) {
-        return false;
+        return other instanceof FunctionType;
     }
 
     @Override

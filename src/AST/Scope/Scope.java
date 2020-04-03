@@ -6,16 +6,21 @@ import Type.Type;
 import java.util.HashMap;
 
 abstract public class Scope {
-    private HashMap<String, Type> varType;
+    private HashMap<String, Type> varTable;
     public Scope(){
-        varType = new HashMap<String, Type>();
+        varTable = new HashMap<String, Type>();
     }
     public boolean hasVar(String varName){
-        return varType.containsKey(varName);
+        return varTable.containsKey(varName);
     }
     public Type getVarType(String varName) throws CompileError {
         if(!hasVar(varName))
             throw new CompileError(null, "No variable name exist in this scope");
-        return varType.get(varName);
+        return varTable.get(varName);
+    }
+    public void put(String varName, Type varType) throws CompileError {
+        if(hasVar(varName))
+            throw new CompileError(null, "Variable name already exist");
+        varTable.put(varName, varType);
     }
 }
