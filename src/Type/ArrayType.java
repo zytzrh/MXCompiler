@@ -3,6 +3,7 @@ package Type;
 import AST.Function.Function;
 import ExceptionHandle.CompileError;
 import Type.NonArray.NonArrayType;
+import Type.NonArray.NullType;
 
 public class ArrayType implements Type {
     private NonArrayType baseNonArrayType;
@@ -31,6 +32,13 @@ public class ArrayType implements Type {
         }else{
             return false;
         }
+    }
+
+    @Override
+    public boolean assignable(Type other) {
+        if(other instanceof NullType)
+            return true;
+        return equal(other);
     }
 
     @Override

@@ -12,6 +12,11 @@ public class FunctionType implements Type {
     }
 
     @Override
+    public boolean assignable(Type other) {
+        return false;
+    }
+
+    @Override
     public boolean hasVarMember(String memberName) {
         return false;
     }

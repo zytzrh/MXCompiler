@@ -83,7 +83,29 @@ public class SemanticCheck extends ASTVisitor {
             toStringParas.add(toStringPara);
             Function toString = new Function(stringType, toStringParas, null);
             functionTable.putFunc("toString", toString);
-            //
+            //inBuilt funtion for string
+            //length(no paras)
+            ArrayList<VariableEntity> lengthParas = new ArrayList<VariableEntity>();
+            Function length = new Function(intType, lengthParas, null);
+            stringType.addMethod("length", length);
+            //substring
+            VariableEntity substringPara1 = new VariableEntity("left", intType);
+            VariableEntity substringPara2 = new VariableEntity("right", intType);
+            ArrayList<VariableEntity> substringParas = new ArrayList<VariableEntity>();
+            substringParas.add(substringPara1);
+            substringParas.add(substringPara2);
+            Function substring = new Function(stringType, substringParas, null);
+            stringType.addMethod("substring", substring);
+            //parseInt
+            ArrayList<VariableEntity> parseIntParas = new ArrayList<VariableEntity>();
+            Function parseInt = new Function(intType, parseIntParas, null);
+            stringType.addMethod("parseInt", parseInt);
+            //ord
+            VariableEntity ordPara = new VariableEntity("pos", intType);
+            ArrayList<VariableEntity> ordParas = new ArrayList<VariableEntity>();
+            ordParas.add(ordPara);
+            Function ord = new Function(intType, ordParas, null);
+            stringType.addMethod("ord", ord);
         }catch(CompileError e){
             e.setLocation(Location.unknownLocation());
             exceptionListener.errorOut(e);
@@ -289,7 +311,7 @@ public class SemanticCheck extends ASTVisitor {
             if (initValue != null) {
                 initValue.accept(this);
                 Type initType = initValue.getExprType();
-                if(!type.equal(initType))
+                if(!type.assignable(initType))
                     throw new CompileError(null, "Variable type not match");
             }
             //register
@@ -361,11 +383,11 @@ public class SemanticCheck extends ASTVisitor {
             Type classType = typeTable.get(className);
             Function constructor = classType.getConstructor();
             ArrayList<VariableEntity> paras = constructor.getParas();
-            BlockScope blockScope = new BlockScope();//we make constructor a block scope*****************
+            ConstructScope constructScope = new ConstructScope();
             for(VariableEntity para : paras){
-                blockScope.put(para.getId(), para.getType());
+                constructScope.put(para.getId(), para.getType());
             }
-            scopeStack.push(blockScope);
+            scopeStack.push(constructScope);
             BlockNode funcBody = node.getFuncBody();
             specialBlock = true;
             funcBody.accept(this);
@@ -387,6 +409,8 @@ public class SemanticCheck extends ASTVisitor {
                 Scope newScope = new BlockScope();
                 scopeStack.push(newScope);
                 scopeIn = true;
+            }else{
+                specialBlock = false;
             }
             ArrayList<StatementNode> statementNodes = node.getStatements();
             for(StatementNode statementNode : statementNodes){
@@ -394,7 +418,6 @@ public class SemanticCheck extends ASTVisitor {
             }
             if(scopeIn)
                 scopeStack.pop();
-            specialBlock = false;
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;
@@ -469,8 +492,8 @@ public class SemanticCheck extends ASTVisitor {
     @Override
     public void visit(ForNode node) {
         try{
-            LoopScope newScope = new LoopScope();
-            scopeStack.push(newScope);
+            LoopScope loopScope = new LoopScope();
+            scopeStack.push(loopScope);
             BlockNode forInitNode = node.getFor_init();
             ExprNode condNode = node.getCond();
             BlockNode forUpdate = node.getFor_update();
@@ -481,10 +504,6 @@ public class SemanticCheck extends ASTVisitor {
                 forInitNode.accept(this);
                 specialBlock = false;
             }
-            //StatementNode
-            specialBlock = true;
-            statementNode.accept(this);
-            specialBlock = false;
             //forUpdateNode
             if(forUpdate != null){
                 specialBlock = true;
@@ -498,6 +517,14 @@ public class SemanticCheck extends ASTVisitor {
                     throw new CompileError(null, "Illegal condition expression type");
                 }
             }
+            //StatementNode
+            specialBlock = true;
+            BlockScope blockScope = new BlockScope();
+            scopeStack.push(blockScope);
+            statementNode.accept(this);
+            scopeStack.pop();
+            specialBlock = false;
+            //pop
             scopeStack.pop();
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
@@ -510,15 +537,20 @@ public class SemanticCheck extends ASTVisitor {
         try{
             ExprNode returnExprNode = node.getReturnExpr();
             Type funcReturnType = null;
+            boolean inConstructor = false;
             for(Scope scope : scopeStack){
                 if(scope instanceof FunctionScope){
                     funcReturnType = ((FunctionScope)scope).getReturnType();
+                }else if(scope instanceof ConstructScope){
+                    inConstructor = true;
                 }
             }
             //check whether in funtion
             if(funcReturnType == null){
+                if(inConstructor)
+                    return;
                 throw new CompileError(null, "'Return' appear not in function");
-            }
+            }else
             //check type
             if(returnExprNode == null){
                 if(!(funcReturnType instanceof VoidType)){
@@ -526,7 +558,7 @@ public class SemanticCheck extends ASTVisitor {
                 }
             }else{
                 returnExprNode.accept(this);
-                if(!returnExprNode.getExprType().equal(funcReturnType))
+                if(!funcReturnType.assignable(returnExprNode.getExprType()))
                     throw new CompileError(null, "'Return' type do not match");
             }
         } catch (CompileError compileError) {
@@ -734,9 +766,14 @@ public class SemanticCheck extends ASTVisitor {
             funcSelf.accept(this);
             Function function;
             if(funcSelf instanceof IdExprNode){
-                if(!new FunctionType().equal(funcSelf.getExprType()))
-                    throw new CompileError(null, "Function not exist");
                 String funcName = ((IdExprNode) funcSelf).getId();
+                if(!new FunctionType().equal(funcSelf.getExprType())){
+                    if(!functionTable.hasFunc(funcName))
+                        throw new CompileError(null, "Function not exist");
+                    else{
+                        funcSelf.setExprType(new FunctionType());
+                    }
+                }
                 function = functionTable.getFunc(funcName);
             }else if(funcSelf instanceof MemberExprNode){
                 if(!new FunctionType().equal(funcSelf.getExprType()))
@@ -759,7 +796,7 @@ public class SemanticCheck extends ASTVisitor {
                 ExprNode arguement = argus.get(i);
                 arguement.accept(this);
                 VariableEntity para = paras.get(i);
-                if(!arguement.getExprType().equal(para.getType()))
+                if(!para.getType().assignable(arguement.getExprType()))
                     throw new CompileError(null, "The argument do not match formal parameter");
             }
             //modify node
@@ -769,6 +806,7 @@ public class SemanticCheck extends ASTVisitor {
                 node.setLvalue(false);
             else
                 node.setLvalue(true);
+            node.setLvalue(false);
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;
@@ -918,20 +956,12 @@ public class SemanticCheck extends ASTVisitor {
             ExprNode rhsNode = node.getRhs();
             lhsNode.accept(this);
             rhsNode.accept(this);
-            if(rhsNode.getExprType() instanceof NullType){
-                if((lhsNode.getExprType() instanceof ClassType) || (lhsNode.getExprType() instanceof ArrayType)){
-                    node.setExprType(lhsNode.getExprType());
-                    node.setLvalue(true);/*???????????????????????????????????????????????????????*/
-                }else{
-                    throw new CompileError(null, "Null can not assign to this type");
-                }
+
+            if(lhsNode.getExprType().assignable(rhsNode.getExprType())){
+                node.setExprType(lhsNode.getExprType());
+                node.setLvalue(true);
             }else{
-                if(lhsNode.getExprType().equal(rhsNode.getExprType())){
-                    node.setExprType(lhsNode.getExprType());
-                    node.setLvalue(true);
-                }else{
-                    throw new CompileError(null, "Type do not match when assign");
-                }
+                throw new CompileError(null, "Type do not match when assign");
             }
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());

@@ -33,6 +33,15 @@ abstract public class NonArrayType implements Type{
     }
 
     @Override
+    public boolean assignable(Type other) {
+        if(this instanceof ClassType && other instanceof NullType){
+            return true;
+        }else{
+            return equal(other);
+        }
+    }
+
+    @Override
     public boolean hasVarMember(String memberName) {
         return varMembers.containsKey(memberName);
     }
