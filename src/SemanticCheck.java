@@ -847,13 +847,15 @@ public class SemanticCheck extends ASTVisitor {
             int nowDim = ((ArrayType) arrayType).getDim();
             if(nowDim == 1){
                 node.setExprType(((ArrayType) arrayType).getBaseNonArrayType());
-                node.setLvalue(arrayName.getLvalue());
+//                node.setLvalue(arrayName.getLvalue());
+                node.setLvalue(true);
             }else{
                 Function sizeFunction = new Function(typeTable.get("int"),
                         new ArrayList<VariableEntity>(), null);
                 node.setExprType(new ArrayType(((ArrayType) arrayType).getBaseNonArrayType(),
                         nowDim-1, sizeFunction));
-                node.setLvalue(arrayName.getLvalue());
+//                node.setLvalue(arrayName.getLvalue());
+                node.setLvalue(true);
             }
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
