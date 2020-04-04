@@ -46,6 +46,10 @@ public class Main {
         } catch (CompileError compileError) {
             exceptionListener.errorOut(compileError);
         }
+        if(exceptionListener.getErrorNum() !=0 ){
+            System.out.println("Semantic error");
+            throw new CompileError();
+        }
     }
 
 }
