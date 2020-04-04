@@ -729,6 +729,13 @@ public class SemanticCheck extends ASTVisitor {
             Function sizeFunction = new Function(typeTable.get("int"), new ArrayList<VariableEntity>(), null);
             node.setExprType(new ArrayType(baseNonArrayType, dim, sizeFunction));
             node.setLvalue(false);
+            //check dim type
+            ArrayList<ExprNode> lenPerDim = node.getLenPerDim();
+            for(ExprNode exprNode: lenPerDim){
+                exprNode.accept(this);
+                if(!(exprNode.getExprType() instanceof IntType))
+                    throw new CompileError(null, "Index can only be int");
+            }
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;
