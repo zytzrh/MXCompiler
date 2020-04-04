@@ -547,7 +547,7 @@ public class SemanticCheck extends ASTVisitor {
             }
             //check whether in funtion
             if(funcReturnType == null){
-                if(inConstructor)
+                if(inConstructor && returnExprNode == null)
                     return;
                 throw new CompileError(null, "'Return' appear not in function");
             }else
@@ -745,7 +745,8 @@ public class SemanticCheck extends ASTVisitor {
             String id = node.getId();
             if(faType.hasVarMember(id)){
                 node.setExprType(faType.getMemberType(id));
-                node.setLvalue(faNode.getLvalue());
+//                node.setLvalue(faNode.getLvalue());
+                node.setLvalue(true);
             }else if(faType.hasMethod(id)){
                 node.setExprType(new FunctionType());
                 /*the lvalue is decided when processing function*/
@@ -802,11 +803,11 @@ public class SemanticCheck extends ASTVisitor {
             //modify node
             Type returnType = function.getReturnType();
             node.setExprType(returnType);
-            if(returnType.equal(typeTable.get("int")) || returnType.equal(typeTable.get("bool")))
-                node.setLvalue(false);
-            else
-                node.setLvalue(true);
-//            node.setLvalue(false);
+//            if(returnType.equal(typeTable.get("int")) || returnType.equal(typeTable.get("bool")))
+//                node.setLvalue(false);
+//            else
+//                node.setLvalue(true);
+            node.setLvalue(false);
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;
@@ -957,12 +958,13 @@ public class SemanticCheck extends ASTVisitor {
             lhsNode.accept(this);
             rhsNode.accept(this);
 
-            if(lhsNode.getExprType().assignable(rhsNode.getExprType())){
-                node.setExprType(lhsNode.getExprType());
-                node.setLvalue(true);
-            }else{
+            if(!lhsNode.getExprType().assignable(rhsNode.getExprType())){
                 throw new CompileError(null, "Type do not match when assign");
             }
+            if(!lhsNode.getLvalue())
+                throw new CompileError(null, "Lvalue do not match");
+            node.setExprType(lhsNode.getExprType());
+            node.setLvalue(true);
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;
