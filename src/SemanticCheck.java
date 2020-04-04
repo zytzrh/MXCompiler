@@ -806,7 +806,7 @@ public class SemanticCheck extends ASTVisitor {
                 node.setLvalue(false);
             else
                 node.setLvalue(true);
-            node.setLvalue(false);
+//            node.setLvalue(false);
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;
