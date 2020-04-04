@@ -3,9 +3,9 @@ import AST.Function.Function;
 import AST.Function.FunctionTable;
 import AST.Location.Location;
 import AST.NodeProperties.ExprNode;
+import AST.NodeProperties.StatementNode;
 import AST.NodeProperties.TypeNode;
-import AST.Scope.GlobalScope;
-import AST.Scope.Scope;
+import AST.Scope.*;
 import AST.VariableEntity.VariableEntity;
 import AST.Visit.ASTVisitor;
 import ExceptionHandle.CompileError;
@@ -14,6 +14,7 @@ import Type.*;
 import Type.NonArray.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Stack;
 
 public class SemanticCheck extends ASTVisitor {
@@ -21,12 +22,14 @@ public class SemanticCheck extends ASTVisitor {
     private TypeTable typeTable;    //<string(typename), type>
     private FunctionTable functionTable;    //<string, function>
     private Stack<Scope> scopeStack;    //save variable entity table <string(variable name), type>
+    private boolean specialBlock;
 
     public SemanticCheck(ExceptionListener exceptionListener){
         this.exceptionListener = exceptionListener;
         typeTable = new TypeTable();
         functionTable = new FunctionTable();
         scopeStack = new Stack<Scope>();
+        specialBlock = false;
         tableInit();
     }
 
@@ -79,6 +82,7 @@ public class SemanticCheck extends ASTVisitor {
             ArrayList<VariableEntity> toStringParas = new ArrayList<VariableEntity>();
             toStringParas.add(toStringPara);
             Function toString = new Function(stringType, toStringParas, null);
+            functionTable.putFunc("toString", toString);
             //
         }catch(CompileError e){
             e.setLocation(Location.unknownLocation());
@@ -111,9 +115,14 @@ public class SemanticCheck extends ASTVisitor {
         //func_body
         BlockNode funcBody = node.getFuncBody();
         //return_type
+        Type returnType;
         TypeNode returnTypeNode = node.getReturnType();
-        returnTypeNode.accept(this);
-        Type returnType = returnTypeNode.getType();
+        if(returnTypeNode == null)
+            returnType = typeTable.get("void");
+        else{
+            returnTypeNode.accept(this);
+            returnType = returnTypeNode.getType();
+        }
         //all
         return new Function(returnType, convertedParas, funcBody);
     }
@@ -132,7 +141,7 @@ public class SemanticCheck extends ASTVisitor {
         //func_body
         BlockNode funcBody = node.getFuncBody();
         //return_type
-        Type returnType = typeTable.get(node.getClassTypeId());
+        Type returnType = typeTable.get(node.getClassName());
         //all
         return new Function(returnType, convertedParas, funcBody);
     }
@@ -210,6 +219,11 @@ public class SemanticCheck extends ASTVisitor {
                 defUnitNode.accept(this);
             }
         }
+        //check all function and method
+        for(var defUnitNode : node.getDefUnits()){
+            if(defUnitNode instanceof FuncDefNode || defUnitNode instanceof ClassDefNode)
+                defUnitNode.accept(this);
+        }
     }
 
 
@@ -248,9 +262,14 @@ public class SemanticCheck extends ASTVisitor {
 
     @Override
     public void visit(VarDefNode node) throws CompileError {
-        ArrayList<VarDefOneNode> varDefs = node.getVarDefs();
-        for(VarDefOneNode varDef : varDefs){
-            varDef.accept(this);
+        try{
+            ArrayList<VarDefOneNode> varDefs = node.getVarDefs();
+            for(VarDefOneNode varDef : varDefs){
+                varDef.accept(this);
+            }
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            throw compileError;
         }
     }
 
@@ -267,10 +286,12 @@ public class SemanticCheck extends ASTVisitor {
             Type type = typeNode.getType();
             //check initValue
             ExprNode initValue = node.getInitValue();
-            initValue.accept(this);
-            Type initType = initValue.getExprType();
-            if(!type.equal(initType))
-                throw new CompileError(null, "Variable type not match");
+            if (initValue != null) {
+                initValue.accept(this);
+                Type initType = initValue.getExprType();
+                if(!type.equal(initType))
+                    throw new CompileError(null, "Variable type not match");
+            }
             //register
             scopeStack.peek().put(id, type);
         } catch (CompileError compileError) {
@@ -279,7 +300,292 @@ public class SemanticCheck extends ASTVisitor {
         }
     }
 
+    @Override
+    public void visit(FuncDefNode node) throws CompileError {
+        try{
+            String funcName = node.getFuncName();
+            Function function = functionTable.getFunc(funcName);
+            Scope newScope = new FunctionScope(function.getReturnType());
+            for(VariableEntity para : function.getParas()){
+                newScope.put(para.getId(), para.getType());
+            }
+            scopeStack.push(newScope);
+            BlockNode funcBody = node.getFuncBody();
+            //visit BlockNode
+            specialBlock = true;
+            funcBody.accept(this);
+            specialBlock = false;
+            scopeStack.pop();
+            //end visit
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            throw compileError;
+        }
+    }
 
+    @Override
+    public void visit(ClassDefNode node) throws CompileError {
+        try{
+            String className = node.getClassName();
+            ClassType type = (ClassType) typeTable.get(className);
+            ClassScope classScope = new ClassScope();
+            //method register
+            functionTable.putMethod(type.getMethods());
+            //variable reigister
+            HashMap<String, Type> varMembers = type.getVarMembers();
+            for(HashMap.Entry<String, Type> varMember : varMembers.entrySet()){
+                classScope.put(varMember.getKey(), varMember.getValue());
+            }
+            classScope.put("this", type);
+            scopeStack.push(classScope);
+            //check method
+            ArrayList<FuncDefNode> funcDefNodes = node.getFuncMembers();
+            for(FuncDefNode funcDefNode : funcDefNodes){
+                funcDefNode.accept(this);
+            }
+            //check constructor
+            if(node.getConstructor() != null)
+                node.getConstructor().accept(this);
+            scopeStack.pop();
+            functionTable.putMethod(null);
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            throw compileError;
+        }
+    }
+
+    @Override
+    public void visit(ConstructDefNode node) {
+        try{
+            String className = node.getClassName();
+            Type classType = typeTable.get(className);
+            Function constructor = classType.getConstructor();
+            ArrayList<VariableEntity> paras = constructor.getParas();
+            BlockScope blockScope = new BlockScope();//we make constructor a block scope*****************
+            for(VariableEntity para : paras){
+                blockScope.put(para.getId(), para.getType());
+            }
+            scopeStack.push(blockScope);
+            BlockNode funcBody = node.getFuncBody();
+            specialBlock = true;
+            funcBody.accept(this);
+            specialBlock = false;
+            scopeStack.pop();
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
+
+    /*for StatementNode vist***************************************************/
+
+    @Override
+    public void visit(BlockNode node) throws CompileError {
+        try{
+            boolean scopeIn = false;
+            if(!specialBlock) {
+                Scope newScope = new BlockScope();
+                scopeStack.push(newScope);
+                scopeIn = true;
+            }
+            ArrayList<StatementNode> statementNodes = node.getStatements();
+            for(StatementNode statementNode : statementNodes){
+                statementNode.accept(this);
+            }
+            if(scopeIn)
+                scopeStack.pop();
+            specialBlock = false;
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            throw compileError;
+        }
+    }
+
+    @Override
+    public void visit(VarDefStNode node) {
+        try{
+            VarDefNode varDefNode = node.getVarDef();
+            varDefNode.accept(this);
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
+
+    @Override
+    public void visit(IfNode node)  {
+        try{
+            ExprNode condNode = node.getCond();
+            condNode.accept(this);
+            if(!(condNode.getExprType() instanceof BoolType)){
+                throw new CompileError(null, "Illegal condition expression type");
+            }
+            //'then' turn into a new scope
+            StatementNode thenStNode = node.getThen_st();
+            BlockScope thenScope = new BlockScope();
+            scopeStack.push(thenScope);
+            specialBlock = true;
+            thenStNode.accept(this);
+            specialBlock = false;
+            scopeStack.pop();
+            //'else' turn into another new scope
+            StatementNode elseStNode = node.getElse_st();
+            if(elseStNode != null){
+                BlockScope elseScope = new BlockScope();
+                scopeStack.push(elseScope);
+                specialBlock = true;
+                elseStNode.accept(this);
+                specialBlock = false;
+                scopeStack.pop();
+            }
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
+
+    @Override
+    public void visit(WhileNode node) {
+        try{
+            ExprNode condNode = node.getCond();
+            condNode.accept(this);
+            if(!(condNode.getExprType() instanceof BoolType)){
+                throw new CompileError(null, "Illegal condition expression type");
+            }
+            //go into a new scope
+            StatementNode statementNode = node.getStatement();
+            LoopScope newScope = new LoopScope();
+            scopeStack.push(newScope);
+            specialBlock = true;
+            statementNode.accept(this);
+            specialBlock = false;
+            scopeStack.pop();
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
+
+    @Override
+    public void visit(ForNode node) {
+        try{
+            LoopScope newScope = new LoopScope();
+            scopeStack.push(newScope);
+            BlockNode forInitNode = node.getFor_init();
+            ExprNode condNode = node.getCond();
+            BlockNode forUpdate = node.getFor_update();
+            StatementNode statementNode = node.getStatement();
+            //forInitNode
+            if(forInitNode != null){
+                specialBlock = true;
+                forInitNode.accept(this);
+                specialBlock = false;
+            }
+            //StatementNode
+            specialBlock = true;
+            statementNode.accept(this);
+            specialBlock = false;
+            //forUpdateNode
+            if(forUpdate != null){
+                specialBlock = true;
+                forUpdate.accept(this);
+                specialBlock = false;
+            }
+            //condNode
+            if(condNode != null){
+                condNode.accept(this);
+                if(!(condNode.getExprType() instanceof BoolType)){
+                    throw new CompileError(null, "Illegal condition expression type");
+                }
+            }
+            scopeStack.pop();
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
+
+    @Override
+    public void visit(ReturnNode node) {
+        try{
+            ExprNode returnExprNode = node.getReturnExpr();
+            Type funcReturnType = null;
+            for(Scope scope : scopeStack){
+                if(scope instanceof FunctionScope){
+                    funcReturnType = ((FunctionScope)scope).getReturnType();
+                }
+            }
+            //check whether in funtion
+            if(funcReturnType == null){
+                throw new CompileError(null, "'Return' appear not in function");
+            }
+            //check type
+            if(returnExprNode == null){
+                if(!(funcReturnType instanceof VoidType)){
+                    throw new CompileError(null, "'Return' type do not match");
+                }
+            }else{
+                returnExprNode.accept(this);
+                if(!returnExprNode.getExprType().equal(funcReturnType))
+                    throw new CompileError(null, "'Return' type do not match");
+            }
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
+
+    @Override
+    public void visit(BreakNode node) {
+        try{
+            boolean isInLoop = false;
+            for(Scope scope: scopeStack){
+                if (scope instanceof LoopScope) {
+                    isInLoop = true;
+                    break;
+                }
+            }
+            if(!isInLoop)
+                throw new CompileError(null, "'break' appear not in loop");
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
+
+    @Override
+    public void visit(ContinueNode node) {
+        try{
+            boolean isInLoop = false;
+            for(Scope scope: scopeStack){
+                if (scope instanceof LoopScope) {
+                    isInLoop = true;
+                    break;
+                }
+            }
+            if(!isInLoop)
+                throw new CompileError(null, "'break' appear not in loop");
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
+
+    @Override
+    public void visit(EmptyNode node) {
+
+    }
+
+    @Override
+    public void visit(ExprStNode node) {
+        try{
+            ExprNode exprNode = node.getExpr();
+            exprNode.accept(this);
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            exceptionListener.errorOut(compileError);
+        }
+    }
 
     /*for ExprNode visit********************************************************/
 
@@ -309,7 +615,7 @@ public class SemanticCheck extends ASTVisitor {
             if(constant.charAt(0) == 'n'){
                 node.setExprType(typeTable.get("null"));
                 node.setLvalue(false);  //rvalue
-            }else if('0' <= constant.charAt(0) && constant.charAt(0) <= 9){
+            }else if('0' <= constant.charAt(0) && constant.charAt(0) <= '9'){
                 node.setExprType(typeTable.get("int"));
                 node.setLvalue(false);
             }else if(constant.charAt(0) == 't' || constant.charAt(0) == 'f'){
@@ -511,20 +817,28 @@ public class SemanticCheck extends ASTVisitor {
             if(node.getOp().equals("!")){
                 if(!(type instanceof BoolType))
                     throw new CompileError(null, "'!' can only be applied to bool type");
-            }else if(node.getOp().equals("++") || node.getOp().equals("--") || node.getOp().equals("+") ||
-                    node.getOp().equals("-") || node.getOp().equals("~")){
+                node.setLvalue(false);
+                node.setExprType(type);
+            }else if(node.getOp().equals("+") || node.getOp().equals("-") || node.getOp().equals("~")){
                 if(!(type instanceof IntType)){
                     throw new CompileError(null,
                             "Prefix symbol " + node.getOp() + " can only be applied to int type");
                 }
+                node.setLvalue(false);
+                node.setExprType(type);
+            }else if(node.getOp().equals("++") || node.getOp().equals("--")){
+                if(!(type instanceof IntType)){
+                    throw new CompileError(null,
+                            "Prefix symbol " + node.getOp() + " can only be applied to int type");
+                }
+                if(!exprNode.getLvalue())
+                    throw new CompileError(null,
+                            "Prefix symbol " + node.getOp() + " can only be applied to lvalue");
+                node.setLvalue(true);
+                node.setExprType(type);
             }else{
                 throw new CompileError(null, "No possible error");
             }
-            if(!exprNode.getLvalue())
-                throw new CompileError(null,
-                        "Prefix symbol " + node.getOp() + " can only be applied to lvalue");
-            node.setExprType(type);
-            node.setLvalue(true);
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;

@@ -8,4 +8,12 @@ public class FunctionScope extends Scope {
         super();
         this.returnType = returnType;
     }
+
+    public Type getReturnType() {
+        return returnType;
+    }
+
+    public void setReturnType(Type returnType) {
+        this.returnType = returnType;
+    }
 }

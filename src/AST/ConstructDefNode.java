@@ -2,28 +2,35 @@ package AST;
 
 import AST.Location.Location;
 import AST.NodeProperties.ASTNode;
+import AST.Visit.ASTVisitor;
+import ExceptionHandle.CompileError;
 
 import java.util.ArrayList;
 
 public class ConstructDefNode extends ASTNode {
-    private String classTypeId;
+    private String className;
     private ArrayList<FormalParaNode> paras;
     private BlockNode funcBody;
 
-    public ConstructDefNode(String text, Location location, String classTypeId, ArrayList<FormalParaNode> paras,
+    public ConstructDefNode(String text, Location location, String className, ArrayList<FormalParaNode> paras,
                             BlockNode funcBody) {
         super(text, location);
-        this.classTypeId = classTypeId;
+        this.className = className;
         this.funcBody = funcBody;
         this.paras = paras;
     }
 
-    public String getClassTypeId(){
-        return this.classTypeId;
+    @Override
+    public void accept(ASTVisitor visitor) throws CompileError {
+        visitor.visit(this);
     }
 
-    public void setClassTypeId(String classTypeId) {
-        this.classTypeId = classTypeId;
+    public String getClassName(){
+        return this.className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     public ArrayList<FormalParaNode> getParas() {

@@ -2,6 +2,8 @@ package AST;
 
 import AST.Location.Location;
 import AST.NodeProperties.DefUnitNode;
+import AST.Visit.ASTVisitor;
+import ExceptionHandle.CompileError;
 
 import java.util.ArrayList;
 
@@ -18,6 +20,11 @@ public class ClassDefNode extends DefUnitNode {
         this.varMembers = varMembers;
         this.funcMembers = funcMembers;
         this.constructor = constructor;
+    }
+
+    @Override
+    public void accept(ASTVisitor visitor) throws CompileError {
+        visitor.visit(this);
     }
 
     public String getClassName() {

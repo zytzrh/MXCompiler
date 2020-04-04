@@ -23,4 +23,8 @@ abstract public class Scope {
             throw new CompileError(null, "Variable name already exist");
         varTable.put(varName, varType);
     }
+
+    public void setVarTable(HashMap<String, Type> varTable) {
+        this.varTable = varTable;
+    }
 }

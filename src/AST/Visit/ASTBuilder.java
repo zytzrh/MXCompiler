@@ -440,7 +440,7 @@ public class ASTBuilder extends MXgrammarBaseVisitor<ASTNode> {
                         "Duplicate declarations of class constructor");
             constructor = (ConstructDefNode) visit(constructDef);
         }
-        if(constructor != null && !constructor.getClassTypeId().equals(class_name))
+        if(constructor != null && !constructor.getClassName().equals(class_name))
             exceptionListener.errorOut(location, "Constructor name error");
         return new ClassDefNode(text, location, class_name, varMembers, funcMembers, constructor);
     }

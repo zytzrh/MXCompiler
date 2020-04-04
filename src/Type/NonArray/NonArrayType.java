@@ -38,22 +38,15 @@ abstract public class NonArrayType implements Type{
     }
 
     @Override
+    public boolean hasMethod(String methodName) {
+        return methods.containsKey(methodName);
+    }
+
+    @Override
     public Type getMemberType(String memberName) throws CompileError {
         if(!hasVarMember(memberName))
             throw new CompileError(null, "Variable member name not exist");
         return varMembers.get(memberName);
-    }
-
-    @Override
-    public void addVarMember(String memberName, Type memberType) throws CompileError {
-        if(hasVarMember(memberName))
-            throw new CompileError(null, "Variable member name already exist");
-        varMembers.put(memberName, memberType);
-    }
-
-    @Override
-    public boolean hasMethod(String methodName) {
-        return methods.containsKey(methodName);
     }
 
     @Override
@@ -64,18 +57,34 @@ abstract public class NonArrayType implements Type{
     }
 
     @Override
+    public Function getConstructor() throws CompileError {
+        if(this.constructor == null)
+            throw new CompileError(null, "Invalid construction");
+        return constructor;
+    }
+
+    public HashMap<String, Function> getMethods() {
+        return methods;
+    }
+
+    public HashMap<String, Type> getVarMembers() {
+        return varMembers;
+    }
+
+    @Override
+    public void addVarMember(String memberName, Type memberType) throws CompileError {
+        if(hasVarMember(memberName))
+            throw new CompileError(null, "Variable member name already exist");
+        varMembers.put(memberName, memberType);
+    }
+
+    @Override
     public void addMethod(String methodName, Function method) throws CompileError {
         if(hasMethod(methodName))
             throw new CompileError(null, "Method name already exist");
         methods.put(methodName, method);
     }
 
-    @Override
-    public Function getConstructor() throws CompileError {
-        if(this.constructor == null)
-            throw new CompileError(null, "Invalid construction");
-        return constructor;
-    }
 
     @Override
     public void setConstructor(Function constructor) {

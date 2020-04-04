@@ -3,6 +3,8 @@ package AST;
 import AST.Location.Location;
 import AST.NodeProperties.DefUnitNode;
 import AST.NodeProperties.TypeNode;
+import AST.Visit.ASTVisitor;
+import ExceptionHandle.CompileError;
 
 import java.util.ArrayList;
 
@@ -21,6 +23,11 @@ public class FuncDefNode extends DefUnitNode {
         this.paras = paras;
         this.funcName = funcName;
         this.funcBody = funcBody;
+    }
+
+    @Override
+    public void accept(ASTVisitor visitor) throws CompileError {
+        visitor.visit(this);
     }
 
     public TypeNode getReturnType() {

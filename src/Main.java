@@ -42,7 +42,11 @@ public class Main {
             throw new CompileError();
         }
         SemanticCheck semanticCheck = new SemanticCheck(exceptionListener);
-        programNode.accept(semanticCheck);
+        try{
+            programNode.accept(semanticCheck);
+        } catch (CompileError compileError) {
+            exceptionListener.errorOut(compileError);
+        }
     }
 
 }
