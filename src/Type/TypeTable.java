@@ -27,4 +27,8 @@ public class TypeTable {
             return typetable.get(typeName);
         }
     }
+
+    public boolean hasType(String typeName){
+        return typetable.containsKey(typeName);
+    }
 }

@@ -171,6 +171,8 @@ public class SemanticCheck extends ASTVisitor {
     private void registerFunction(FuncDefNode node){
         try{
             String funcName = node.getFuncName();
+            if(typeTable.hasType(funcName))
+                throw new CompileError(null, "Duplicate name for function name and class name");
             Function function = convertFuntion(node);
             functionTable.putFunc(funcName, function);
         }catch (CompileError compileError){
@@ -195,6 +197,8 @@ public class SemanticCheck extends ASTVisitor {
             ArrayList<FuncDefNode> funcDefNodes= node.getFuncMembers();
             for(FuncDefNode funcDefNode : funcDefNodes){
                 String methodName = funcDefNode.getFuncName();
+                if(methodName.equals(className))
+                    throw new CompileError(null, "Constructor Type Error");
                 Function method = convertFuntion(funcDefNode);
                 typeTable.get(className).addMethod(methodName, method);
             }
@@ -245,6 +249,16 @@ public class SemanticCheck extends ASTVisitor {
         for(var defUnitNode : node.getDefUnits()){
             if(defUnitNode instanceof FuncDefNode || defUnitNode instanceof ClassDefNode)
                 defUnitNode.accept(this);
+        }
+
+        if(!functionTable.hasFunc("main")){
+            throw new CompileError(null, "No main function");
+        }else{
+            Function mainFunction = functionTable.getFunc("main");
+            if(!(mainFunction.getReturnType() instanceof IntType))
+                throw new CompileError(null, "Return type of 'main' must be 'int'");
+            if(mainFunction.getParas().size() != 0)
+                throw new CompileError(null, "'main' function should have no parameter");
         }
     }
 
