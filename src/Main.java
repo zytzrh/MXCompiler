@@ -2,6 +2,7 @@ import AST.ProgramNode;
 import AST.Visit.ASTBuilder;
 import ExceptionHandle.CompileError;
 import ExceptionHandle.ExceptionListener;
+import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -14,17 +15,15 @@ public class Main {
 
 
 
-    public static void main(String[] args) throws CompileError {
+    public static void main(String[] args) throws CompileError, IOException {
         ExceptionListener exceptionListener = new ExceptionListener();
-        CharStream input;
-        try{
-            File f = new File("basic-2.mx");
-            InputStream is = new FileInputStream(f);
-            input = CharStreams.fromStream(is);
-        } catch (Exception e) {
-            System.out.println("file open failed");
-            throw new CompileError();
-        }
+
+        InputStream is = System.in;
+        /*for file*******************/
+        //is = new FileInputStream("basic-2.mx");
+        /*for file******************/
+        ANTLRInputStream input = new ANTLRInputStream(is);
+
         MXgrammarLexer lexer = new MXgrammarLexer(input);
         lexer.removeErrorListeners();
         lexer.addErrorListener(exceptionListener);
