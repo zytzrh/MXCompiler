@@ -237,17 +237,16 @@ public class SemanticCheck extends ASTVisitor {
                 registerMember((ClassDefNode) defUnitNode);
             }
         }
-        //register global variable
         Scope globalscope = new GlobalScope();
         scopeStack.push(globalscope);
-        for(var defUnitNode : node.getDefUnits()){
-            if(defUnitNode instanceof VarDefNode){
-                defUnitNode.accept(this);
-            }
-        }
+//        for(var defUnitNode : node.getDefUnits()){
+//            if(defUnitNode instanceof VarDefNode){
+//                defUnitNode.accept(this);
+//            }
+//        }
         //check all function and method
         for(var defUnitNode : node.getDefUnits()){
-            if(defUnitNode instanceof FuncDefNode || defUnitNode instanceof ClassDefNode)
+            if(defUnitNode instanceof FuncDefNode || defUnitNode instanceof ClassDefNode || defUnitNode instanceof VarDefNode)
                 defUnitNode.accept(this);
         }
 
