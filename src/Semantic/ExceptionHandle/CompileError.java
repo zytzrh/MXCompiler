@@ -1,4 +1,4 @@
-package ExceptionHandle;
+package Semantic.ExceptionHandle;
 
 import AST.Location.Location;
 

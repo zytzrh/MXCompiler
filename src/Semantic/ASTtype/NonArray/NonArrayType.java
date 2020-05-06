@@ -1,9 +1,9 @@
-package Type.NonArray;
+package Semantic.ASTtype.NonArray;
 
 
 import AST.Function.Function;
-import ExceptionHandle.CompileError;
-import Type.Type;
+import Semantic.ExceptionHandle.CompileError;
+import Semantic.ASTtype.Type;
 
 import java.util.HashMap;
 

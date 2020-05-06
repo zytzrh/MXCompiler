@@ -1,9 +1,9 @@
-package Type;
+package Semantic.ASTtype;
 
 import AST.Function.Function;
-import ExceptionHandle.CompileError;
-import Type.NonArray.NonArrayType;
-import Type.NonArray.NullType;
+import Semantic.ExceptionHandle.CompileError;
+import Semantic.ASTtype.NonArray.NonArrayType;
+import Semantic.ASTtype.NonArray.NullType;
 
 public class ArrayType implements Type {
     private NonArrayType baseNonArrayType;

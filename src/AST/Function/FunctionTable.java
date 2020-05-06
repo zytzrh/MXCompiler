@@ -1,8 +1,7 @@
 package AST.Function;
 
 
-import ExceptionHandle.CompileError;
-import ParserAndLexer.MXgrammarParser;
+import Semantic.ExceptionHandle.CompileError;
 
 import java.util.HashMap;
 

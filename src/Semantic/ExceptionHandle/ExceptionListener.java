@@ -1,4 +1,4 @@
-package ExceptionHandle;
+package Semantic.ExceptionHandle;
 
 import AST.Location.Location;
 import org.antlr.v4.runtime.BaseErrorListener;

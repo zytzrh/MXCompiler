@@ -1,7 +1,7 @@
 package AST.NodeProperties;
 
 import AST.Location.Location;
-import Type.Type;
+import Semantic.ASTtype.Type;
 
 abstract public class TypeNode extends ASTNode{
      Type type;

@@ -98,7 +98,7 @@ expr
     |   expr '.' ID                                         #member_expr
     // check the whether the type of expr has a member named ID(it may be implemented as a func_name)
     |   func_name=expr '(' exprs? ')'                       #funcCall_expr
-    // the former expr must be a func_name(ID or expr.ID or NEW new Type)
+    // the former expr must be a func_name(ID or expr.ID or NEW new Semantic.ASTtype)
     |   array_name=expr '[' index=expr ']'                  #subscript_expr
     // check expr must be array type
     |   <assoc=right> op=('++' | '--') expr                 #prefix_expr

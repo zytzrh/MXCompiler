@@ -1,6 +1,6 @@
 package AST.VariableEntity;
 
-import Type.Type;
+import Semantic.ASTtype.Type;
 
 public class VariableEntity {
     private String id;

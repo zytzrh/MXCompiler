@@ -1,5 +1,5 @@
 // Generated from D:/Code/Compiler/mynext2/src\MXgrammar.g4 by ANTLR 4.8
-package ParserAndLexer;
+package Semantic.ParserAndLexer;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 /**

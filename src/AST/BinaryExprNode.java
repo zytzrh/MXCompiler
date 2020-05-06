@@ -3,7 +3,7 @@ package AST;
 import AST.Location.Location;
 import AST.NodeProperties.ExprNode;
 import AST.Visit.ASTVisitor;
-import ExceptionHandle.CompileError;
+import Semantic.ExceptionHandle.CompileError;
 
 public class BinaryExprNode extends ExprNode {
     private ExprNode lhs;

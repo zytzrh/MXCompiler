@@ -1,3 +1,5 @@
+package Semantic;
+
 import AST.*;
 import AST.Function.Function;
 import AST.Function.FunctionTable;
@@ -8,10 +10,10 @@ import AST.NodeProperties.TypeNode;
 import AST.Scope.*;
 import AST.VariableEntity.VariableEntity;
 import AST.Visit.ASTVisitor;
-import ExceptionHandle.CompileError;
-import ExceptionHandle.ExceptionListener;
-import Type.*;
-import Type.NonArray.*;
+import Semantic.ExceptionHandle.CompileError;
+import Semantic.ExceptionHandle.ExceptionListener;
+import Semantic.ASTtype.*;
+import Semantic.ASTtype.NonArray.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,7 +1,7 @@
-package Type;
+package Semantic.ASTtype;
 
-import ExceptionHandle.CompileError;
-import Type.NonArray.NonArrayType;
+import Semantic.ExceptionHandle.CompileError;
+import Semantic.ASTtype.NonArray.NonArrayType;
 
 import java.util.HashMap;
 
@@ -30,5 +30,9 @@ public class TypeTable {
 
     public boolean hasType(String typeName){
         return typetable.containsKey(typeName);
+    }
+
+    public HashMap<String, NonArrayType> getTypetable() {
+        return typetable;
     }
 }

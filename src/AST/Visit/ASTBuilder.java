@@ -4,8 +4,8 @@ import AST.*;
 import AST.Location.Location;
 import AST.NodeProperties.*;
 
-import ExceptionHandle.ExceptionListener;
-import ParserAndLexer.*;
+import Semantic.ExceptionHandle.ExceptionListener;
+import Semantic.ParserAndLexer.*;
 
 import java.util.ArrayList;
 

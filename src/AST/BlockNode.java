@@ -4,7 +4,7 @@ package AST;
 import AST.Location.Location;
 import AST.NodeProperties.StatementNode;
 import AST.Visit.ASTVisitor;
-import ExceptionHandle.CompileError;
+import Semantic.ExceptionHandle.CompileError;
 
 import java.util.ArrayList;
 

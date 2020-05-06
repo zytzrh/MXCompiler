@@ -1,7 +1,7 @@
-package Type.NonArray;
+package Semantic.ASTtype.NonArray;
 
 import AST.Function.Function;
-import Type.Type;
+import Semantic.ASTtype.Type;
 
 import java.util.HashMap;
 

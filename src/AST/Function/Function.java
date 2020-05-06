@@ -2,7 +2,7 @@ package AST.Function;
 
 import AST.BlockNode;
 import AST.VariableEntity.VariableEntity;
-import Type.Type;
+import Semantic.ASTtype.Type;
 
 import java.util.ArrayList;
 

@@ -1,7 +1,7 @@
-package Type;
+package Semantic.ASTtype;
 
 import AST.Function.Function;
-import ExceptionHandle.CompileError;
+import Semantic.ExceptionHandle.CompileError;
 
 public interface Type {
     public boolean equal(Type other);

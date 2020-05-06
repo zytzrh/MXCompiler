@@ -1,10 +1,7 @@
 package AST.Visit;
 
 import AST.*;
-import AST.Function.Function;
-import AST.NodeProperties.ExprNode;
-import ExceptionHandle.CompileError;
-import ParserAndLexer.MXgrammarParser;
+import Semantic.ExceptionHandle.CompileError;
 
 abstract public class ASTVisitor {
     abstract public void visit(ProgramNode node) throws CompileError;

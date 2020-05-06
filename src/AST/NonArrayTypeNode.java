@@ -3,7 +3,7 @@ package AST;
 import AST.Location.Location;
 import AST.NodeProperties.TypeNode;
 import AST.Visit.ASTVisitor;
-import ExceptionHandle.CompileError;
+import Semantic.ExceptionHandle.CompileError;
 
 public class NonArrayTypeNode extends TypeNode {
     private String typeName;

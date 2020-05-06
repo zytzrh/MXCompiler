@@ -1,13 +1,12 @@
 import AST.ProgramNode;
 import AST.Visit.ASTBuilder;
-import ExceptionHandle.CompileError;
-import ExceptionHandle.ExceptionListener;
+import Semantic.ExceptionHandle.CompileError;
+import Semantic.ExceptionHandle.ExceptionListener;
+import Semantic.SemanticCheck;
 import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import ParserAndLexer.*;
+import Semantic.ParserAndLexer.*;
 
 import java.io.*;
 

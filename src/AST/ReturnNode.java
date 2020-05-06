@@ -4,7 +4,7 @@ import AST.Location.Location;
 import AST.NodeProperties.ExprNode;
 import AST.NodeProperties.StatementNode;
 import AST.Visit.ASTVisitor;
-import ExceptionHandle.CompileError;
+import Semantic.ExceptionHandle.CompileError;
 
 public class ReturnNode extends StatementNode {
     ExprNode returnExpr;

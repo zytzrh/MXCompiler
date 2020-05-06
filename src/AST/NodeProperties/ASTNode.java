@@ -3,7 +3,7 @@ package AST.NodeProperties;
 import AST.Location.Location;
 import AST.Scope.Scope;
 import AST.Visit.ASTVisitor;
-import ExceptionHandle.CompileError;
+import Semantic.ExceptionHandle.CompileError;
 
 
 abstract public class ASTNode{

@@ -1,6 +1,6 @@
 package AST.Scope;
 
-import Type.Type;
+import Semantic.ASTtype.Type;
 
 public class FunctionScope extends Scope {
     private Type returnType;
