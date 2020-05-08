@@ -1,9 +1,15 @@
 package Semantic.ASTtype;
 
 import AST.Function.Function;
+import IR.LLVMoperand.ConstNull;
+import IR.LLVMoperand.Operand;
+import IR.TypeSystem.LLVMPointerType;
+import IR.TypeSystem.LLVMtype;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ASTtype.NonArray.NonArrayType;
 import Semantic.ASTtype.NonArray.NullType;
+
+import java.util.HashMap;
 
 public class ArrayType implements Type {
     private NonArrayType baseNonArrayType;
@@ -18,6 +24,20 @@ public class ArrayType implements Type {
 //        ArrayList<VariableEntity> paras = new ArrayList<VariableEntity>();
 //        BlockNode funcBody = null;
 //        this.sizeFunction = new Function()
+    }
+
+    @Override
+    public Operand getDefaultValue() {
+        return new ConstNull();
+    }
+
+    @Override
+    public LLVMtype convert2LLVM(HashMap<Type, LLVMtype> typeMap) {
+        LLVMtype llvMtype = baseNonArrayType.convert2LLVM(typeMap);
+        for(int i= 0; i < dim; i++){
+            llvMtype = new LLVMPointerType(llvMtype);
+        }
+        return llvMtype;
     }
 
     public int getDim(){

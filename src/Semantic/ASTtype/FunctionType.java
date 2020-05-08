@@ -1,7 +1,11 @@
 package Semantic.ASTtype;
 
 import AST.Function.Function;
+import IR.LLVMoperand.Operand;
+import IR.TypeSystem.LLVMtype;
 import Semantic.ExceptionHandle.CompileError;
+
+import java.util.HashMap;
 
 public class FunctionType implements Type {
     Function function;
@@ -49,6 +53,18 @@ public class FunctionType implements Type {
     @Override
     public void setConstructor(Function constructor) {
 
+    }
+
+    @Override
+    public LLVMtype convert2LLVM(HashMap<Type, LLVMtype> typeMap) {
+        assert false;
+        return null;
+    }
+
+    @Override
+    public Operand getDefaultValue() {
+        assert false;
+        return null;
     }
 
     @Override

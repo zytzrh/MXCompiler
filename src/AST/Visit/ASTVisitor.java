@@ -12,18 +12,18 @@ abstract public class ASTVisitor {
     abstract public void visit(VarDefOneNode node);
     abstract public void visit(FuncDefNode node) throws CompileError;
     abstract public void visit(ClassDefNode node) throws CompileError;
-    abstract public void visit(ConstructDefNode node);
+    abstract public void visit(ConstructDefNode node) throws CompileError;
     //for StatementNode
     abstract public void visit(BlockNode node) throws CompileError;
-    abstract public void visit(VarDefStNode node);
+    abstract public void visit(VarDefStNode node) throws CompileError;
     abstract public void visit(IfNode node);
-    abstract public void visit(WhileNode node);
-    abstract public void visit(ForNode node);
-    abstract public void visit(ReturnNode node);
+    abstract public void visit(WhileNode node) throws CompileError;
+    abstract public void visit(ForNode node) throws CompileError;
+    abstract public void visit(ReturnNode node) throws CompileError;
     abstract public void visit(BreakNode node);
     abstract public void visit(ContinueNode node);
     abstract public void visit(EmptyNode node);
-    abstract public void visit(ExprStNode node);
+    abstract public void visit(ExprStNode node) throws CompileError;
     //for ExprNode
     abstract public void visit(ThisExprNode node) throws CompileError;
     abstract public void visit(ConstExprNode node) throws CompileError;

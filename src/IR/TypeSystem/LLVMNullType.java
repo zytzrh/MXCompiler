@@ -1,8 +1,15 @@
 package IR.TypeSystem;
 
-public class LLVMNullType extends LLVMtype{
+public class LLVMNullType extends LLVMtype{     //not used?
     @Override
     public String toString() {
+        assert false;
         return "";
+    }
+
+    @Override
+    public int getByte() {
+        assert false;
+        return 0;
     }
 }

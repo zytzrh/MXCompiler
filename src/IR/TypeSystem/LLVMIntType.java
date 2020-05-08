@@ -29,4 +29,12 @@ public class LLVMIntType extends LLVMtype{
                 return "i32";
         }
     }
+
+    @Override
+    public int getByte() {
+        if(bitWidth == BitWidth.int32)
+            return 4;
+        else
+            return 1;
+    }
 }

@@ -1,14 +1,19 @@
 import AST.ProgramNode;
 import AST.Visit.ASTBuilder;
+import IR.IRBuilder;
+import MxCompiler.IR.IRPrinter;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ExceptionHandle.ExceptionListener;
+import Semantic.ParserAndLexer.MXgrammarLexer;
+import Semantic.ParserAndLexer.MXgrammarParser;
 import Semantic.SemanticCheck;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import Semantic.ParserAndLexer.*;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class Main {
 
@@ -18,7 +23,7 @@ public class Main {
 
         InputStream is = System.in;
         /*for file*******************/
-//        is = new FileInputStream("basic-2.mx");
+        is = new FileInputStream("basic-2.mx");
         /*for file******************/
         ANTLRInputStream input = new ANTLRInputStream(is);
 
@@ -48,6 +53,9 @@ public class Main {
             System.out.println("Semantic error");
             throw new CompileError();
         }
+        IRBuilder irBuilder = new IRBuilder(semanticCheck);
+        IRPrinter irPrinter = new IRPrinter("out.ll");
+        irPrinter.visit(irBuilder.getModule());
     }
 
 }

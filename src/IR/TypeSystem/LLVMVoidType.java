@@ -5,4 +5,9 @@ public class LLVMVoidType extends LLVMtype{
     public String toString() {
         return "void";
     }
+
+    @Override
+    public int getByte() {
+        return 0;
+    }
 }

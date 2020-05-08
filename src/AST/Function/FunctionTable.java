@@ -50,4 +50,8 @@ public class FunctionTable {
                 return globalTable.get(funcName);
         }
     }
+
+    public HashMap<String, Function> getGlobalTable() {
+        return globalTable;
+    }
 }

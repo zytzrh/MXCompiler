@@ -10,6 +10,11 @@ public class LLVMArrayType extends LLVMtype {
     }
 
     @Override
+    public int getByte() {
+        return baseType.getByte() * length;
+    }
+
+    @Override
     public String toString() {
         return "[" + length + "x" + baseType.toString() + "]";
     }
@@ -29,4 +34,5 @@ public class LLVMArrayType extends LLVMtype {
     public void setBaseType(LLVMtype baseType) {
         this.baseType = baseType;
     }
+
 }

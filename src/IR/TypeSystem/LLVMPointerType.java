@@ -19,4 +19,9 @@ public class LLVMPointerType extends LLVMtype{
     public String toString() {
         return baseType.toString() + "*";
     }
+
+    @Override
+    public int getByte() {
+        return 4;
+    }
 }

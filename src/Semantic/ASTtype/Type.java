@@ -1,7 +1,11 @@
 package Semantic.ASTtype;
 
 import AST.Function.Function;
+import IR.LLVMoperand.Operand;
+import IR.TypeSystem.LLVMtype;
 import Semantic.ExceptionHandle.CompileError;
+
+import java.util.HashMap;
 
 public interface Type {
     public boolean equal(Type other);
@@ -14,4 +18,6 @@ public interface Type {
     public void addMethod(String methodName, Function method) throws CompileError;
     public Function getConstructor() throws CompileError;
     public void setConstructor(Function constructor);
+    public LLVMtype convert2LLVM(HashMap<Type, LLVMtype> typeMap);
+    public Operand getDefaultValue();
 }

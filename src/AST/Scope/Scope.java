@@ -1,30 +1,27 @@
 package AST.Scope;
 
+import AST.VariableEntity.VariableEntity;
 import Semantic.ExceptionHandle.CompileError;
-import Semantic.ASTtype.Type;
 
 import java.util.HashMap;
 
 abstract public class Scope {
-    private HashMap<String, Type> varTable;
+    private HashMap<String, VariableEntity> varTable;
     public Scope(){
-        varTable = new HashMap<String, Type>();
+        varTable = new HashMap<String, VariableEntity>();
     }
     public boolean hasVar(String varName){
         return varTable.containsKey(varName);
     }
-    public Type getVarType(String varName) throws CompileError {
+    public VariableEntity getVarEntity(String varName) throws CompileError {
         if(!hasVar(varName))
             throw new CompileError(null, "No variable name exist in this scope");
         return varTable.get(varName);
     }
-    public void put(String varName, Type varType) throws CompileError {
+    public void put(String varName, VariableEntity varEntity) throws CompileError {
         if(hasVar(varName))
             throw new CompileError(null, "Variable name already exist");
-        varTable.put(varName, varType);
+        varTable.put(varName, varEntity);
     }
 
-    public void setVarTable(HashMap<String, Type> varTable) {
-        this.varTable = varTable;
-    }
 }

@@ -51,44 +51,44 @@ public class SemanticCheck extends ASTVisitor {
             VariableEntity printPara = new VariableEntity("str", stringType);
             ArrayList<VariableEntity> printParas = new ArrayList<VariableEntity>();
             printParas.add(printPara);
-            Function print = new Function(voidType, printParas, null);
+            Function print = new Function(voidType, printParas, null, Function.Category.BuiltIn);
             functionTable.putFunc("print", print);
             //println
             VariableEntity printlnPara = new VariableEntity("str", stringType);
             ArrayList<VariableEntity> printlnParas = new ArrayList<VariableEntity>();
             printlnParas.add(printlnPara);
-            Function println = new Function(voidType, printlnParas, null);
+            Function println = new Function(voidType, printlnParas, null, Function.Category.BuiltIn);
             functionTable.putFunc("println", println);
             //printInt
             VariableEntity printIntPara = new VariableEntity("n", intType);
             ArrayList<VariableEntity> printIntParas = new ArrayList<VariableEntity>();
             printIntParas.add(printIntPara);
-            Function printInt = new Function(voidType, printIntParas, null);
+            Function printInt = new Function(voidType, printIntParas, null, Function.Category.BuiltIn);
             functionTable.putFunc("printInt", printInt);
             //printlnInt
             VariableEntity printlnIntPara = new VariableEntity("n", intType);
             ArrayList<VariableEntity> printlnIntParas = new ArrayList<VariableEntity>();
             printlnIntParas.add(printlnIntPara);
-            Function printlnInt = new Function(voidType, printlnIntParas, null);
+            Function printlnInt = new Function(voidType, printlnIntParas, null, Function.Category.BuiltIn);
             functionTable.putFunc("printlnInt", printlnInt);
             //getString (no paras)
             ArrayList<VariableEntity> getStringParas = new ArrayList<VariableEntity>();
-            Function getString = new Function(stringType, getStringParas, null);
+            Function getString = new Function(stringType, getStringParas, null, Function.Category.BuiltIn);
             functionTable.putFunc("getString", getString);
             //getInt (no paras)
             ArrayList<VariableEntity> getIntParas = new ArrayList<VariableEntity>();
-            Function getInt = new Function(intType, getIntParas, null);
+            Function getInt = new Function(intType, getIntParas, null, Function.Category.BuiltIn);
             functionTable.putFunc("getInt", getInt);
             //toString
             VariableEntity toStringPara = new VariableEntity("i", intType);
             ArrayList<VariableEntity> toStringParas = new ArrayList<VariableEntity>();
             toStringParas.add(toStringPara);
-            Function toString = new Function(stringType, toStringParas, null);
+            Function toString = new Function(stringType, toStringParas, null, Function.Category.BuiltIn);
             functionTable.putFunc("toString", toString);
             //inBuilt funtion for string
             //length(no paras)
             ArrayList<VariableEntity> lengthParas = new ArrayList<VariableEntity>();
-            Function length = new Function(intType, lengthParas, null);
+            Function length = new Function(intType, lengthParas, null, Function.Category.BuiltIn);
             stringType.addMethod("length", length);
             //substring
             VariableEntity substringPara1 = new VariableEntity("left", intType);
@@ -96,17 +96,17 @@ public class SemanticCheck extends ASTVisitor {
             ArrayList<VariableEntity> substringParas = new ArrayList<VariableEntity>();
             substringParas.add(substringPara1);
             substringParas.add(substringPara2);
-            Function substring = new Function(stringType, substringParas, null);
+            Function substring = new Function(stringType, substringParas, null, Function.Category.BuiltIn);
             stringType.addMethod("substring", substring);
             //parseInt
             ArrayList<VariableEntity> parseIntParas = new ArrayList<VariableEntity>();
-            Function parseInt = new Function(intType, parseIntParas, null);
+            Function parseInt = new Function(intType, parseIntParas, null, Function.Category.BuiltIn);
             stringType.addMethod("parseInt", parseInt);
             //ord
             VariableEntity ordPara = new VariableEntity("pos", intType);
             ArrayList<VariableEntity> ordParas = new ArrayList<VariableEntity>();
             ordParas.add(ordPara);
-            Function ord = new Function(intType, ordParas, null);
+            Function ord = new Function(intType, ordParas, null, Function.Category.BuiltIn);
             stringType.addMethod("ord", ord);
         }catch(CompileError e){
             e.setLocation(Location.unknownLocation());
@@ -148,7 +148,33 @@ public class SemanticCheck extends ASTVisitor {
             returnType = returnTypeNode.getType();
         }
         //all
-        return new Function(returnType, convertedParas, funcBody);
+        return new Function(returnType, convertedParas, funcBody, Function.Category.Normal);
+    }
+
+    private Function convertMethod(FuncDefNode node) throws CompileError {
+        //paras
+        ArrayList<VariableEntity> convertedParas = new ArrayList<VariableEntity>();
+        ArrayList<FormalParaNode> Paras = node.getParas();
+        for(FormalParaNode para : Paras){
+            TypeNode paraTypeNode = para.getParaType();
+            paraTypeNode.accept(this);
+            Type paraType = paraTypeNode.getType();
+            String paraName = para.getParaName();
+            convertedParas.add(new VariableEntity(paraName, paraType));
+        }
+        //func_body
+        BlockNode funcBody = node.getFuncBody();
+        //return_type
+        Type returnType;
+        TypeNode returnTypeNode = node.getReturnType();
+        if(returnTypeNode == null)
+            returnType = typeTable.get("void");
+        else{
+            returnTypeNode.accept(this);
+            returnType = returnTypeNode.getType();
+        }
+        //all
+        return new Function(returnType, convertedParas, funcBody, Function.Category.Method);
     }
 
     private Function convertConstructor(ConstructDefNode node) throws CompileError {
@@ -167,7 +193,7 @@ public class SemanticCheck extends ASTVisitor {
         //return_type
         Type returnType = typeTable.get(node.getClassName());
         //all
-        return new Function(returnType, convertedParas, funcBody);
+        return new Function(returnType, convertedParas, funcBody, Function.Category.Constructor);
     }
 
     private void registerFunction(FuncDefNode node){
@@ -201,7 +227,7 @@ public class SemanticCheck extends ASTVisitor {
                 String methodName = funcDefNode.getFuncName();
                 if(methodName.equals(className))
                     throw new CompileError(null, "Constructor Type Error");
-                Function method = convertFuntion(funcDefNode);
+                Function method = convertMethod(funcDefNode);
                 typeTable.get(className).addMethod(methodName, method);
             }
             //registor constructor
@@ -209,7 +235,8 @@ public class SemanticCheck extends ASTVisitor {
                 Function constructor = convertConstructor(node.getConstructor());
                 typeTable.get(className).setConstructor(constructor);
             }else{
-                Function constructor = new Function(typeTable.get(className), new ArrayList<VariableEntity>(), null);
+                Function constructor = new Function(typeTable.get(className), new ArrayList<VariableEntity>(),
+                        null, Function.Category.defaultConstructor);
                 typeTable.get(className).setConstructor(constructor);
             }
         } catch (CompileError compileError) {
@@ -273,7 +300,8 @@ public class SemanticCheck extends ASTVisitor {
             baseTypeNode.accept(this);
             NonArrayType basetype = typeTable.get(baseTypeNode.getTypeName());
             int dim = node.getDim();
-            Function sizeFunction = new Function(typeTable.get("int"), new ArrayList<VariableEntity>(), null);
+            Function sizeFunction = new Function(typeTable.get("int"), new ArrayList<VariableEntity>(),
+                    null, Function.Category.BuiltIn);
             ArrayType arrayType = new ArrayType(basetype, dim, sizeFunction);
             node.setType(arrayType);
         } catch (CompileError compileError) {
@@ -317,6 +345,8 @@ public class SemanticCheck extends ASTVisitor {
             String id = node.getId();
             if(scopeStack.peek().hasVar(id))
                 throw new CompileError(null, "Duplicate variable name");
+            if(typeTable.hasType(id))
+                throw new CompileError(null, "Variable name and class name are duplicated");
             //fetch type
             TypeNode typeNode = node.getTypeNode();
             typeNode.accept(this);
@@ -330,7 +360,9 @@ public class SemanticCheck extends ASTVisitor {
                     throw new CompileError(null, "Variable type not match");
             }
             //register
-            scopeStack.peek().put(id, type);
+            VariableEntity variableEntity = new VariableEntity(id, type);
+            scopeStack.peek().put(id, variableEntity);
+            node.setVariableEntity(variableEntity);
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             exceptionListener.errorOut(compileError);
@@ -344,7 +376,7 @@ public class SemanticCheck extends ASTVisitor {
             Function function = functionTable.getFunc(funcName);
             Scope newScope = new FunctionScope(function.getReturnType());
             for(VariableEntity para : function.getParas()){
-                newScope.put(para.getId(), para.getType());
+                newScope.put(para.getId(), para);
             }
             scopeStack.push(newScope);
             BlockNode funcBody = node.getFuncBody();
@@ -367,13 +399,13 @@ public class SemanticCheck extends ASTVisitor {
             ClassType type = (ClassType) typeTable.get(className);
             ClassScope classScope = new ClassScope();
             //method register
-            functionTable.putMethod(type.getMethods());
+            functionTable.putMethod(type.getMethods());//????????????????????????????????????????????????
             //variable reigister
             HashMap<String, Type> varMembers = type.getVarMembers();
             for(HashMap.Entry<String, Type> varMember : varMembers.entrySet()){
-                classScope.put(varMember.getKey(), varMember.getValue());
+                classScope.put(varMember.getKey(), new VariableEntity(varMember.getKey(), varMember.getValue()));
             }
-            classScope.put("this", type);
+            classScope.put("this", new VariableEntity("this", type));
             scopeStack.push(classScope);
             //check method
             ArrayList<FuncDefNode> funcDefNodes = node.getFuncMembers();
@@ -384,7 +416,7 @@ public class SemanticCheck extends ASTVisitor {
             if(node.getConstructor() != null)
                 node.getConstructor().accept(this);
             scopeStack.pop();
-            functionTable.putMethod(null);
+            functionTable.putMethod(null);//???????????????????????????????????
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;
@@ -400,7 +432,7 @@ public class SemanticCheck extends ASTVisitor {
             ArrayList<VariableEntity> paras = constructor.getParas();
             ConstructScope constructScope = new ConstructScope();
             for(VariableEntity para : paras){
-                constructScope.put(para.getId(), para.getType());
+                constructScope.put(para.getId(), new VariableEntity(para.getId(), para.getType()));
             }
             scopeStack.push(constructScope);
             BlockNode funcBody = node.getFuncBody();
@@ -639,16 +671,16 @@ public class SemanticCheck extends ASTVisitor {
     @Override
     public void visit(ThisExprNode node) throws CompileError {
         try{
-            Type type = null;
+            VariableEntity varEntity = null;
             for(Scope scope : scopeStack){
                 if(scope.hasVar("this"))
-                    type = scope.getVarType("this");
+                    varEntity = scope.getVarEntity("this");
             }
-            if(type == null){
+            if(varEntity == null){
                 throw new CompileError(null, "Access 'this' not in method");
             }
-            node.setExprType(type);
-            node.setLvalue(true);
+            node.setExprType(varEntity.getType());
+            node.setLvalue(true);//??????????????????????????????????????????????????
         } catch (CompileError compileError) {
             compileError.setLocation(node.getLocation());
             throw compileError;
@@ -684,14 +716,15 @@ public class SemanticCheck extends ASTVisitor {
     public void visit(IdExprNode node) throws CompileError {
         try{
             String id = node.getId();
-            Type type = null;
+            VariableEntity varEntity = null;
             for(Scope scope : scopeStack){
                 if(scope.hasVar(id))
-                    type = scope.getVarType(id);
+                    varEntity = scope.getVarEntity(id);
             }
-            if(type != null){
-                node.setExprType(type);
+            if(varEntity != null){
+                node.setExprType(varEntity.getType());
                 node.setLvalue(true);
+                node.setVariableEntity(varEntity);
             }else if(functionTable.hasFunc(id)){
                 node.setExprType(new FunctionType());
                 /*the lvalue is decided when processing function*/
@@ -728,7 +761,8 @@ public class SemanticCheck extends ASTVisitor {
             baseTypeNode.accept(this);
             NonArrayType baseNonArrayType = (NonArrayType) baseTypeNode.getType();
             int dim = node.getDim();
-            Function sizeFunction = new Function(typeTable.get("int"), new ArrayList<VariableEntity>(), null);
+            Function sizeFunction = new Function(typeTable.get("int"), new ArrayList<VariableEntity>(),
+                    null, Function.Category.BuiltIn);
             node.setExprType(new ArrayType(baseNonArrayType, dim, sizeFunction));
             node.setLvalue(false);
             //check dim type
@@ -859,7 +893,7 @@ public class SemanticCheck extends ASTVisitor {
                 node.setLvalue(true);
             }else{
                 Function sizeFunction = new Function(typeTable.get("int"),
-                        new ArrayList<VariableEntity>(), null);
+                        new ArrayList<VariableEntity>(), null, Function.Category.BuiltIn);
                 node.setExprType(new ArrayType(((ArrayType) arrayType).getBaseNonArrayType(),
                         nowDim-1, sizeFunction));
 //                node.setLvalue(arrayName.getLvalue());
@@ -993,5 +1027,13 @@ public class SemanticCheck extends ASTVisitor {
             compileError.setLocation(node.getLocation());
             throw compileError;
         }
+    }
+
+    public TypeTable getTypeTable() {
+        return typeTable;
+    }
+
+    public FunctionTable getFunctionTable() {
+        return functionTable;
     }
 }
