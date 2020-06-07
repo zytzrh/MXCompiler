@@ -23,4 +23,12 @@ public class StoreInst extends LLVMInstruction{
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    public Operand getValue() {
+        return value;
+    }
+
+    public Operand getAddr() {
+        return addr;
+    }
 }

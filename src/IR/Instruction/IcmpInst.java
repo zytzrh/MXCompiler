@@ -35,4 +35,44 @@ public class IcmpInst extends LLVMInstruction{
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    public IcmpName getOperator() {
+        return operator;
+    }
+
+    public void setOperator(IcmpName operator) {
+        this.operator = operator;
+    }
+
+    public LLVMtype getIrType() {
+        return irType;
+    }
+
+    public void setIrType(LLVMtype irType) {
+        this.irType = irType;
+    }
+
+    public Operand getOp1() {
+        return op1;
+    }
+
+    public void setOp1(Operand op1) {
+        this.op1 = op1;
+    }
+
+    public Operand getOp2() {
+        return op2;
+    }
+
+    public void setOp2(Operand op2) {
+        this.op2 = op2;
+    }
+
+    public Register getResult() {
+        return result;
+    }
+
+    public void setResult(Register result) {
+        this.result = result;
+    }
 }

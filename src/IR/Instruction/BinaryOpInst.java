@@ -24,6 +24,38 @@ public class BinaryOpInst extends LLVMInstruction{
         this.result = result;
     }
 
+    public BinaryOpName getOp() {
+        return op;
+    }
+
+    public void setOp(BinaryOpName op) {
+        this.op = op;
+    }
+
+    public Operand getLhs() {
+        return lhs;
+    }
+
+    public void setLhs(Operand lhs) {
+        this.lhs = lhs;
+    }
+
+    public Operand getRhs() {
+        return rhs;
+    }
+
+    public void setRhs(Operand rhs) {
+        this.rhs = rhs;
+    }
+
+    public Register getResult() {
+        return result;
+    }
+
+    public void setResult(Register result) {
+        this.result = result;
+    }
+
     @Override
     public String toString() {
         return result.toString() + " = " +

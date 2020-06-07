@@ -1,7 +1,7 @@
 import AST.ProgramNode;
 import AST.Visit.ASTBuilder;
 import IR.IRBuilder;
-import MxCompiler.IR.IRPrinter;
+import IR.IRPrinter;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ExceptionHandle.ExceptionListener;
 import Semantic.ParserAndLexer.MXgrammarLexer;
@@ -54,6 +54,7 @@ public class Main {
             throw new CompileError();
         }
         IRBuilder irBuilder = new IRBuilder(semanticCheck);
+        irBuilder.visit(programNode);
         IRPrinter irPrinter = new IRPrinter("out.ll");
         irPrinter.visit(irBuilder.getModule());
     }

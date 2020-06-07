@@ -28,12 +28,11 @@ public class CallInst extends LLVMInstruction {
         }
         string.append("call " + llvMfunction.getResultType().toString() + " " + "@" +
                 llvMfunction.getFunctionName() + "(");
-        Operand lastPara = paras.get(paras.size()-1);
-        for(Operand para : paras){
-            string.append(para.getLlvMtype().toString() + " " + para.toString());
-            if(para != lastPara){
+        for (int i = 0; i < paras.size(); i++) {
+            string.append(llvMfunction.getParas().get(i).getLlvMtype().toString()).append(" ")
+                    .append(llvMfunction.getParas().get(i).toString());
+            if (i != paras.size() - 1)
                 string.append(", ");
-            }
         }
         string.append(")");
         return string.toString();
@@ -41,5 +40,29 @@ public class CallInst extends LLVMInstruction {
 
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
+    }
+
+    public Register getResult() {
+        return result;
+    }
+
+    public void setResult(Register result) {
+        this.result = result;
+    }
+
+    public LLVMfunction getLlvMfunction() {
+        return llvMfunction;
+    }
+
+    public void setLlvMfunction(LLVMfunction llvMfunction) {
+        this.llvMfunction = llvMfunction;
+    }
+
+    public ArrayList<Operand> getParas() {
+        return paras;
+    }
+
+    public void setParas(ArrayList<Operand> paras) {
+        this.paras = paras;
     }
 }

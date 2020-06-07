@@ -27,4 +27,12 @@ public class ReturnInst extends LLVMInstruction{
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    public LLVMtype getReturnType() {
+        return returnType;
+    }
+
+    public Operand getReturnValue() {
+        return returnValue;
+    }
 }

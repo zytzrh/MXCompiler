@@ -27,4 +27,28 @@ public class BitCastInst extends LLVMInstruction{
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    public Operand getSource() {
+        return source;
+    }
+
+    public void setSource(Operand source) {
+        this.source = source;
+    }
+
+    public LLVMtype getObjectType() {
+        return ObjectType;
+    }
+
+    public void setObjectType(LLVMtype objectType) {
+        ObjectType = objectType;
+    }
+
+    public Register getResult() {
+        return result;
+    }
+
+    public void setResult(Register result) {
+        this.result = result;
+    }
 }

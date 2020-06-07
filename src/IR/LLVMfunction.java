@@ -1,10 +1,13 @@
 package IR;
 
+import IR.Instruction.LLVMInstruction;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class LLVMfunction {
     private String functionName;
@@ -15,12 +18,19 @@ public class LLVMfunction {
 
     private Block initBlock;
     private Block returnBlock;
+    private Block exitBlock;    //gugu changed: act as the last block, maybe can be changed
 
     private HashMap<String, HashMap<String, Register>> varNameManager;
     private HashMap<String, HashMap<String, Block>> blockNameManager;
 
+    private Map<LLVMInstruction, Integer> use;  //gugu changed: name can be modified
+
+
+    private boolean sideEffect;
+
     public LLVMfunction(String functionName, ArrayList<Register> paras,
                         LLVMtype resultType) {
+        this.functionName = functionName;
         this.paras = paras;
         this.resultType = resultType;
         this.thisAddr = null;
@@ -30,6 +40,8 @@ public class LLVMfunction {
 
         varNameManager = new HashMap<String, HashMap<String, Register>>();
         blockNameManager = new HashMap<String, HashMap<String, Block>>();
+
+        this.use = new LinkedHashMap<>();
     }
 
     public void registerBlock(String name, Block block){
@@ -43,6 +55,8 @@ public class LLVMfunction {
         String newName = name + "." + sameNameMap.size();
         block.setName(newName);
         sameNameMap.put(newName, block);
+
+        addBlock(block);
     }
 
     public void registerVar(String name, Register register){
@@ -56,6 +70,57 @@ public class LLVMfunction {
         String newName = name + "." + sameNameMap.size();
         register.setRegisterId(newName);
         sameNameMap.put(newName, register);
+    }
+
+    public String printDeclaratiion() {
+        StringBuilder string = new StringBuilder("declare ");
+        string.append(resultType.toString());
+        string.append(" @").append(functionName);
+
+        string.append("(");
+        for (int i = 0; i < paras.size(); i++) {
+            Register para = paras.get(i);
+            string.append(para.getLlvMtype().toString()).append(" ");
+            string.append(para.toString());
+            if (i != paras.size() - 1)
+                string.append(", ");
+        }
+        string.append(")");
+
+        return string.toString();
+    }
+
+    public void accept(IRVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    public void addUse(LLVMInstruction instruction){
+        if(!use.containsKey(instruction)){
+            use.put(instruction,1);
+        }else{
+            use.put(instruction, use.get(instruction) + 1);
+        }
+    }
+
+    public void removeUse(LLVMInstruction instruction){
+        int cnt = use.get(instruction);
+        if(cnt == 1)
+            use.remove(instruction);
+        else
+            use.replace(instruction, cnt-1);
+    }
+
+    public Map<LLVMInstruction, Integer> getUse() {
+        return use;
+    }
+
+    public void addBlock(Block block) {
+        if (exitBlock == null){
+            initBlock = exitBlock = block;
+        }
+        else{
+            exitBlock.appendBlock(block);
+        }
     }
 
     public String getFunctionName() {
@@ -130,27 +195,15 @@ public class LLVMfunction {
         this.returnAddr = returnAddr;
     }
 
-    public String printDeclaratiion() {
-        StringBuilder string = new StringBuilder("declare ");
-        string.append(resultType.toString());
-        string.append(" @").append(functionName);
-
-        string.append("(");
-        for (int i = 0; i < paras.size(); i++) {
-            Register para = paras.get(i);
-            string.append(para.getLlvMtype().toString()).append(" ");
-            string.append(para.toString());
-            if (i != paras.size() - 1)
-                string.append(", ");
-        }
-        string.append(")");
-
-        return string.toString();
+    public void setUse(Map<LLVMInstruction, Integer> use) {
+        this.use = use;
     }
 
-    public void accept(IRVisitor visitor) {
-        visitor.visit(this);
+    public boolean isSideEffect() {
+        return sideEffect;
     }
 
-
+    public void setSideEffect(boolean sideEffect) {
+        this.sideEffect = sideEffect;
+    }
 }

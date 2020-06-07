@@ -24,4 +24,20 @@ public class LoadInst extends LLVMInstruction{
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
+
+    public Operand getAddr() {
+        return addr;
+    }
+
+    public void setAddr(Operand addr) {
+        this.addr = addr;
+    }
+
+    public Register getResult() {
+        return result;
+    }
+
+    public void setResult(Register result) {
+        this.result = result;
+    }
 }

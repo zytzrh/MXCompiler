@@ -1,48 +1,37 @@
-package MxCompiler.IR;
+package IR;
 
-import IR.Block;
-import IR.IRVisitor;
 import IR.Instruction.*;
-import IR.LLVMfunction;
-import IR.Module;
 import IR.TypeSystem.LLVMStructType;
 import IR.TypeSystem.LLVMtype;
 
-import java.io.*;
-import java.util.HashMap;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
 
 public class IRPrinter implements IRVisitor {
-    private File outputFile;
-    private OutputStream os;
-    private PrintWriter writer;
-    private String indent;
+    PrintStream stdout;
+    PrintStream newout;
+    String indent;
 
-    public IRPrinter(String filename) {
-        try {
-            outputFile = new File(filename);
-            assert outputFile.exists() || outputFile.createNewFile();
-            os = new FileOutputStream(filename, false);
-            writer = new PrintWriter(os);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e.getMessage());
-        }
-
+    public IRPrinter(String filename) throws FileNotFoundException {
+        stdout = System.out;
+        newout = new PrintStream("IRout.txt");;
         indent = "    ";
     }
 
 
     private void print(String string) {
-        writer.print(string);
+        System.out.print(string);
     }
 
     private void println(String string) {
-        writer.println(string);
+        System.out.println(string);
     }
 
 
     @Override
     public void visit(Module module) throws IOException {
+        System.setOut(newout);
         //struct
         for(LLVMtype llvMtype : module.getTypeMap().values()){
             if(llvMtype instanceof LLVMStructType)
@@ -57,6 +46,7 @@ public class IRPrinter implements IRVisitor {
         //builtIn function
         for(LLVMfunction llvMfunction : module.getBuiltInFunctionMap().values()){
             println(llvMfunction.printDeclaratiion());
+            //System.out.println(llvMfunction.printDeclaratiion());
         }
         println("");
         //function
@@ -64,8 +54,7 @@ public class IRPrinter implements IRVisitor {
             llvMfunction.accept(this);
         }
 
-        writer.close();
-        os.close();
+        System.setOut(stdout);
     }
 
 
@@ -74,31 +63,38 @@ public class IRPrinter implements IRVisitor {
     public void visit(LLVMfunction function) {
         println(function.printDeclaratiion().replace("declare", "define") + " {");
 
-        for(HashMap<String, Block> blockHashMap : function.getBlockNameManager().values()){
-            for(Block block : blockHashMap.values()){
-                block.accept(this);
-                println("");
-            }
+        Block nowBlock = function.getInitBlock();
+        while (nowBlock != null){
+            nowBlock.accept(this);
+            if(nowBlock.getNext() != null)  println("");
+            nowBlock = nowBlock.getNext();
         }
 
         println("}");
     }
 
     @Override
-    public void visit(Block block) {
+    public void visit(Block block) {            //gugu changde: can be changed a lot
         print(block.getName() + ":");
-        if (block.getDirectPredecessor() != null) {
+        if(block.hasPredecessor()){
             print(" ".repeat(50 - (block.getName().length() + 1)));
             print("; preds = ");
-            print(block.getDirectPredecessor().getName());
+            int size = block.getPredecessors().size();
+            int cnt = 0;
+            for (Block predecessor : block.getPredecessors()) {
+                print(predecessor.toString());
+                if (++cnt != size)
+                    print(", ");
+            }
         }
-
-
         println("");
 
-        for(LLVMInstruction llvmInstruction : block.getInstructions()){
-            llvmInstruction.accept(this);
+        LLVMInstruction nowInstruction = block.getInstHead();
+        while(nowInstruction != null){
+            nowInstruction.accept(this);
+            nowInstruction = nowInstruction.getPostInst();
         }
+
     }
 
     @Override

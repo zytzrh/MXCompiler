@@ -83,7 +83,15 @@ public class Module {
                 for(Type memberType : ((ClassType) astType).getVarMembers().values()){
                     LLVMtype LLVMMemberType = memberType.convert2LLVM(typeMap);
                     llvmStructType.getMembers().add(LLVMMemberType);
-                    llvmStructType.getMemberIndexMap().put(memberType.toString(), index);
+                    
+                    String memberName = null;
+                    for(String string : ((ClassType) astType).getVarMembers().keySet()){
+                        if(((ClassType) astType).getVarMembers().get(string) == memberType){
+                            memberName = string;
+                            break;
+                        }
+                    }
+                    llvmStructType.getMemberIndexMap().put(memberName, index);
                     index++;
                 }
             }
@@ -106,10 +114,10 @@ public class Module {
         Block returnBlock = new Block("returnBlock", llvMfunction);
         llvMfunction.setInitBlock(initBlock);
         llvMfunction.setReturnBlock(returnBlock);
-        llvMfunction.registerBlock(initBlock.getName(), initBlock);
-        llvMfunction.registerBlock(returnBlock.getName(), returnBlock);
+//        llvMfunction.registerBlock(initBlock.getName(), initBlock);
+//        llvMfunction.registerBlock(returnBlock.getName(), returnBlock);
         if(!(llvmReturnType instanceof LLVMVoidType)){
-            Register returnAddr = new Register(new LLVMPointerType(llvmReturnType), "return$addr");
+            Register returnAddr = new Register(new LLVMPointerType(llvmReturnType), "return$address");
             llvMfunction.setReturnAddr(returnAddr);
             llvMfunction.registerVar(returnAddr.getRegisterId(), returnAddr);
             initBlock.addInstruction(new AllocInst(initBlock, returnAddr, llvmReturnType));
@@ -151,10 +159,10 @@ public class Module {
         Block returnBlock = new Block("returnBlock", llvMfunction);
         llvMfunction.setInitBlock(initBlock);
         llvMfunction.setReturnBlock(returnBlock);
-        llvMfunction.registerBlock(initBlock.getName(), initBlock);
-        llvMfunction.registerBlock(returnBlock.getName(), returnBlock);
+//        llvMfunction.registerBlock(initBlock.getName(), initBlock);
+//        llvMfunction.registerBlock(returnBlock.getName(), returnBlock);
         if(!(llvmReturnType instanceof LLVMVoidType)){
-            Register returnAddr = new Register(new LLVMPointerType(llvmReturnType), "return$addr");
+            Register returnAddr = new Register(new LLVMPointerType(llvmReturnType), "return$address");
             llvMfunction.setReturnAddr(returnAddr);
             llvMfunction.registerVar(returnAddr.getRegisterId(), returnAddr);
             initBlock.addInstruction(new AllocInst(initBlock, returnAddr, llvmReturnType));
@@ -224,12 +232,14 @@ public class Module {
         parameters = new ArrayList<Register>();
         function = new LLVMfunction("getString", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        //gugu changed: lack side effect false??
 
         // int getInt();
         returnType = new LLVMVoidType();
         parameters = new ArrayList<Register>();
         function = new LLVMfunction("getInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        //gugu changed: lack side effect false??
 
         // string toString(int i);
         returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
@@ -237,6 +247,7 @@ public class Module {
         parameters.add(new Register(new LLVMIntType(LLVMIntType.BitWidth.int32), "i"));
         function = new LLVMfunction("toString", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // byte* malloc(int size);
         returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
@@ -244,36 +255,116 @@ public class Module {
         parameters.add(new Register(new LLVMIntType(LLVMIntType.BitWidth.int32), "size"));
         function = new LLVMfunction("malloc", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // string string.concatenate(string str1, string str2);
+        returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str1"));
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str2"));
+        function = new LLVMfunction("__string_concatenate", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // bool string.equal(string str1, string str2);
-
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str1"));
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str2"));
+        function = new LLVMfunction("__string_equal", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // bool string.notEqual(string str1, string str2);
-
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str1"));
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str2"));
+        function = new LLVMfunction("__string_notEqual", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // bool string.lessThan(string str1, string str2);
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str1"));
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str2"));
+        function = new LLVMfunction("__string_lessThan", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // bool string.greaterThan(string str1, string str2);
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str1"));
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str2"));
+        function = new LLVMfunction("__string_greaterThan", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
+
 
         // bool string.lessEqual(string str1, string str2);
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str1"));
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str2"));
+        function = new LLVMfunction("__string_lessEqual", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // bool string.greaterEqual(string str1, string str2);
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str1"));
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str2"));
+        function = new LLVMfunction("__string_greaterEqual", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
 
         // int string.length(string str);
-
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str"));
+        function = new LLVMfunction("__string_length", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // string string.substring(string str, int left, int right);
-
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int8);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str"));
+        parameters.add(new Register(new LLVMIntType(LLVMIntType.BitWidth.int32), "left"));
+        parameters.add(new Register(new LLVMIntType(LLVMIntType.BitWidth.int32), "right"));
+        function = new LLVMfunction("__string_substring", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // int string.parseInt(string str);
-
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str"));
+        function = new LLVMfunction("__string_parseInt", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // int ord(string str, int pos);
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str"));
+        parameters.add(new Register(new LLVMIntType(LLVMIntType.BitWidth.int32), "pos"));
+        function = new LLVMfunction("__string_ord", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
 
         // int array.size(array arr);
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
+        parameters = new ArrayList<Register>();
+        parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)), "arr"));
+        function = new LLVMfunction("__array_size", parameters, returnType);
+        this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(false);
+
 
     }
 
