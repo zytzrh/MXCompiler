@@ -21,7 +21,7 @@ public class ReturnInst extends LLVMInstruction{
         if(!(returnType instanceof LLVMVoidType))
             return "ret " + returnType.toString() + " " + returnValue.toString();
         else
-            return "return " + "void";
+            return "ret " + "void";
     }
 
     public void accept(IRVisitor visitor) {

@@ -3,6 +3,7 @@ package AST;
 import AST.Location.Location;
 import AST.NodeProperties.DefUnitNode;
 import AST.NodeProperties.TypeNode;
+import AST.VariableEntity.VariableEntity;
 import AST.Visit.ASTVisitor;
 import Semantic.ExceptionHandle.CompileError;
 
@@ -14,6 +15,8 @@ public class FuncDefNode extends DefUnitNode {
     private ArrayList<FormalParaNode> paras;
     private String funcName;
     private BlockNode funcBody;
+
+    private ArrayList<VariableEntity> varMembersEntity;       //if in class, contain class variableEntity
 
 
     public FuncDefNode(String text, Location location, TypeNode returnType, ArrayList<FormalParaNode> paras,
@@ -46,4 +49,11 @@ public class FuncDefNode extends DefUnitNode {
         return funcBody;
     }
 
+    public ArrayList<VariableEntity> getVarMembersEntity() {
+        return varMembersEntity;
+    }
+
+    public void setVarMembersEntity(ArrayList<VariableEntity> varMembersEntity) {
+        this.varMembersEntity = varMembersEntity;
+    }
 }

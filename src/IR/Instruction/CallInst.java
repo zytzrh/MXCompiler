@@ -29,8 +29,8 @@ public class CallInst extends LLVMInstruction {
         string.append("call " + llvMfunction.getResultType().toString() + " " + "@" +
                 llvMfunction.getFunctionName() + "(");
         for (int i = 0; i < paras.size(); i++) {
-            string.append(llvMfunction.getParas().get(i).getLlvMtype().toString()).append(" ")
-                    .append(llvMfunction.getParas().get(i).toString());
+            string.append(paras.get(i).getLlvMtype().toString()).append(" ")
+                    .append(paras.get(i).toString());
             if (i != paras.size() - 1)
                 string.append(", ");
         }

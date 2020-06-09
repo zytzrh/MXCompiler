@@ -16,7 +16,7 @@ abstract public class ASTVisitor {
     //for StatementNode
     abstract public void visit(BlockNode node) throws CompileError;
     abstract public void visit(VarDefStNode node) throws CompileError;
-    abstract public void visit(IfNode node);
+    abstract public void visit(IfNode node) throws CompileError;
     abstract public void visit(WhileNode node) throws CompileError;
     abstract public void visit(ForNode node) throws CompileError;
     abstract public void visit(ReturnNode node) throws CompileError;

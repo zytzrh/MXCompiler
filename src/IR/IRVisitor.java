@@ -23,6 +23,10 @@ public interface IRVisitor {
     void visit(BitCastInst inst);
     void visit(IcmpInst inst);
     void visit(CallInst inst);
+    void visit(PhiInst inst);
 
     void visit(DefineGlobal defineGlobal);
+
+    void visit(MoveInst moveInst);
+    void visit(ParallelCopyInst parallelCopyInst);
 }

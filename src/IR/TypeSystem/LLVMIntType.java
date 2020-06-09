@@ -1,5 +1,9 @@
 package IR.TypeSystem;
 
+import IR.LLVMoperand.ConstBool;
+import IR.LLVMoperand.ConstInt;
+import IR.LLVMoperand.Operand;
+
 public class LLVMIntType extends LLVMtype{
     public enum BitWidth{
         int1, int8, int32
@@ -7,14 +11,6 @@ public class LLVMIntType extends LLVMtype{
     private BitWidth bitWidth;
 
     public LLVMIntType(BitWidth bitWidth) {
-        this.bitWidth = bitWidth;
-    }
-
-    public BitWidth getBitWidth() {
-        return bitWidth;
-    }
-
-    public void setBitWidth(BitWidth bitWidth) {
         this.bitWidth = bitWidth;
     }
 
@@ -37,4 +33,21 @@ public class LLVMIntType extends LLVMtype{
         else
             return 1;
     }
+
+    @Override
+    public Operand DefaultValue() {
+        if(bitWidth == BitWidth.int1)
+            return new ConstBool(false);
+        else
+            return new ConstInt(new LLVMIntType(BitWidth.int1), 0);
+    }
+
+    public BitWidth getBitWidth() {
+        return bitWidth;
+    }
+
+    public void setBitWidth(BitWidth bitWidth) {
+        this.bitWidth = bitWidth;
+    }
+
 }

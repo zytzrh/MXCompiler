@@ -15,8 +15,7 @@ public class VoidType extends NonArrayType {
 
     @Override
     public LLVMtype convert2LLVM(HashMap<Type, LLVMtype> typeMap) {
-        assert false;
-        return null;
+        return typeMap.get(this);
     }
 
     @Override

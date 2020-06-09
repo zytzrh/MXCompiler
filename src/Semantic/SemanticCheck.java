@@ -10,10 +10,13 @@ import AST.NodeProperties.TypeNode;
 import AST.Scope.*;
 import AST.VariableEntity.VariableEntity;
 import AST.Visit.ASTVisitor;
+import Semantic.ASTtype.ArrayType;
+import Semantic.ASTtype.FunctionType;
+import Semantic.ASTtype.NonArray.*;
+import Semantic.ASTtype.Type;
+import Semantic.ASTtype.TypeTable;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ExceptionHandle.ExceptionListener;
-import Semantic.ASTtype.*;
-import Semantic.ASTtype.NonArray.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -117,7 +120,7 @@ public class SemanticCheck extends ASTVisitor {
     private void registerClassType(ClassDefNode node){
         try{
             String class_name = node.getClassName();
-            NonArrayType class_type = new ClassType("class_name");
+            NonArrayType class_type = new ClassType(node.getClassName());
             typeTable.put(class_name, class_type);
         }catch (CompileError compileError){
             compileError.setLocation(node.getLocation());
@@ -374,6 +377,17 @@ public class SemanticCheck extends ASTVisitor {
         try{
             String funcName = node.getFuncName();
             Function function = functionTable.getFunc(funcName);
+
+//            if(scopeStack.peek() instanceof ClassScope){
+//                ClassScope classScope = (ClassScope) scopeStack.peek();
+//                ClassType classType = classScope.getClassType();
+//                HashMap<String, Type> varMembers = classType.getVarMembers();
+//                for(HashMap.Entry<String, Type> varMember : varMembers.entrySet()){
+//                    classScope.put(varMember.getKey(), new VariableEntity(varMember.getKey(), varMember.getValue()));
+//                }
+//                classScope.put("this", new VariableEntity("this", classType));
+//            }
+
             Scope newScope = new FunctionScope(function.getReturnType());
             for(VariableEntity para : function.getParas()){
                 newScope.put(para.getId(), para);
@@ -397,7 +411,7 @@ public class SemanticCheck extends ASTVisitor {
         try{
             String className = node.getClassName();
             ClassType type = (ClassType) typeTable.get(className);
-            ClassScope classScope = new ClassScope();
+            ClassScope classScope = new ClassScope(type);
             //method register
             functionTable.putMethod(type.getMethods());//????????????????????????????????????????????????
             //variable reigister
@@ -738,6 +752,29 @@ public class SemanticCheck extends ASTVisitor {
     }
 
     @Override
+    public void visit(MemberExprNode node) throws CompileError {
+        try{
+            ExprNode faNode = node.getExpr();
+            faNode.accept(this);
+            Type faType = faNode.getExprType();
+            String id = node.getId();
+            if(faType.hasVarMember(id)){
+                node.setExprType(faType.getMemberType(id));
+//                node.setLvalue(faNode.getLvalue());
+                node.setLvalue(true);
+            }else if(faType.hasMethod(id)){
+                node.setExprType(new FunctionType());
+                /*the lvalue is decided when processing function*/
+            }else{
+                throw new CompileError(null, "Member not exist");
+            }
+        } catch (CompileError compileError) {
+            compileError.setLocation(node.getLocation());
+            throw compileError;
+        }
+    }
+
+    @Override
     public void visit(PostfixExprNode node) throws CompileError {
         try{
             ExprNode exprNode = node.getExpr();
@@ -792,28 +829,6 @@ public class SemanticCheck extends ASTVisitor {
         }
     }
 
-    @Override
-    public void visit(MemberExprNode node) throws CompileError {
-        try{
-            ExprNode faNode = node.getExpr();
-            faNode.accept(this);
-            Type faType = faNode.getExprType();
-            String id = node.getId();
-            if(faType.hasVarMember(id)){
-                node.setExprType(faType.getMemberType(id));
-//                node.setLvalue(faNode.getLvalue());
-                node.setLvalue(true);
-            }else if(faType.hasMethod(id)){
-                node.setExprType(new FunctionType());
-                /*the lvalue is decided when processing function*/
-            }else{
-                throw new CompileError(null, "Member not exist");
-            }
-        } catch (CompileError compileError) {
-            compileError.setLocation(node.getLocation());
-            throw compileError;
-        }
-    }
 
     @Override
     public void visit(FuncExprNode node) throws CompileError {

@@ -1,5 +1,7 @@
 package IR.TypeSystem;
 
+import IR.LLVMoperand.Operand;
+
 public class LLVMVoidType extends LLVMtype{
     @Override
     public String toString() {
@@ -9,5 +11,11 @@ public class LLVMVoidType extends LLVMtype{
     @Override
     public int getByte() {
         return 0;
+    }
+
+    @Override
+    public Operand DefaultValue() {
+        assert false;
+        return null;
     }
 }

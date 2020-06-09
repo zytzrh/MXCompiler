@@ -28,4 +28,6 @@ public class ClassType extends NonArrayType {
     public Operand getDefaultValue() {
         return new ConstNull();
     }
+
+
 }

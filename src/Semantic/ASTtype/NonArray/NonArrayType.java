@@ -99,4 +99,8 @@ abstract public class NonArrayType implements Type{
     public void setConstructor(Function constructor) {
         this.constructor = constructor;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

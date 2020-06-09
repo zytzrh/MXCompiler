@@ -3,6 +3,7 @@ package IR;
 import IR.Instruction.*;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
+import Utility.Pair;
 
 import java.util.*;
 
@@ -39,7 +40,7 @@ public class Block {
         this.use = new LinkedHashMap<>();   //why linkedHashMap ? gugu changed
     }
 
-    public void addInstruction(LLVMInstruction newInstruction){
+    public void addInst(LLVMInstruction newInstruction){
         if(!Terminal){
             if(instHead == null && instTail == null){
                 instHead = newInstruction;
@@ -49,128 +50,8 @@ public class Block {
                 newInstruction.setPreInst(instTail);    //gugu changed
                 instTail = newInstruction;
             }
-
             /*more to do with specific instruction adding*/
-            //BranchInst
-            if(newInstruction instanceof BranchInst){
-                Terminal = true;
-                BranchInst branchInst = (BranchInst) newInstruction;
-                if(branchInst.getCondition() != null){
-                    Block thenBlock = branchInst.getThenBlock();
-                    Block elseBlock = branchInst.getElseBlock();
-                    Block block = branchInst.getBlock();
-                    Operand cond = branchInst.getCondition();
-
-                    block.getSuccessors().add(thenBlock);
-                    block.getSuccessors().add(elseBlock);
-                    thenBlock.getPredecessors().add(block);
-                    elseBlock.getPredecessors().add(block);
-
-                    cond.addUse(branchInst);
-                    thenBlock.addUse(branchInst);
-                    elseBlock.addUse(branchInst);
-                }else{
-                    Block thenBlock = branchInst.getThenBlock();
-                    Block block = branchInst.getBlock();
-
-                    block.getSuccessors().add(thenBlock);
-                    thenBlock.getPredecessors().add(block);
-
-                    thenBlock.addUse(branchInst);
-                }
-            }
-            //ReturnInst
-            else if(newInstruction instanceof ReturnInst){
-                Terminal = true;
-                ReturnInst returnInst = (ReturnInst) newInstruction;
-                Operand returnValue = returnInst.getReturnValue();
-
-                if(returnValue != null)
-                    returnValue.addUse(returnInst);
-            }
-            //AlloInst
-            else if(newInstruction instanceof AllocInst){
-                AllocInst allocInst = (AllocInst) newInstruction;
-                Register result = allocInst.getResult();
-
-                result.setDef(allocInst);
-            }
-            //BinaryOpInst
-            else if(newInstruction instanceof BinaryOpInst){
-                BinaryOpInst binaryOpInst = (BinaryOpInst) newInstruction;
-                Register result = binaryOpInst.getResult();
-                Operand lhs = binaryOpInst.getLhs();
-                Operand rhs = binaryOpInst.getRhs();
-
-                result.setDef(binaryOpInst);
-                lhs.addUse(binaryOpInst);
-                rhs.addUse(binaryOpInst);//gugu changed: lhs/rhs may be not const
-            }
-            //BitCastInst
-            else if(newInstruction instanceof BitCastInst){
-                BitCastInst bitCastInst = (BitCastInst) newInstruction;
-                Operand source = bitCastInst.getSource();
-                Register result = bitCastInst.getResult();
-
-                result.setDef(bitCastInst);
-                source.addUse(bitCastInst);
-            }
-            //callInst
-            else if(newInstruction instanceof CallInst){
-                CallInst callInst = (CallInst) newInstruction;
-                ArrayList<Operand> paras = callInst.getParas();
-                Register result = callInst.getResult();
-                LLVMfunction function = callInst.getLlvMfunction();
-                for(Operand para: paras){
-                    para.addUse(callInst);
-                }
-                if(result != null){
-                    result.setDef(callInst);
-                }
-                function.addUse(callInst);
-            }
-            //GEPInst
-            else if(newInstruction instanceof GEPInst){
-                GEPInst gepInst = (GEPInst) newInstruction;
-                ArrayList<Operand> indexs = gepInst.getIndexs();
-                Register result = gepInst.getResult();
-                Operand pointer = gepInst.getPointer();
-
-                result.setDef(gepInst);
-                pointer.addUse(gepInst);
-                for(Operand operand:indexs){
-                    operand.addUse(gepInst);
-                }
-            }
-            //IcmpInst
-            else if(newInstruction instanceof IcmpInst){
-                IcmpInst icmpInst  = (IcmpInst) newInstruction;
-                Register result = icmpInst.getResult();
-                Operand op1 = icmpInst.getOp1();
-                Operand op2 = icmpInst.getOp2();
-
-                result.setDef(icmpInst);
-                op1.addUse(icmpInst);
-                op2.addUse(icmpInst);
-            }
-            //LoadInst
-            else if(newInstruction instanceof LoadInst){
-                LoadInst loadInst = (LoadInst) newInstruction;
-                Register result = loadInst.getResult();
-                Operand addr = loadInst.getAddr();
-
-                result.setDef(loadInst);
-                addr.addUse(loadInst);
-            }
-            //StoreInst
-            else if(newInstruction instanceof StoreInst){
-                StoreInst storeInst = (StoreInst) newInstruction;
-                Operand value = storeInst.getValue();
-                Operand addr = storeInst.getAddr();
-
-                value.addUse(storeInst);
-                addr.addUse(storeInst);
-            }
+            afterAddInst(newInstruction);
 
         }else{
             //is Terminal and do nothing
@@ -178,10 +59,174 @@ public class Block {
         }
     }
 
+    public void addInstFront(LLVMInstruction newInstruction){
+        if(instHead == null && instTail == null){
+            instTail = newInstruction;
+            instHead = newInstruction;
+            afterAddInst(newInstruction);
+        }else{
+            instHead.setPreInst(newInstruction);
+            newInstruction.setPostInst(instHead);
+            instHead = newInstruction;
+            afterAddInst(newInstruction);
+        }
+    }
+
+    public void afterAddInst(LLVMInstruction newInstruction){
+        //BranchInst
+        if(newInstruction instanceof BranchInst){
+            Terminal = true;
+            BranchInst branchInst = (BranchInst) newInstruction;
+            if(branchInst.getCondition() != null){
+                Block thenBlock = branchInst.getIfTrueBlock();
+                Block elseBlock = branchInst.getIfFalseBlock();
+                Block block = branchInst.getBlock();
+                Operand cond = branchInst.getCondition();
+
+                block.getSuccessors().add(thenBlock);
+                block.getSuccessors().add(elseBlock);
+                thenBlock.getPredecessors().add(block);
+                elseBlock.getPredecessors().add(block);
+
+                cond.addUse(branchInst);
+                thenBlock.addUse(branchInst);
+                elseBlock.addUse(branchInst);
+            }else{
+                Block thenBlock = branchInst.getIfTrueBlock();
+                Block block = branchInst.getBlock();
+
+                block.getSuccessors().add(thenBlock);
+                thenBlock.getPredecessors().add(block);
+
+                thenBlock.addUse(branchInst);
+            }
+        }
+        //ReturnInst
+        else if(newInstruction instanceof ReturnInst){
+            Terminal = true;
+            ReturnInst returnInst = (ReturnInst) newInstruction;
+            Operand returnValue = returnInst.getReturnValue();
+
+            if(returnValue != null)
+                returnValue.addUse(returnInst);
+        }
+        //AlloInst
+        else if(newInstruction instanceof AllocInst){
+            AllocInst allocInst = (AllocInst) newInstruction;
+            Register result = allocInst.getResult();
+
+            result.setDef(allocInst);
+        }
+        //BinaryOpInst
+        else if(newInstruction instanceof BinaryOpInst){
+            BinaryOpInst binaryOpInst = (BinaryOpInst) newInstruction;
+            Register result = binaryOpInst.getResult();
+            Operand lhs = binaryOpInst.getLhs();
+            Operand rhs = binaryOpInst.getRhs();
+
+            result.setDef(binaryOpInst);
+            lhs.addUse(binaryOpInst);
+            rhs.addUse(binaryOpInst);//gugu changed: lhs/rhs may be not const
+        }
+        //BitCastInst
+        else if(newInstruction instanceof BitCastInst){
+            BitCastInst bitCastInst = (BitCastInst) newInstruction;
+            Operand source = bitCastInst.getSource();
+            Register result = bitCastInst.getResult();
+
+            result.setDef(bitCastInst);
+            source.addUse(bitCastInst);
+        }
+        //callInst
+        else if(newInstruction instanceof CallInst){
+            CallInst callInst = (CallInst) newInstruction;
+            ArrayList<Operand> paras = callInst.getParas();
+            Register result = callInst.getResult();
+            LLVMfunction function = callInst.getLlvMfunction();
+            for(Operand para: paras){
+                para.addUse(callInst);
+            }
+            if(result != null){
+                result.setDef(callInst);
+            }
+            function.addUse(callInst);
+        }
+        //GEPInst
+        else if(newInstruction instanceof GEPInst){
+            GEPInst gepInst = (GEPInst) newInstruction;
+            ArrayList<Operand> indexs = gepInst.getIndexs();
+            Register result = gepInst.getResult();
+            Operand pointer = gepInst.getPointer();
+
+            result.setDef(gepInst);
+            pointer.addUse(gepInst);
+            for(Operand operand:indexs){
+                operand.addUse(gepInst);
+            }
+        }
+        //IcmpInst
+        else if(newInstruction instanceof IcmpInst){
+            IcmpInst icmpInst  = (IcmpInst) newInstruction;
+            Register result = icmpInst.getResult();
+            Operand op1 = icmpInst.getOp1();
+            Operand op2 = icmpInst.getOp2();
+
+            result.setDef(icmpInst);
+            op1.addUse(icmpInst);
+            op2.addUse(icmpInst);
+        }
+        //LoadInst
+        else if(newInstruction instanceof LoadInst){
+            LoadInst loadInst = (LoadInst) newInstruction;
+            Register result = loadInst.getResult();
+            Operand addr = loadInst.getAddr();
+
+            result.setDef(loadInst);
+            addr.addUse(loadInst);
+        }
+        //StoreInst
+        else if(newInstruction instanceof StoreInst){
+            StoreInst storeInst = (StoreInst) newInstruction;
+            Operand value = storeInst.getValue();
+            Operand addr = storeInst.getAddr();
+
+            value.addUse(storeInst);
+            addr.addUse(storeInst);
+        }
+        //PhiInst
+        else if(newInstruction instanceof PhiInst){
+            PhiInst phiInst = (PhiInst) newInstruction;
+            Set<Pair<Operand, Block>> branches = phiInst.getBranches();
+            Register result = phiInst.getResult();
+
+            for(Pair<Operand, Block> branch: branches){
+                Operand operand = branch.getFirst();
+                Block block = branch.getSecond();
+                operand.addUse(phiInst);
+                block.addUse(phiInst);
+            }
+            result.setDef(phiInst);
+        }
+        //moveInst
+        else if(newInstruction instanceof MoveInst){
+            MoveInst moveInst = (MoveInst) newInstruction;
+            Operand source = moveInst.getSource();
+            Register result = moveInst.getResult();
+
+            source.addUse(moveInst);
+            result.setDef(moveInst);
+        }
+        //ParallelCopyInst
+        else if(newInstruction instanceof ParallelCopyInst){
+            //nothing
+        }
+    }
+
     public void appendBlock(Block block) {
         this.setNext(block);
         block.setPrev(this);
     }
+
 
     public String getName() {
 

@@ -52,6 +52,7 @@ public class IRPrinter implements IRVisitor {
         //function
         for(LLVMfunction llvMfunction : module.getFunctionMap().values()){
             llvMfunction.accept(this);
+            println("");
         }
 
         System.setOut(stdout);
@@ -149,8 +150,23 @@ public class IRPrinter implements IRVisitor {
     }
 
     @Override
+    public void visit(PhiInst inst) {
+        println(indent + inst.toString());
+    }
+
+    @Override
     public void visit(DefineGlobal defineGlobal) {
         println(indent + defineGlobal.toString());
+    }
+
+    @Override
+    public void visit(MoveInst moveInst) {
+        println(indent + moveInst.toString());
+    }
+
+    @Override
+    public void visit(ParallelCopyInst parallelCopyInst) {
+        println(indent + parallelCopyInst.toString());
     }
 
 }

@@ -1,5 +1,7 @@
 package IR.TypeSystem;
 
+import IR.LLVMoperand.Operand;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -41,6 +43,12 @@ public class LLVMStructType extends LLVMtype {
     @Override
     public String toString() {
         return "%" + className;
+    }
+
+    @Override
+    public Operand DefaultValue() {
+        assert false;
+        return null;
     }
 
     @Override

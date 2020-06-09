@@ -9,6 +9,10 @@ abstract public class LLVMInstruction {
     private LLVMInstruction postInst;
     private String comment;
 
+    public boolean isTerminalInst(){
+        return this instanceof BranchInst || this instanceof ReturnInst;
+    }
+
     public LLVMInstruction(Block block) {
         this.block = block;
     }

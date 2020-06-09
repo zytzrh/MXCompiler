@@ -3,6 +3,8 @@ package IR.Instruction;
 import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMoperand.Operand;
+import IR.TypeSystem.LLVMPointerType;
+import IR.TypeSystem.LLVMtype;
 
 public class StoreInst extends LLVMInstruction{
     private Operand value;
@@ -16,7 +18,9 @@ public class StoreInst extends LLVMInstruction{
 
     @Override
     public String toString() {
-        return "store " + value.getLlvMtype().toString() + " " + value.toString() + ", " +
+        assert addr.getLlvMtype() instanceof LLVMPointerType;
+        LLVMtype valueType = ((LLVMPointerType) addr.getLlvMtype()).getBaseType();
+        return "store " + valueType.toString() + " " + value.toString() + ", " +
                 addr.getLlvMtype().toString() + " " + addr.toString();
     }
 

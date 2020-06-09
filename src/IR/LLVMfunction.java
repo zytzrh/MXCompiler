@@ -1,6 +1,7 @@
 package IR;
 
 import IR.Instruction.LLVMInstruction;
+import IR.Instruction.ReturnInst;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
 
@@ -120,8 +121,48 @@ public class LLVMfunction {
         }
         else{
             exitBlock.appendBlock(block);
+            exitBlock = block;
         }
     }
+
+    public boolean isFunctional(){
+        int returnCount  = 0;
+        ReturnInst returnInst = null;
+        for(Block block = initBlock; block != exitBlock; block = block.getNext()){
+            LLVMInstruction instTail = block.getInstTail();
+            if(instTail == null || !instTail.isTerminalInst()){
+                return false;                        //gugu changed: why??
+            }
+            if(instTail instanceof ReturnInst){
+                returnInst = (ReturnInst) instTail;
+                returnCount++;
+                if(returnCount > 1)
+                    return false;                    //gugu changed: unpossible situation
+            }
+        }
+        Block block = returnInst.getBlock();
+        if(block != this.exitBlock){            //gugu changed
+            //move to exit
+            if(block.getPrev() == null)
+                this.setInitBlock(block.getNext());
+            else
+                block.getPrev().setNext(block.getNext());
+            if(block.getNext() == null)
+                this.setExitBlock(block.getPrev());
+            else
+                block.getNext().setPrev(block.getPrev());
+            block.setPrev(null);
+            block.setNext(null);
+            this.addBlock(block);
+        }
+        return true;
+
+    }
+
+
+
+
+
 
     public String getFunctionName() {
         return functionName;
@@ -205,5 +246,13 @@ public class LLVMfunction {
 
     public void setSideEffect(boolean sideEffect) {
         this.sideEffect = sideEffect;
+    }
+
+    public Block getExitBlock() {
+        return exitBlock;
+    }
+
+    public void setExitBlock(Block exitBlock) {
+        this.exitBlock = exitBlock;
     }
 }

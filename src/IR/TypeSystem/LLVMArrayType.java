@@ -1,5 +1,7 @@
 package IR.TypeSystem;
 
+import IR.LLVMoperand.Operand;
+
 public class LLVMArrayType extends LLVMtype {
     private int length;
     private LLVMtype baseType;
@@ -16,7 +18,13 @@ public class LLVMArrayType extends LLVMtype {
 
     @Override
     public String toString() {
-        return "[" + length + "x" + baseType.toString() + "]";
+        return "[" + length + " " + "x" + " " + baseType.toString() +  "]";
+    }
+
+    @Override
+    public Operand DefaultValue() {
+        assert false;
+        return null;
     }
 
     public int getLength() {
@@ -34,5 +42,6 @@ public class LLVMArrayType extends LLVMtype {
     public void setBaseType(LLVMtype baseType) {
         this.baseType = baseType;
     }
+
 
 }

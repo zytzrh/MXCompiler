@@ -1,5 +1,8 @@
 package IR.TypeSystem;
 
+import IR.LLVMoperand.ConstNull;
+import IR.LLVMoperand.Operand;
+
 public class LLVMPointerType extends LLVMtype{
     private LLVMtype baseType;
 
@@ -7,13 +10,6 @@ public class LLVMPointerType extends LLVMtype{
         this.baseType = baseType;
     }
 
-    public LLVMtype getBaseType() {
-        return baseType;
-    }
-
-    public void setBaseType(LLVMtype baseType) {
-        this.baseType = baseType;
-    }
 
     @Override
     public String toString() {
@@ -23,5 +19,18 @@ public class LLVMPointerType extends LLVMtype{
     @Override
     public int getByte() {
         return 4;
+    }
+
+    @Override
+    public Operand DefaultValue() {
+        return new ConstNull();
+    }
+
+    public LLVMtype getBaseType() {
+        return baseType;
+    }
+
+    public void setBaseType(LLVMtype baseType) {
+        this.baseType = baseType;
     }
 }

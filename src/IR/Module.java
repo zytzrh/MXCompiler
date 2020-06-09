@@ -63,8 +63,9 @@ public class Module {
                 typeMap.put(astType, new LLVMIntType(LLVMIntType.BitWidth.int32));
             else if(astType instanceof BoolType)
                 typeMap.put(astType, new LLVMIntType(LLVMIntType.BitWidth.int1));
-            else if(astType instanceof VoidType)
+            else if(astType instanceof VoidType){
                 typeMap.put(astType, new LLVMVoidType());
+            }
             else if(astType instanceof NullType)        //maybe deleted
                 typeMap.put(astType, new LLVMNullType());
             else if(astType instanceof StringType)
@@ -80,17 +81,12 @@ public class Module {
             if(astType instanceof ClassType){
                 LLVMStructType llvmStructType = (LLVMStructType) typeMap.get(astType);
                 int index = 0;
-                for(Type memberType : ((ClassType) astType).getVarMembers().values()){
+                HashMap<String, Type> varMembers = ((ClassType) astType).getVarMembers();
+                for(String memberName : varMembers.keySet()){
+                    Type memberType = varMembers.get(memberName);
                     LLVMtype LLVMMemberType = memberType.convert2LLVM(typeMap);
                     llvmStructType.getMembers().add(LLVMMemberType);
-                    
-                    String memberName = null;
-                    for(String string : ((ClassType) astType).getVarMembers().keySet()){
-                        if(((ClassType) astType).getVarMembers().get(string) == memberType){
-                            memberName = string;
-                            break;
-                        }
-                    }
+
                     llvmStructType.getMemberIndexMap().put(memberName, index);
                     index++;
                 }
@@ -120,15 +116,15 @@ public class Module {
             Register returnAddr = new Register(new LLVMPointerType(llvmReturnType), "return$address");
             llvMfunction.setReturnAddr(returnAddr);
             llvMfunction.registerVar(returnAddr.getRegisterId(), returnAddr);
-            initBlock.addInstruction(new AllocInst(initBlock, returnAddr, llvmReturnType));
-            initBlock.addInstruction(new StoreInst(initBlock, function.getReturnType().getDefaultValue(), returnAddr));
+            initBlock.addInst(new AllocInst(initBlock, returnAddr, llvmReturnType));
+            initBlock.addInst(new StoreInst(initBlock, function.getReturnType().getDefaultValue(), returnAddr));
 
             Register returnLoad = new Register(llvmReturnType, "return");
             llvMfunction.registerVar(returnLoad.getRegisterId(), returnLoad);
-            returnBlock.addInstruction(new LoadInst(returnBlock, returnAddr, returnLoad));
-            returnBlock.addInstruction(new ReturnInst(returnBlock, llvmReturnType, returnLoad));
+            returnBlock.addInst(new LoadInst(returnBlock, returnAddr, returnLoad));
+            returnBlock.addInst(new ReturnInst(returnBlock, llvmReturnType, returnLoad));
         }else{
-            returnBlock.addInstruction(new ReturnInst(returnBlock, new LLVMVoidType(), null));
+            returnBlock.addInst(new ReturnInst(returnBlock, new LLVMVoidType(), null));
         }
         for(int i = 0; i < paras.size(); i++){
             Register para = paras.get(i);
@@ -136,16 +132,16 @@ public class Module {
             Register allocAddr = new Register(new LLVMPointerType(paraAddrType),
                     para.getRegisterId() + "$address");
             llvMfunction.registerVar(allocAddr.getRegisterId(), allocAddr);
-            initBlock.addInstruction(new AllocInst(initBlock, allocAddr, paraAddrType));
-            initBlock.addInstruction(new StoreInst(initBlock, para, allocAddr));
-            function.getParas().get(i).setAllocAddr(allocAddr);
+            initBlock.addInst(new AllocInst(initBlock, allocAddr, paraAddrType));
+            initBlock.addInst(new StoreInst(initBlock, para, allocAddr));
+            function.getParas().get(i).setAllocAddr(allocAddr);         //
         }
     }
 
     //can used for both method and constructor
     public void initMethod(String functionName, Function function, ClassType classType){
         ArrayList<Register> paras = new ArrayList<Register>();
-        Register thisRegiser = new Register(new LLVMPointerType(classType.convert2LLVM(typeMap)), "this");
+        Register thisRegiser = new Register(classType.convert2LLVM(typeMap), "this");
         paras.add(thisRegiser);                             //differ from normal function
         for(VariableEntity para : function.getParas()){
             LLVMtype llvmParaType = para.getType().convert2LLVM(typeMap);
@@ -153,6 +149,7 @@ public class Module {
         }
         LLVMtype llvmReturnType = function.getReturnType().convert2LLVM(typeMap);
         LLVMfunction llvMfunction = new LLVMfunction(functionName, paras, llvmReturnType);
+        llvMfunction.registerVar(thisRegiser.getRegisterId(), thisRegiser);
         functionMap.put(functionName, llvMfunction);
         //initBlock
         Block initBlock = new Block("initBlock", llvMfunction);
@@ -165,31 +162,31 @@ public class Module {
             Register returnAddr = new Register(new LLVMPointerType(llvmReturnType), "return$address");
             llvMfunction.setReturnAddr(returnAddr);
             llvMfunction.registerVar(returnAddr.getRegisterId(), returnAddr);
-            initBlock.addInstruction(new AllocInst(initBlock, returnAddr, llvmReturnType));
-            initBlock.addInstruction(new StoreInst(initBlock, function.getReturnType().getDefaultValue(), returnAddr));
+            initBlock.addInst(new AllocInst(initBlock, returnAddr, llvmReturnType));
+            initBlock.addInst(new StoreInst(initBlock, function.getReturnType().getDefaultValue(), returnAddr));
 
             Register returnLoad = new Register(llvmReturnType, "return");
             llvMfunction.registerVar(returnLoad.getRegisterId(), returnLoad);
-            returnBlock.addInstruction(new LoadInst(returnBlock, returnAddr, returnLoad));
-            returnBlock.addInstruction(new ReturnInst(returnBlock, llvmReturnType, returnLoad));
+            returnBlock.addInst(new LoadInst(returnBlock, returnAddr, returnLoad));
+            returnBlock.addInst(new ReturnInst(returnBlock, llvmReturnType, returnLoad));
         }else{
-            returnBlock.addInstruction(new ReturnInst(returnBlock, new LLVMVoidType(), null));
+            returnBlock.addInst(new ReturnInst(returnBlock, new LLVMVoidType(), null));
         }
         //differ from normal function
         Register thisAddr = new Register(new LLVMPointerType(thisRegiser.getLlvMtype()), "this$address");
         llvMfunction.setThisAddr(thisAddr);
         llvMfunction.registerVar(thisAddr.getRegisterId(), thisAddr);
-        initBlock.addInstruction(new AllocInst(initBlock, thisAddr, thisRegiser.getLlvMtype()));
-        initBlock.addInstruction(new StoreInst(initBlock, thisRegiser, thisAddr));
-        for(int i = 0; i < paras.size(); i++){
-            Register para = paras.get(i+1);                                 //differ from normal funtion
+        initBlock.addInst(new AllocInst(initBlock, thisAddr, thisRegiser.getLlvMtype()));
+        initBlock.addInst(new StoreInst(initBlock, thisRegiser, thisAddr));
+        for(int i = 1; i < paras.size(); i++){
+            Register para = paras.get(i);                                 //differ from normal funtion
             LLVMtype paraAddrType = para.getLlvMtype();
             Register allocAddr = new Register(new LLVMPointerType(paraAddrType),
                     para.getRegisterId() + "$address");
             llvMfunction.registerVar(allocAddr.getRegisterId(), allocAddr);
-            initBlock.addInstruction(new AllocInst(initBlock, allocAddr, paraAddrType));
-            initBlock.addInstruction(new StoreInst(initBlock, para, allocAddr));
-            function.getParas().get(i).setAllocAddr(allocAddr);
+            initBlock.addInst(new AllocInst(initBlock, allocAddr, paraAddrType));
+            initBlock.addInst(new StoreInst(initBlock, para, allocAddr));
+            function.getParas().get(i-1).setAllocAddr(allocAddr);           //
         }
     }
 
@@ -228,14 +225,14 @@ public class Module {
         this.builtInFunctionMap.put(function.getFunctionName(), function);
 
         // string getString();
-        returnType = new LLVMVoidType();
+        returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
         parameters = new ArrayList<Register>();
         function = new LLVMfunction("getString", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         //gugu changed: lack side effect false??
 
         // int getInt();
-        returnType = new LLVMVoidType();
+        returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
         parameters = new ArrayList<Register>();
         function = new LLVMfunction("getInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
@@ -331,7 +328,7 @@ public class Module {
         function.setSideEffect(false);
 
         // string string.substring(string str, int left, int right);
-        returnType = new LLVMIntType(LLVMIntType.BitWidth.int8);
+        returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
         parameters = new ArrayList<Register>();
         parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)),"str"));
         parameters.add(new Register(new LLVMIntType(LLVMIntType.BitWidth.int32), "left"));

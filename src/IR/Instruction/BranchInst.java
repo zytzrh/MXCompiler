@@ -7,34 +7,34 @@ import IR.LLVMoperand.Operand;
 
 public class BranchInst extends LLVMInstruction{
     private Operand condition;
-    private Block thenBlock;
-    private Block elseBlock;
+    private Block ifTrueBlock;
+    private Block ifFalseBlock;
 
-    public BranchInst(Block block, Operand condition, Block thenBlock, Block elseBlock) {
+    public BranchInst(Block block, Operand condition, Block ifTrueBlock, Block ifFalseBlock) {
         super(block);
         this.condition = condition;
-        this.thenBlock = thenBlock;
-        this.elseBlock = elseBlock;
+        this.ifTrueBlock = ifTrueBlock;
+        this.ifFalseBlock = ifFalseBlock;
     }
 
     @Override
     public String toString() {
         if(condition == null)
-            return "br label " + thenBlock.toString();
+            return "br label " + ifTrueBlock.toString();
         else
-            return "br i1 " + condition.toString() + ", label " + thenBlock.toString() + ", label " + elseBlock.toString();
+            return "br i1 " + condition.toString() + ", label " + ifTrueBlock.toString() + ", label " + ifFalseBlock.toString();
     }
 
     public Operand getCondition() {
         return condition;
     }
 
-    public Block getThenBlock() {
-        return thenBlock;
+    public Block getIfTrueBlock() {
+        return ifTrueBlock;
     }
 
-    public Block getElseBlock() {
-        return elseBlock;
+    public Block getIfFalseBlock() {
+        return ifFalseBlock;
     }
 
     public void accept(IRVisitor visitor) {
