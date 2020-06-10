@@ -31,6 +31,17 @@ public class MoveInst extends LLVMInstruction{
         irVisitor.visit(this);
     }
 
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        if(source == oldUse){
+            source.removeUse(this);
+            source = (Operand) newUse;
+            source.addUse(this);
+        }
+    }
+
+    //gugu changed: no remove from block
+
     public Operand getSource() {
         return source;
     }

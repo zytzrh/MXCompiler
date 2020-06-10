@@ -7,6 +7,7 @@ import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 
 import java.util.ArrayList;
+import java.util.ListIterator;
 
 public class CallInst extends LLVMInstruction {
     private Register result;
@@ -36,6 +37,33 @@ public class CallInst extends LLVMInstruction {
         }
         string.append(")");
         return string.toString();
+    }
+
+    @Override
+    public void removeFromBlock() {
+        super.removeFromBlock();
+        for(Operand para : paras){
+            para.removeUse(this);       //gugu changed: why only delete use, not delete variable def
+        }
+        llvMfunction.removeUse(this);
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        ListIterator<Operand> listIterator = paras.listIterator();
+        while(listIterator.hasNext()){
+            Operand para= listIterator.next();
+            if(para == oldUse){
+                para.removeUse(this);
+                listIterator.set((Operand) newUse);
+                ((Operand) newUse).addUse(this);
+            }
+        }
+        if(llvMfunction == oldUse){
+            llvMfunction.removeUse(this);
+            llvMfunction = (LLVMfunction) newUse;
+            llvMfunction.addUse(this);
+        }
     }
 
     public void accept(IRVisitor visitor) {

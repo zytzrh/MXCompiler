@@ -15,6 +15,19 @@ public class AllocInst extends LLVMInstruction {
         this.llvMtype = llvMtype;
     }
 
+
+    @Override
+    public String toString() {
+        return result.toString() + " = alloca " + llvMtype.toString();
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) { }
+
+    public void accept(IRVisitor visitor) {
+        visitor.visit(this);
+    }
+
     public Register getResult() {
         return result;
     }
@@ -29,15 +42,6 @@ public class AllocInst extends LLVMInstruction {
 
     public void setLlvMtype(LLVMtype llvMtype) {
         this.llvMtype = llvMtype;
-    }
-
-    @Override
-    public String toString() {
-        return result.toString() + " = alloca " + llvMtype.toString();
-    }
-
-    public void accept(IRVisitor visitor) {
-        visitor.visit(this);
     }
 
 

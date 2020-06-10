@@ -36,4 +36,9 @@ public class DefineGlobal extends LLVMInstruction {
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
     }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        assert false;
+    }
 }

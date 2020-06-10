@@ -24,6 +24,37 @@ public class BinaryOpInst extends LLVMInstruction{
         this.result = result;
     }
 
+    @Override
+    public void removeFromBlock() {
+        super.removeFromBlock();
+        lhs.removeUse(this);
+        rhs.removeUse(this);
+    }
+
+    @Override
+    public String toString() {
+        return result.toString() + " = " +
+                op.name() + " " + result.getLlvMtype().toString() + " " + lhs.toString() + ", " + rhs.toString();
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        if(lhs == oldUse){
+            lhs.removeUse(this);
+            lhs = (Operand) newUse;
+            lhs.addUse(this);
+        }
+        if(rhs == oldUse){
+            rhs.removeUse(this);
+            rhs = (Operand) newUse;
+            rhs.addUse(this);
+        }
+    }
+
+    public void accept(IRVisitor visitor) {
+        visitor.visit(this);
+    }
+
     public BinaryOpName getOp() {
         return op;
     }
@@ -56,13 +87,4 @@ public class BinaryOpInst extends LLVMInstruction{
         this.result = result;
     }
 
-    @Override
-    public String toString() {
-        return result.toString() + " = " +
-                op.name() + " " + result.getLlvMtype().toString() + " " + lhs.toString() + ", " + rhs.toString();
-    }
-
-    public void accept(IRVisitor visitor) {
-        visitor.visit(this);
-    }
 }

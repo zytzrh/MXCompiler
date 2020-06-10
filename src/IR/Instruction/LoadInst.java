@@ -21,6 +21,21 @@ public class LoadInst extends LLVMInstruction{
                 + addr.getLlvMtype().toString() + " " + addr.toString();
     }
 
+    @Override
+    public void removeFromBlock() {
+        super.removeFromBlock();
+        addr.removeUse(this);
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        if(addr == oldUse){
+            addr.removeUse(this);
+            addr = (Operand) newUse;
+            addr.addUse(this);
+        }
+    }
+
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }

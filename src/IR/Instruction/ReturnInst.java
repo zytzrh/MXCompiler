@@ -24,6 +24,22 @@ public class ReturnInst extends LLVMInstruction{
             return "ret " + "void";
     }
 
+    @Override
+    public void removeFromBlock() {
+        super.removeFromBlock();
+        if(returnValue != null)
+            returnValue.removeUse(this);
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        if(returnValue == oldUse){
+            returnValue.removeUse(this);
+            returnValue = (Operand) newUse;
+            returnValue.addUse(this);
+        }
+    }
+
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }

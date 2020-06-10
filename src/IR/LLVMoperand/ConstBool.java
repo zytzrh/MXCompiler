@@ -19,4 +19,12 @@ public class ConstBool extends Operand{
     public boolean isConst() {
         return true;
     }
+
+    public boolean getValue() {
+        return value;
+    }
+
+    public void setValue(boolean value) {
+        this.value = value;
+    }
 }

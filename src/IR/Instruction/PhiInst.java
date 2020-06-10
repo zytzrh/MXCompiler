@@ -44,9 +44,53 @@ public class PhiInst extends LLVMInstruction {
         return string.toString();
     }
 
+    public void cutBlock(Block block){
+        for(Pair<Operand, Block> branch : this.branches){
+            if(branch.getSecond() == block){
+                cutBranch(branch);
+                break;
+            }
+        }
+    }
+
+    public void cutBranch(Pair<Operand, Block> branch){             //gugu changed: maybe can be combined with cutBlock
+        Operand operand = branch.getFirst();
+        Block block = branch.getSecond();
+        operand.removeUse(this);
+        block.removeUse(this);
+        this.branches.remove(branch);
+    }
+
+    @Override
+    public void removeFromBlock() {
+        super.removeFromBlock();
+        for(Pair<Operand, Block> branch : branches){
+            Operand operand = branch.getFirst();
+            Block block = branch.getSecond();
+            operand.removeUse(this);
+            block.removeUse(this);
+        }
+    }
+
     @Override
     public void accept(IRVisitor irVisitor) {
         irVisitor.visit(this);
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        for(Pair<Operand, Block> branch : branches){
+            if(branch.getFirst() == oldUse){
+                branch.getFirst().removeUse(this);
+                branch.setFirst((Operand) newUse);
+                branch.getFirst().addUse(this);
+            }
+            if(branch.getSecond() == oldUse){
+                branch.getSecond().removeUse(this);
+                branch.setSecond((Block) newUse);
+                branch.getSecond().addUse(this);
+            }
+        }
     }
 
     public Set<Pair<Operand, Block>> getBranches() {

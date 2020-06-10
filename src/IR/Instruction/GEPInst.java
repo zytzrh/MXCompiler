@@ -8,6 +8,7 @@ import IR.TypeSystem.LLVMPointerType;
 import IR.TypeSystem.LLVMtype;
 
 import java.util.ArrayList;
+import java.util.ListIterator;
 
 public class GEPInst extends LLVMInstruction{
     private Operand pointer;    //gugu changed: why operand?? ans: register or GlobarVar??
@@ -35,6 +36,32 @@ public class GEPInst extends LLVMInstruction{
             string.append(", " + index.getLlvMtype().toString() + " " + index.toString());
         }
         return string.toString();
+    }
+
+    @Override
+    public void removeFromBlock() {
+        super.removeFromBlock();
+        pointer.removeUse(this);
+        for(Operand index : indexs)
+            index.removeUse(this);
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        ListIterator<Operand> listIterator = indexs.listIterator();
+        while(listIterator.hasNext()){
+            Operand index = listIterator.next();
+            if(index == oldUse){
+                index.removeUse(this);
+                listIterator.set((Operand) newUse);
+                ((Operand) newUse).addUse(this);
+            }
+        }
+        if(pointer == oldUse){
+            pointer.removeUse(this);
+            pointer = (Operand) newUse;
+            pointer.addUse(this);
+        }
     }
 
     public void accept(IRVisitor visitor) {

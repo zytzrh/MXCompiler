@@ -9,6 +9,20 @@ abstract public class LLVMInstruction {
     private LLVMInstruction postInst;
     private String comment;
 
+    public void removeFromBlock(){
+        if(preInst == null)
+            block.setInstHead(postInst);
+        else
+            preInst.setPostInst(postInst);
+
+        if(postInst == null)
+            block.setInstTail(preInst);
+        else
+            postInst.setPreInst(preInst);
+    }
+
+    abstract public void overrideObject(Object oldUse, Object newUse);
+
     public boolean isTerminalInst(){
         return this instanceof BranchInst || this instanceof ReturnInst;
     }

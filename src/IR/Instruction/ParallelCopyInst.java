@@ -33,5 +33,6 @@ public class ParallelCopyInst extends LLVMInstruction{
         irVisitor.visit(this);
     }
 
-
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) { }
 }

@@ -4,7 +4,7 @@ import IR.Module;
 
 abstract public class Pass {
     protected Module module;
-    protected boolean changded;
+    protected boolean changed;
 
     public Pass(Module module) {        //gugu changed: the para of constructor
         this.module = module;
@@ -20,11 +20,11 @@ abstract public class Pass {
         this.module = module;
     }
 
-    public boolean isChangded() {
-        return changded;
+    public boolean isChanged() {
+        return changed;
     }
 
-    public void setChangded(boolean changded) {
-        this.changded = changded;
+    public void setChanged(boolean changed) {
+        this.changed = changed;
     }
 }

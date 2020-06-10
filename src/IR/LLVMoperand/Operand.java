@@ -3,6 +3,7 @@ package IR.LLVMoperand;
 import IR.Instruction.LLVMInstruction;
 import IR.TypeSystem.LLVMtype;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -29,6 +30,14 @@ abstract public class Operand {
             use.remove(instruction);
         else
             use.replace(instruction, cnt-1);
+    }
+
+    public void beOverriden(Object newUse){
+        ArrayList<LLVMInstruction> instructions = new ArrayList<>(use.keySet());
+        for(LLVMInstruction instruction : instructions){
+            instruction.overrideObject(this, newUse);
+        }
+        use.clear();
     }
 
     public LLVMtype getLlvMtype() {

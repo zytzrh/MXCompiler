@@ -24,6 +24,11 @@ public class Block {
 
     private Map<LLVMInstruction, Integer> use;  //gugu changed: maybe useless?
 
+    private Block dfsParent;
+    private Block r_dfsParent;
+    private int dfsOrder;
+    private int r_dfsOrder;
+
     public Block(String name, LLVMfunction function) {
         this.name = name;
         this.function = function;
@@ -270,6 +275,79 @@ public class Block {
             use.replace(instruction, cnt-1);
     }
 
+    public void cutSuccessor(Block block){
+        this.getSuccessors().remove(block);
+        block.getPredecessors().remove(this);
+    }
+
+    public void cutBlockForPhi(Block block) {
+        LLVMInstruction currentInstruction = instHead;
+        while (currentInstruction instanceof PhiInst) {
+            LLVMInstruction postInst = currentInstruction.getPostInst();
+            ((PhiInst) currentInstruction).cutBlock(block);
+            currentInstruction = postInst;
+        }
+    }
+
+    public void removeFromFunction(){
+        LLVMInstruction instruction = instHead;
+        while(instruction != null){
+            LLVMInstruction nextInstruction = instruction.getPostInst();
+            instruction.removeFromBlock();
+            instruction = nextInstruction;
+        }
+        for(Block successor : successors)
+            successor.cutBlockForPhi(successor);
+
+        removeFromList();
+        cutCFGLink();
+    }
+
+    public void removeFromList(){
+        assert prev != null;        //gugu changed: never delete initBlock??
+        prev.setNext(next);
+        if(next == null)
+            function.setExitBlock(prev);
+        else
+            next.setPrev(prev);
+    }
+
+    public void cutCFGLink(){
+        Iterator<Block> iterator;
+        iterator = predecessors.iterator();
+        while(iterator.hasNext()){
+            Block predecessor = iterator.next();
+            predecessor.getSuccessors().remove(this);
+            iterator.remove();
+        }
+        iterator = successors.iterator();
+        while(iterator.hasNext()){
+            Block successor = iterator.next();
+            successor.getPredecessors().remove(this);
+            iterator.remove();
+        }
+    }
+
+    public void justAddInst(LLVMInstruction instruction){
+        instruction.setBlock(this);
+        instruction.setPreInst(this.instTail);
+        if(this.instHead == null && this.instTail == null){
+            this.instHead = instruction;
+        }else{
+            this.instTail.setPostInst(instruction);
+        }
+        this.instTail = instruction;
+    }
+
+    public void beOverriden(Object newUse){
+        ArrayList<LLVMInstruction> instructions = new ArrayList<>(use.keySet());
+        for(LLVMInstruction instruction : instructions){
+            instruction.overrideObject(this, newUse);
+        }
+        use.clear();
+    }
+
+
     public Map<LLVMInstruction, Integer> getUse() {
         return use;
     }
@@ -326,7 +404,37 @@ public class Block {
         return this.getPredecessors().size() != 0;
     }
 
+    public Block getDfsParent() {
+        return dfsParent;
+    }
 
+    public void setDfsParent(Block dfsParent) {
+        this.dfsParent = dfsParent;
+    }
+
+    public Block getR_dfsParent() {
+        return r_dfsParent;
+    }
+
+    public void setR_dfsParent(Block r_dfsParent) {
+        this.r_dfsParent = r_dfsParent;
+    }
+
+    public int getDfsOrder() {
+        return dfsOrder;
+    }
+
+    public void setDfsOrder(int dfsOrder) {
+        this.dfsOrder = dfsOrder;
+    }
+
+    public int getR_dfsOrder() {
+        return r_dfsOrder;
+    }
+
+    public void setR_dfsOrder(int r_dfsOrder) {
+        this.r_dfsOrder = r_dfsOrder;
+    }
 }
 
 

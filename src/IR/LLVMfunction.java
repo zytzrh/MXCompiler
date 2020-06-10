@@ -5,10 +5,7 @@ import IR.Instruction.ReturnInst;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class LLVMfunction {
     private String functionName;
@@ -128,7 +125,7 @@ public class LLVMfunction {
     public boolean isFunctional(){
         int returnCount  = 0;
         ReturnInst returnInst = null;
-        for(Block block = initBlock; block != exitBlock; block = block.getNext()){
+        for(Block block = initBlock; block != null; block = block.getNext()){
             LLVMInstruction instTail = block.getInstTail();
             if(instTail == null || !instTail.isTerminalInst()){
                 return false;                        //gugu changed: why??
@@ -157,6 +154,58 @@ public class LLVMfunction {
         }
         return true;
 
+    }
+
+    public ArrayList<Block> getDFSOrder() {
+        ArrayList<Block> dfsOrder = new ArrayList<>();
+        HashSet<Block>dfsVisit = new HashSet<>();
+        Stack<Block> blockStack = new Stack<>();
+
+        initBlock.setDfsParent(null);
+        blockStack.push(initBlock);
+
+        while(!blockStack.empty()){
+            Block currentBlock = blockStack.pop();
+            if(!dfsVisit.contains(currentBlock)){
+                currentBlock.setDfsOrder(dfsOrder.size());
+                dfsOrder.add(currentBlock);
+                dfsVisit.add(currentBlock);
+                for(Block successor : currentBlock.getSuccessors()){
+                    if(!dfsVisit.contains(successor)){
+                        successor.setDfsParent(currentBlock);
+                        blockStack.push(successor);
+                    }
+                }
+            }
+        }
+
+        return dfsOrder;
+    }
+
+    public ArrayList<Block> getReverseDFSOrder() {
+        ArrayList<Block>reverseDfsOrder = new ArrayList<>();
+        HashSet<Block>dfsVisit = new HashSet<>();
+        Stack<Block> blockStack = new Stack<>();
+
+        initBlock.setR_dfsParent(null);
+        blockStack.push(exitBlock);
+
+        while(!blockStack.empty()){
+            Block currentBlock = blockStack.pop();
+            if(!dfsVisit.contains(currentBlock)){
+                currentBlock.setR_dfsOrder(reverseDfsOrder.size());
+                reverseDfsOrder.add(currentBlock);
+                dfsVisit.add(currentBlock);
+                for(Block predecessor : currentBlock.getPredecessors()){
+                    if(!dfsVisit.contains(predecessor)){
+                        predecessor.setR_dfsParent(currentBlock);
+                        blockStack.push(predecessor);
+                    }
+                }
+            }
+        }
+
+        return reverseDfsOrder;
     }
 
 

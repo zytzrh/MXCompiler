@@ -2,6 +2,7 @@ import AST.ProgramNode;
 import AST.Visit.ASTBuilder;
 import IR.IRBuilder;
 import IR.IRPrinter;
+import Optimization.CFGSimplifier;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ExceptionHandle.ExceptionListener;
 import Semantic.ParserAndLexer.MXgrammarLexer;
@@ -55,6 +56,8 @@ public class Main {
         }
         IRBuilder irBuilder = new IRBuilder(semanticCheck);
         irBuilder.visit(programNode);
+        CFGSimplifier cfgSimplifier = new CFGSimplifier(irBuilder.getModule());
+        cfgSimplifier.run();
         IRPrinter irPrinter = new IRPrinter("out.ll");
         irPrinter.visit(irBuilder.getModule());
     }

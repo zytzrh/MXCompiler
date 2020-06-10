@@ -24,6 +24,21 @@ public class BitCastInst extends LLVMInstruction{
                 + ObjectType.toString();
     }
 
+    @Override
+    public void removeFromBlock() {
+        super.removeFromBlock();
+        source.removeUse(this);
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        if(source == oldUse){
+            source.removeUse(this);
+            source = (Operand) newUse;
+            source.addUse(this);
+        }
+    }
+
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }

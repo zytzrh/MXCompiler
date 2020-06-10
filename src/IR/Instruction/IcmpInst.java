@@ -32,6 +32,27 @@ public class IcmpInst extends LLVMInstruction{
                 + operator.name() + " " + irType.toString() + " " + op1.toString() + ", " + op2.toString();
     }
 
+    @Override
+    public void removeFromBlock() {
+        super.removeFromBlock();
+        op1.removeUse(this);
+        op2.removeUse(this);
+    }
+
+    @Override
+    public void overrideObject(Object oldUse, Object newUse) {
+        if(op1 == oldUse){
+            op1.removeUse(this);
+            op1 = (Operand) newUse;
+            op1.addUse(this);
+        }
+        if(op2 == oldUse){
+            op2.removeUse(this);
+            op2 = (Operand) newUse;
+            op2.addUse(this);
+        }
+    }
+
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
     }
