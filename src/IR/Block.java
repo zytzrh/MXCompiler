@@ -26,8 +26,8 @@ public class Block {
 
     private Block dfsParent;
     private Block r_dfsParent;
-    private int dfsOrder;
-    private int r_dfsOrder;
+    private int dfsNum;
+    private int r_dfsNum;
 
     public Block(String name, LLVMfunction function) {
         this.name = name;
@@ -420,20 +420,20 @@ public class Block {
         this.r_dfsParent = r_dfsParent;
     }
 
-    public int getDfsOrder() {
-        return dfsOrder;
+    public int getDfsNum() {
+        return dfsNum;
     }
 
-    public void setDfsOrder(int dfsOrder) {
-        this.dfsOrder = dfsOrder;
+    public void setDfsNum(int dfsNum) {
+        this.dfsNum = dfsNum;
     }
 
-    public int getR_dfsOrder() {
-        return r_dfsOrder;
+    public int getR_dfsNum() {
+        return r_dfsNum;
     }
 
-    public void setR_dfsOrder(int r_dfsOrder) {
-        this.r_dfsOrder = r_dfsOrder;
+    public void setR_dfsNum(int r_dfsNum) {
+        this.r_dfsNum = r_dfsNum;
     }
 }
 

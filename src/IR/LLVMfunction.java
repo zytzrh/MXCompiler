@@ -167,7 +167,7 @@ public class LLVMfunction {
         while(!blockStack.empty()){
             Block currentBlock = blockStack.pop();
             if(!dfsVisit.contains(currentBlock)){
-                currentBlock.setDfsOrder(dfsOrder.size());
+                currentBlock.setDfsNum(dfsOrder.size());
                 dfsOrder.add(currentBlock);
                 dfsVisit.add(currentBlock);
                 for(Block successor : currentBlock.getSuccessors()){
@@ -193,7 +193,7 @@ public class LLVMfunction {
         while(!blockStack.empty()){
             Block currentBlock = blockStack.pop();
             if(!dfsVisit.contains(currentBlock)){
-                currentBlock.setR_dfsOrder(reverseDfsOrder.size());
+                currentBlock.setR_dfsNum(reverseDfsOrder.size());
                 reverseDfsOrder.add(currentBlock);
                 dfsVisit.add(currentBlock);
                 for(Block predecessor : currentBlock.getPredecessors()){
