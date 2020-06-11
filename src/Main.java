@@ -101,7 +101,7 @@ public class Main {
             new RegisterAllocator(ASMRISCVModule, loopAnalysis).run();
             new CodeEmitter("output.s", true).run(ASMRISCVModule);
         }catch (Exception e){
-            throw new RuntimeException();
+
         }
     }
 
