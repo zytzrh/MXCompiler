@@ -16,7 +16,6 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,7 +27,7 @@ public class Main {
 
         InputStream is = System.in;
         /*for file*******************/
-        is = new FileInputStream("basic-2.mx");
+//        is = new FileInputStream("basic-2.mx");
         /*for file******************/
         ANTLRInputStream input = new ANTLRInputStream(is);
 
