@@ -2,6 +2,7 @@
 # print the compiled source, i.e. asm code, directly to stdout.
 # don't print anything other to stdout.
 # if you would like to print some debug information, please go to stderr.
+
 set -e
 cd "$(dirname "$0")"
 export CCHK="java -classpath /Antlr/antlr-4.8-complete.jar:./bin Main"
