@@ -1,12 +1,19 @@
 package IR.Instruction;
 
 import IR.IRVisitor;
+import IR.LLVMfunction;
 import IR.LLVMoperand.ConstString;
 import IR.LLVMoperand.GlobalVar;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
 import Optimization.ConstOptim;
+import Optimization.LoopAnalysis;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class DefineGlobal extends LLVMInstruction {
     private GlobalVar globalVar;
@@ -70,5 +77,20 @@ public class DefineGlobal extends LLVMInstruction {
 
     public void setInit(Operand init) {
         this.init = init;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        return false;
+    }
+
+    @Override
+    public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {
+        return super.dceRemoveFromBlock(loopAnalysis);
     }
 }

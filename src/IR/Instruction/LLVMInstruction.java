@@ -2,8 +2,16 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
+import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import Optimization.ConstOptim;
+import Optimization.LoopAnalysis;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 abstract public class LLVMInstruction {
     private Block block;
@@ -86,4 +94,14 @@ abstract public class LLVMInstruction {
 
 
     abstract public Register getResult();
+
+    abstract public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap,
+                                              Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope);
+
+    abstract public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue);
+
+    public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {
+        removeFromBlock();
+        return true;
+    }
 }

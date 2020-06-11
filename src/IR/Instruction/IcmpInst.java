@@ -2,10 +2,16 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
 import IR.LLVMoperand.*;
 import IR.TypeSystem.LLVMIntType;
 import IR.TypeSystem.LLVMtype;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class IcmpInst extends LLVMInstruction{
     public enum IcmpName {
@@ -143,5 +149,20 @@ public class IcmpInst extends LLVMInstruction{
             assert ((ConstInt) op2).getValue() != Integer.MIN_VALUE;
             this.op2 = new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), ((ConstInt) op2).getValue() - 1);
         }
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
+            scopeMap.replace(result, SideEffectChecker.Scope.local);
+            return true;
+        } else
+            return false;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        op1.markBaseAsLive(live, queue);
+        op2.markBaseAsLive(live, queue);
     }
 }

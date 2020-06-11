@@ -2,11 +2,17 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
 import IR.LLVMoperand.ConstInt;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMIntType;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class BinaryOpInst extends LLVMInstruction{
     public enum BinaryOpName {
@@ -124,5 +130,20 @@ public class BinaryOpInst extends LLVMInstruction{
         Operand tmp = lhs;
         lhs = rhs;
         rhs = tmp;
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
+            scopeMap.replace(result, SideEffectChecker.Scope.local);
+            return true;
+        } else
+            return false;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        lhs.markBaseAsLive(live, queue);
+        rhs.markBaseAsLive(live, queue);
     }
 }

@@ -2,11 +2,14 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
+import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
 
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
+
 //gugu changed can be changed totally
 public class ParallelCopyInst extends LLVMInstruction{
     private HashSet<MoveInst> moves;
@@ -80,5 +83,15 @@ public class ParallelCopyInst extends LLVMInstruction{
     @Override
     public Register getResult() {
         return null;
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        return false;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        // Do nothing.
     }
 }

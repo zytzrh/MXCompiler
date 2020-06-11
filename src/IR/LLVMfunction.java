@@ -340,4 +340,10 @@ public class LLVMfunction {
         block1.getPrev().setNext(block2);
         block1.setPrev(block2);
     }
+
+    public boolean hasSideEffect() {
+        return sideEffect;
+    }
+
+
 }

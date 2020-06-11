@@ -2,11 +2,17 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMVoidType;
 import IR.TypeSystem.LLVMtype;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class ReturnInst extends LLVMInstruction{
     private LLVMtype returnType;
@@ -63,5 +69,16 @@ public class ReturnInst extends LLVMInstruction{
     @Override
     public Register getResult() {
         throw new RuntimeException("Get result of return instruction.");
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        return false;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        if (returnValue != null)
+            returnValue.markBaseAsLive(live, queue);
     }
 }

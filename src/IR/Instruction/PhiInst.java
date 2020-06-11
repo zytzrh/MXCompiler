@@ -2,11 +2,16 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
+import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
 import Utility.Pair;
 
+import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 public class PhiInst extends LLVMInstruction {
@@ -125,5 +130,47 @@ public class PhiInst extends LLVMInstruction {
             return true;
         } else
             return false;
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        if (SideEffectChecker.getOperandScope(result) == SideEffectChecker.Scope.local) {
+            if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
+                scopeMap.replace(result, SideEffectChecker.Scope.local);
+                return true;
+            } else
+                return false;
+        }
+
+        for (Pair<Operand, Block> pair : branches) {
+            if (pair.getFirst() instanceof ConstNull)
+                continue;
+            SideEffectChecker.Scope scope = scopeMap.get(pair.getFirst());
+            if (scope == SideEffectChecker.Scope.undefined)
+                continue;
+            if (scope == SideEffectChecker.Scope.outer) {
+                if (scopeMap.get(result) != SideEffectChecker.Scope.outer) {
+                    scopeMap.replace(result, SideEffectChecker.Scope.outer);
+                    return true;
+                } else
+                    return false;
+            }
+        }
+        if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
+            scopeMap.replace(result, SideEffectChecker.Scope.local);
+            return true;
+        } else
+            return false;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        for (Pair<Operand, Block> pair : branches) {
+            pair.getFirst().markBaseAsLive(live, queue);
+            if (pair.getSecond().isNotExitBlock() && !live.contains(pair.getSecond().getInstTail())) {
+                live.add(pair.getSecond().getInstTail());
+                queue.offer(pair.getSecond().getInstTail());
+            }
+        }
     }
 }

@@ -5,6 +5,7 @@ import BackEnd.Construct.InstructionSelector;
 import BackEnd.Construct.RegisterAllocator;
 import BackEnd.RISCVModule;
 import IR.IRBuilder;
+import IR.IRPrinter;
 import IR.Module;
 import Optimization.*;
 import Semantic.ExceptionHandle.CompileError;
@@ -16,6 +17,7 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -27,7 +29,7 @@ public class Main {
 
         InputStream is = System.in;
         /*for file*******************/
-//        is = new FileInputStream("basic-2.mx");
+        is = new FileInputStream("basic-2.mx");
         /*for file******************/
         ANTLRInputStream input = new ANTLRInputStream(is);
 
@@ -60,8 +62,8 @@ public class Main {
         IRBuilder irBuilder = new IRBuilder(semanticCheck);
         irBuilder.visit(programNode);
         Module module = irBuilder.getModule();
-        //        IRPrinter irPrinter = new IRPrinter("out.ll");
-        //        irPrinter.visit(irBuilder.getModule());
+        IRPrinter irPrinter = new IRPrinter("out.ll");
+        irPrinter.visit(irBuilder.getModule());
 
 
         try{
@@ -72,14 +74,17 @@ public class Main {
             SSAConstructor ssaConstructor = new SSAConstructor(module);
             ssaConstructor.run();
 
-
+            SideEffectChecker sideEffectChecker = new SideEffectChecker(module);
             LoopAnalysis loopAnalysis = new LoopAnalysis(module);
+            DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(module, sideEffectChecker, loopAnalysis);
             ConstOptim constOptim = new ConstOptim(module);
             while(true){
                 boolean changed = false;
+                dTreeConstructor.run();
                 changed = constOptim.run();
+                changed |= deadCodeEliminator.run();
                 changed |= cfgSimplifier.run();
-                changed |= loopAnalysis.run();
+                loopAnalysis.run();
                 changed |= cfgSimplifier.run();
                 if (!changed)
                     break;
@@ -96,7 +101,7 @@ public class Main {
             new RegisterAllocator(ASMRISCVModule, loopAnalysis).run();
             new CodeEmitter("output.s", true).run(ASMRISCVModule);
         }catch (Exception e){
-            //bad program
+            throw new RuntimeException();
         }
     }
 

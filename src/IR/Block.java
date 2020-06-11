@@ -576,6 +576,35 @@ public class Block {
     public boolean dominate(Block block) {
         return this == block || block.getStrictDominators().contains(this);
     }
+
+    public boolean isNotExitBlock() {
+        return !(instTail instanceof ReturnInst);
+    }
+
+    public boolean dceRemoveFromFunction() {
+        if (successors.size() != 1)
+            return false;
+        if (prev == null)
+            function.setInitBlock(next);
+        else
+            prev.setNext(next);
+
+        if (next == null)
+            function.setExitBlock(prev);
+        else
+            next.setPrev(prev);
+
+        Block successor = successors.iterator().next();
+        this.beOverriden(successor);
+        successor.getPredecessors().remove(this);
+        for (Block predecessor : predecessors) {
+            predecessor.getInstHead().overrideObject(this, successor);
+            predecessor.getSuccessors().remove(this);
+            predecessor.getSuccessors().add(successor);
+            successor.getPredecessors().add(predecessor);
+        }
+        return true;
+    }
 }
 
 

@@ -41,4 +41,6 @@ public class ConstBool extends Operand implements Constant{
         }
         throw new RuntimeException("ConstBool cast to " + objectType.toString());
     }
+
+
 }

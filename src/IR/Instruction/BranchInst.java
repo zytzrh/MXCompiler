@@ -2,9 +2,16 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import Optimization.ConstOptim;
+import Optimization.LoopAnalysis;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 
 public class BranchInst extends LLVMInstruction{
@@ -111,5 +118,35 @@ public class BranchInst extends LLVMInstruction{
     public boolean replaceResultWithConstant(ConstOptim constOptim) {
         // Do nothing.
         return false;
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        return false;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+
+        if (condition != null)
+            condition.markBaseAsLive(live, queue);
+    }
+
+    @Override
+    public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {
+        if (this.condition != null)
+            this.reset2Unconditional(this.ifFalseBlock);
+        if (loopAnalysis.isPreHeader(this.getBlock()))
+            return false;
+        if (this.getBlock().getPrev() == null)
+            return false;
+        for (Block successor : this.getBlock().getSuccessors()) {
+            if (successor.getInstHead() instanceof PhiInst)
+                return false;
+        }
+        if (!this.getBlock().dceRemoveFromFunction())
+            return false;
+        removeFromBlock();
+        return true;
     }
 }

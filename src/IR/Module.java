@@ -205,6 +205,8 @@ public class Module {
         parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)), "str"));
         function = new LLVMfunction("print", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(true);
+
 
         // void println(string str);
         returnType = new LLVMVoidType();
@@ -212,6 +214,7 @@ public class Module {
         parameters.add(new Register(new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8)), "str"));
         function = new LLVMfunction("println", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(true);
 
         // void printInt(int n);
         returnType = new LLVMVoidType();
@@ -219,6 +222,7 @@ public class Module {
         parameters.add(new Register(new LLVMIntType(LLVMIntType.BitWidth.int32), "n"));
         function = new LLVMfunction("printInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(true);
 
         // void printlnInt(int n);
         returnType = new LLVMVoidType();
@@ -226,12 +230,14 @@ public class Module {
         parameters.add(new Register(new LLVMIntType(LLVMIntType.BitWidth.int32), "n"));
         function = new LLVMfunction("printlnInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(true);
 
         // string getString();
         returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
         parameters = new ArrayList<Register>();
         function = new LLVMfunction("getString", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(true);
         //gugu changed: lack side effect false??
 
         // int getInt();
@@ -239,6 +245,7 @@ public class Module {
         parameters = new ArrayList<Register>();
         function = new LLVMfunction("getInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
+        function.setSideEffect(true);
         //gugu changed: lack side effect false??
 
         // string toString(int i);

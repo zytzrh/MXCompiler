@@ -2,9 +2,16 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
+import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class AllocInst extends LLVMInstruction {
     private Register result;
@@ -54,5 +61,20 @@ public class AllocInst extends LLVMInstruction {
             return true;
         } else
             return false;
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap,
+                                     Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
+            scopeMap.replace(result, SideEffectChecker.Scope.local);
+            return true;
+        } else
+            return false;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        //do nothing
     }
 }

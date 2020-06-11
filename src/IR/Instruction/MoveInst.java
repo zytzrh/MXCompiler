@@ -2,9 +2,15 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class MoveInst extends LLVMInstruction{
     private Operand source;
@@ -63,5 +69,15 @@ public class MoveInst extends LLVMInstruction{
     public boolean replaceResultWithConstant(ConstOptim constOptim) {
         //do nothing
         return false;
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        return false;
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        // Do nothing.
     }
 }

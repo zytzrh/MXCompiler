@@ -6,9 +6,9 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
 
-import java.util.ArrayList;
-import java.util.ListIterator;
+import java.util.*;
 
 public class CallInst extends LLVMInstruction {
     private Register result;
@@ -110,5 +110,31 @@ public class CallInst extends LLVMInstruction {
             return true;
         } else
             return false;
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        if (isVoidCall())
+            return false;
+        if (SideEffectChecker.getOperandScope(result) == SideEffectChecker.Scope.local) {
+            if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
+                scopeMap.replace(result, SideEffectChecker.Scope.local);
+                return true;
+            } else
+                return false;
+        } else {
+            SideEffectChecker.Scope scope = returnValueScope.get(llvMfunction);
+            if (scopeMap.get(result) != scope) {
+                scopeMap.replace(result, scope);
+                return true;
+            } else
+                return false;
+        }
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        for (Operand parameter : paras)
+            parameter.markBaseAsLive(live, queue);
     }
 }

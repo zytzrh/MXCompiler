@@ -2,10 +2,17 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMfunction;
+import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
 import Optimization.ConstOptim;
+import Optimization.SideEffectChecker;
+
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 public class BitCastInst extends LLVMInstruction{
     private Operand source;
@@ -77,5 +84,29 @@ public class BitCastInst extends LLVMInstruction{
             return true;
         } else
             return false;
+    }
+
+    @Override
+    public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
+        if (source instanceof ConstNull) {
+            if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
+                scopeMap.replace(result, SideEffectChecker.Scope.local);
+                return true;
+            } else
+                return false;
+        }
+        SideEffectChecker.Scope scope = scopeMap.get(source);
+        assert scope != SideEffectChecker.Scope.undefined;
+        if (scopeMap.get(result) != scope) {
+            scopeMap.replace(result, scope);
+            return true;
+        } else
+            return false;
+
+    }
+
+    @Override
+    public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        source.markBaseAsLive(live, queue);
     }
 }

@@ -5,9 +5,7 @@ import IR.Instruction.BranchInst;
 import IR.Instruction.LLVMInstruction;
 import IR.TypeSystem.LLVMtype;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 abstract public class Operand {
     private LLVMtype llvMtype;
@@ -90,5 +88,9 @@ abstract public class Operand {
             return 1;
         else
             return 2;
+    }
+
+    public void markBaseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue){
+
     }
 }

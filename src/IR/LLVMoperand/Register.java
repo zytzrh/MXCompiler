@@ -1,7 +1,11 @@
 package IR.LLVMoperand;
 
 import IR.Instruction.LLVMInstruction;
+import IR.Instruction.ReturnInst;
 import IR.TypeSystem.LLVMtype;
+
+import java.util.Queue;
+import java.util.Set;
 
 public class Register extends Operand{
     private String name;
@@ -60,5 +64,21 @@ public class Register extends Operand{
 
     public void setParameter(boolean parameter) {
         isParameter = parameter;
+    }
+
+    @Override
+    public void markBaseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
+        if(isParameter())
+            return;
+        assert def != null;
+        if (!live.contains(def)) {
+            live.add(def);
+            queue.offer(def);
+        }
+        if (!(def.getBlock().getInstTail() instanceof ReturnInst) && !live.contains(def.getBlock().getInstTail())) {
+            //not exit block
+            live.add(def.getBlock().getInstTail());
+            queue.offer(def.getBlock().getInstTail());
+        }
     }
 }
