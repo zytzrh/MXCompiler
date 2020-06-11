@@ -5,7 +5,6 @@ import BackEnd.Construct.InstructionSelector;
 import BackEnd.Construct.RegisterAllocator;
 import BackEnd.RISCVModule;
 import IR.IRBuilder;
-import IR.IRPrinter;
 import IR.Module;
 import Optimization.*;
 import Semantic.ExceptionHandle.CompileError;
@@ -62,47 +61,49 @@ public class Main {
         IRBuilder irBuilder = new IRBuilder(semanticCheck);
         irBuilder.visit(programNode);
         Module module = irBuilder.getModule();
-        IRPrinter irPrinter = new IRPrinter("out.ll");
-        irPrinter.visit(irBuilder.getModule());
+//        IRPrinter irPrinter = new IRPrinter("out.ll");
+//        irPrinter.visit(irBuilder.getModule());
 
-
-        try{
-            CFGSimplifier cfgSimplifier = new CFGSimplifier(module);
-            cfgSimplifier.run();
-            DTreeConstructor dTreeConstructor = new DTreeConstructor(module);
-            dTreeConstructor.run();
-            SSAConstructor ssaConstructor = new SSAConstructor(module);
-            ssaConstructor.run();
-
-            SideEffectChecker sideEffectChecker = new SideEffectChecker(module);
-            LoopAnalysis loopAnalysis = new LoopAnalysis(module);
-            DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(module, sideEffectChecker, loopAnalysis);
-            ConstOptim constOptim = new ConstOptim(module);
-            while(true){
-                boolean changed = false;
+        if(args[args.length-1].equals("codegen")){
+            try{
+                CFGSimplifier cfgSimplifier = new CFGSimplifier(module);
+                cfgSimplifier.run();
+                DTreeConstructor dTreeConstructor = new DTreeConstructor(module);
                 dTreeConstructor.run();
-                changed = constOptim.run();
-                changed |= deadCodeEliminator.run();
-                changed |= cfgSimplifier.run();
+                SSAConstructor ssaConstructor = new SSAConstructor(module);
+                ssaConstructor.run();
+
+                SideEffectChecker sideEffectChecker = new SideEffectChecker(module);
+                LoopAnalysis loopAnalysis = new LoopAnalysis(module);
+                DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(module, sideEffectChecker, loopAnalysis);
+                ConstOptim constOptim = new ConstOptim(module);
+                while(true){
+                    boolean changed = false;
+                    dTreeConstructor.run();
+                    changed = constOptim.run();
+                    changed |= deadCodeEliminator.run();
+                    changed |= cfgSimplifier.run();
+                    loopAnalysis.run();
+                    changed |= cfgSimplifier.run();
+                    if (!changed)
+                        break;
+                }
+
+                new SSADestructor(module).run();
+                InstructionSelector instructionSelector = new InstructionSelector();
+                module.accept(instructionSelector);
+                RISCVModule ASMRISCVModule = instructionSelector.getASMRISCVModule();
+
+                dTreeConstructor.run();
                 loopAnalysis.run();
-                changed |= cfgSimplifier.run();
-                if (!changed)
-                    break;
+
+                new RegisterAllocator(ASMRISCVModule, loopAnalysis).run();
+                new CodeEmitter("output.s", true).run(ASMRISCVModule);
+            }catch (Exception e){
+
             }
-
-            new SSADestructor(module).run();
-            InstructionSelector instructionSelector = new InstructionSelector();
-            module.accept(instructionSelector);
-            RISCVModule ASMRISCVModule = instructionSelector.getASMRISCVModule();
-
-            dTreeConstructor.run();
-            loopAnalysis.run();
-
-            new RegisterAllocator(ASMRISCVModule, loopAnalysis).run();
-            new CodeEmitter("output.s", true).run(ASMRISCVModule);
-        }catch (Exception e){
-
         }
+
     }
 
 }
