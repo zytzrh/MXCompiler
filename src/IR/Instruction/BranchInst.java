@@ -3,6 +3,8 @@ package IR.Instruction;
 import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMoperand.Operand;
+import IR.LLVMoperand.Register;
+import Optimization.ConstOptim;
 
 
 public class BranchInst extends LLVMInstruction{
@@ -39,6 +41,10 @@ public class BranchInst extends LLVMInstruction{
 
     public void accept(IRVisitor visitor) {
         visitor.visit(this);
+    }
+
+    public Register getResult() {
+        throw new RuntimeException("Error :Get result of branch instruction.");
     }
 
     public void reset2Unconditional(Block block){
@@ -101,4 +107,9 @@ public class BranchInst extends LLVMInstruction{
         this.ifFalseBlock = ifFalseBlock;
     }
 
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        // Do nothing.
+        return false;
+    }
 }

@@ -1,5 +1,7 @@
 package IR.LLVMoperand;
 
+import IR.Instruction.BinaryOpInst;
+import IR.Instruction.BranchInst;
 import IR.Instruction.LLVMInstruction;
 import IR.TypeSystem.LLVMtype;
 
@@ -40,6 +42,15 @@ abstract public class Operand {
         use.clear();
     }
 
+    public String getName(){
+        return null;
+    }
+
+    abstract public String toString();
+
+    abstract public boolean isConst();
+
+
     public LLVMtype getLlvMtype() {
         return llvMtype;
     }
@@ -48,9 +59,36 @@ abstract public class Operand {
         this.llvMtype = llvMtype;
     }
 
-    abstract public String toString();
+    public Map<LLVMInstruction, Integer> getUse() {
+        return use;
+    }
 
-    abstract public boolean isConst();
+    public void setUse(Map<LLVMInstruction, Integer> use) {
+        this.use = use;
+    }
 
+    public boolean onlyHaveOneBranchUse() {
+        if (use.size() > 1)
+            return false;
+        for (Map.Entry<LLVMInstruction, Integer> entry : use.entrySet())
+            if (!(entry.getKey() instanceof BranchInst) || entry.getValue() > 1)
+                return false;
+        return true;
+    }
 
+    public int getPrivilege() {
+        if (this instanceof Register && ((Register) this).isParameter())
+            return 3;
+        if (this instanceof Constant)
+            return 0;
+        assert this instanceof Register;
+        if (!(((Register) this).getDef() instanceof BinaryOpInst))
+            return 3;
+
+        BinaryOpInst def = ((BinaryOpInst) ((Register) this).getDef());
+        if (def.isIntegerNot() || def.isNegative())
+            return 1;
+        else
+            return 2;
+    }
 }

@@ -2,8 +2,11 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMoperand.ConstInt;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
+import IR.TypeSystem.LLVMIntType;
+import Optimization.ConstOptim;
 
 public class BinaryOpInst extends LLVMInstruction{
     public enum BinaryOpName {
@@ -87,4 +90,39 @@ public class BinaryOpInst extends LLVMInstruction{
         this.result = result;
     }
 
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        ConstOptim.Status status = constOptim.getStatus(result);
+        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
+            result.beOverriden(status.getOperand());
+            this.removeFromBlock();
+            return true;
+        } else
+            return false;
+    }
+
+    public boolean shouldSwapOperands() {
+        // add, sub, mul, sdiv, srem,          // Binary Operations
+        //        shl, ashr, and, or, xor             // Bitwise Binary Operations
+        return (op == BinaryOpName.add
+                || op == BinaryOpName.mul || op == BinaryOpName.and
+                || op == BinaryOpName.or || op == BinaryOpName.xor)
+                && lhs.getPrivilege() < rhs.getPrivilege();
+    }
+
+    public boolean isIntegerNot() {
+        return op == BinaryOpName.xor
+                && (lhs.equals(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), -1))
+                || rhs.equals(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), -1)));
+    }
+
+    public boolean isNegative() {
+        return op == BinaryOpName.sub && lhs.equals(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), 0));
+    }
+
+    public void swapOperands() {
+        Operand tmp = lhs;
+        lhs = rhs;
+        rhs = tmp;
+    }
 }

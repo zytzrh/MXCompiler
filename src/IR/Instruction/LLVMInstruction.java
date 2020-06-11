@@ -2,6 +2,8 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMoperand.Register;
+import Optimization.ConstOptim;
 
 abstract public class LLVMInstruction {
     private Block block;
@@ -66,4 +68,22 @@ abstract public class LLVMInstruction {
     abstract public String toString();
 
     abstract public void accept(IRVisitor irVisitor);
+
+    public boolean hasResult() {
+        if (this instanceof CallInst)
+            return !((CallInst) this).isVoidCall();
+        return this instanceof AllocInst
+                || this instanceof BinaryOpInst
+                || this instanceof BitCastInst
+                || this instanceof GEPInst
+                || this instanceof IcmpInst
+                || this instanceof LoadInst
+                || this instanceof PhiInst
+                || this instanceof MoveInst;
+    }
+
+    abstract public boolean replaceResultWithConstant(ConstOptim constOptim);
+
+
+    abstract public Register getResult();
 }

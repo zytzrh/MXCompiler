@@ -4,6 +4,7 @@ import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
+import Optimization.ConstOptim;
 
 public class MoveInst extends LLVMInstruction{
     private Operand source;
@@ -56,5 +57,11 @@ public class MoveInst extends LLVMInstruction{
 
     public void setResult(Register result) {
         this.result = result;
+    }
+
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        //do nothing
+        return false;
     }
 }

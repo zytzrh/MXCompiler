@@ -3,8 +3,10 @@ package IR.Instruction;
 import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMoperand.Operand;
+import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
 import IR.TypeSystem.LLVMtype;
+import Optimization.ConstOptim;
 
 public class StoreInst extends LLVMInstruction{
     private Operand value;
@@ -55,5 +57,16 @@ public class StoreInst extends LLVMInstruction{
 
     public Operand getAddr() {
         return addr;
+    }
+
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        // Do nothing.
+        return false;
+    }
+
+    @Override
+    public Register getResult() {
+        throw new RuntimeException("Get result of store instruction");
     }
 }

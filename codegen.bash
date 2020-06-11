@@ -5,6 +5,6 @@
 set -e
 cd "$(dirname "$0")"
 export CCHK="java -classpath /mnt/d/Code/Compiler/MXCompiler/Antlr/antlr-4.8-complete.jar:./bin Main"
-cat > basic-2.mx   # save everything in stdin to program.txt
+#cat > basic-2.mx   # save everything in stdin to program.txt
 $CCHK
-cat < IRout.txt
+#cat < IRout.txt

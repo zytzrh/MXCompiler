@@ -28,6 +28,19 @@ public class Block {
     private Block r_dfsParent;
     private int dfsNum;
     private int r_dfsNum;
+    /************************/
+    private Block idom;
+    private Block semiDom;
+    private ArrayList<Block> semiDomChildren;
+    private HashSet<Block> strictDominators;
+
+    private Block postIdom;
+    private Block postSemiDom;
+    private ArrayList<Block> postSemiDomChildren;
+    private HashSet<Block> postStrictDominators;
+
+    private HashSet<Block> DF; // Dominance Frontier
+    private HashSet<Block> postDF;
 
     public Block(String name, LLVMfunction function) {
         this.name = name;
@@ -434,6 +447,134 @@ public class Block {
 
     public void setR_dfsNum(int r_dfsNum) {
         this.r_dfsNum = r_dfsNum;
+    }
+
+    public Block getIdom() {
+        return idom;
+    }
+
+    public void setIdom(Block idom) {
+        this.idom = idom;
+    }
+
+    public Block getSemiDom() {
+        return semiDom;
+    }
+
+    public void setSemiDom(Block semiDom) {
+        this.semiDom = semiDom;
+    }
+
+    public ArrayList<Block> getSemiDomChildren() {
+        return semiDomChildren;
+    }
+
+    public void setSemiDomChildren(ArrayList<Block> semiDomChildren) {
+        this.semiDomChildren = semiDomChildren;
+    }
+
+    public HashSet<Block> getStrictDominators() {
+        return strictDominators;
+    }
+
+    public void setStrictDominators(HashSet<Block> strictDominators) {
+        this.strictDominators = strictDominators;
+    }
+
+    public Block getPostIdom() {
+        return postIdom;
+    }
+
+    public void setPostIdom(Block postIdom) {
+        this.postIdom = postIdom;
+    }
+
+    public Block getPostSemiDom() {
+        return postSemiDom;
+    }
+
+    public void setPostSemiDom(Block postSemiDom) {
+        this.postSemiDom = postSemiDom;
+    }
+
+    public ArrayList<Block> getPostSemiDomChildren() {
+        return postSemiDomChildren;
+    }
+
+    public void setPostSemiDomChildren(ArrayList<Block> postSemiDomChildren) {
+        this.postSemiDomChildren = postSemiDomChildren;
+    }
+
+    public HashSet<Block> getPostStrictDominators() {
+        return postStrictDominators;
+    }
+
+    public void setPostStrictDominators(HashSet<Block> postStrictDominators) {
+        this.postStrictDominators = postStrictDominators;
+    }
+
+    public HashSet<Block> getDF() {
+        return DF;
+    }
+
+    public void setDF(HashSet<Block> DF) {
+        this.DF = DF;
+    }
+
+    public HashSet<Block> getPostDF() {
+        return postDF;
+    }
+
+    public void setPostDF(HashSet<Block> postDF) {
+        this.postDF = postDF;
+    }
+
+    public ArrayList<LLVMInstruction> getInstructions() {
+        ArrayList<LLVMInstruction> instructions = new ArrayList<>();
+        LLVMInstruction ptr = instHead;
+        while (ptr != null) {
+            instructions.add(ptr);
+            ptr = ptr.getPostInst();
+        }
+        return instructions;
+    }
+
+    public void addInstructionPrev(LLVMInstruction inst1, LLVMInstruction inst2) {
+        // Assure that inst1 is in this block.
+        if (inst1.getPreInst() == null) {
+            inst1.setPreInst(inst2);
+            inst2.setPostInst(inst1);
+            this.setInstHead(inst2);
+        } else {
+            inst2.setPreInst(inst1.getPreInst());
+            inst2.setPostInst(inst1);
+            inst1.getPreInst().setPostInst(inst2);
+            inst1.setPreInst(inst2);
+        }
+        afterAddInst(inst2);
+    }
+
+    public ParallelCopyInst getParallelCopy() {
+        LLVMInstruction ptr = this.getInstTail();
+        while (ptr != null && !(ptr instanceof ParallelCopyInst))
+            ptr = ptr.getPreInst();
+        return ptr == null ? null : ((ParallelCopyInst) ptr);
+    }
+
+    public String getNameWithoutDot() {
+        if (name.contains(".")) {
+            String[] strings = name.split("\\.");
+            StringBuilder res = new StringBuilder();
+            for (int i = 0; i < strings.length - 2; i++)
+                res.append(strings[i]).append('.');
+            res.append(strings[strings.length - 2]);
+            return res.toString();
+        } else
+            throw new RuntimeException();
+    }
+
+    public boolean dominate(Block block) {
+        return this == block || block.getStrictDominators().contains(this);
     }
 }
 

@@ -2,7 +2,7 @@ package IR.LLVMoperand;
 
 import IR.TypeSystem.LLVMtype;
 
-public class ConstString extends Operand{
+public class ConstString extends Operand implements Constant{
     private String value;   //the type does not concern?
 
     public ConstString(LLVMtype llvMtype, String value) {
@@ -24,5 +24,19 @@ public class ConstString extends Operand{
     @Override
     public boolean isConst() {
         return true;
+    }
+
+    @Override
+    public Constant castToType(LLVMtype objectType) {
+        // This method will never be called.
+        throw new RuntimeException("ConstString cast to " + objectType.toString());
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 }

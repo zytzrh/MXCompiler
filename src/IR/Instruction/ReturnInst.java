@@ -3,8 +3,10 @@ package IR.Instruction;
 import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMoperand.Operand;
+import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMVoidType;
 import IR.TypeSystem.LLVMtype;
+import Optimization.ConstOptim;
 
 public class ReturnInst extends LLVMInstruction{
     private LLVMtype returnType;
@@ -50,5 +52,16 @@ public class ReturnInst extends LLVMInstruction{
 
     public Operand getReturnValue() {
         return returnValue;
+    }
+
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        // Do nothing.
+        return false;
+    }
+
+    @Override
+    public Register getResult() {
+        throw new RuntimeException("Get result of return instruction.");
     }
 }

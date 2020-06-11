@@ -4,7 +4,9 @@ import IR.IRVisitor;
 import IR.LLVMoperand.ConstString;
 import IR.LLVMoperand.GlobalVar;
 import IR.LLVMoperand.Operand;
+import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
+import Optimization.ConstOptim;
 
 public class DefineGlobal extends LLVMInstruction {
     private GlobalVar globalVar;
@@ -40,5 +42,33 @@ public class DefineGlobal extends LLVMInstruction {
     @Override
     public void overrideObject(Object oldUse, Object newUse) {
         assert false;
+    }
+
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        assert false;           //gugu changed
+        return false;
+    }
+
+    @Override
+    public Register getResult() {
+        assert false;       //gugu changed
+        return null;
+    }
+
+    public GlobalVar getGlobalVar() {
+        return globalVar;
+    }
+
+    public void setGlobalVar(GlobalVar globalVar) {
+        this.globalVar = globalVar;
+    }
+
+    public Operand getInit() {
+        return init;
+    }
+
+    public void setInit(Operand init) {
+        this.init = init;
     }
 }

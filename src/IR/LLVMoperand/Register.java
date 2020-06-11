@@ -4,21 +4,34 @@ import IR.Instruction.LLVMInstruction;
 import IR.TypeSystem.LLVMtype;
 
 public class Register extends Operand{
-    private String registerId;
+    private String name;
     private LLVMInstruction def;
+    private boolean isParameter;
 
-    public Register(LLVMtype llvMtype, String registerId) {
+    public Register(LLVMtype llvMtype, String name) {
         super(llvMtype);
-        this.registerId = registerId;
+        this.name = name;
         this.def = null;
+        isParameter = false;
     }
 
-    public String getRegisterId() {
-        return registerId;
+
+    @Override
+    public String toString() {
+        return "%" + name;
     }
 
-    public void setRegisterId(String registerId) {
-        this.registerId = registerId;
+    @Override
+    public boolean isConst() {
+        return false;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public LLVMInstruction getDef() {
@@ -29,13 +42,23 @@ public class Register extends Operand{
         this.def = def;
     }
 
-    @Override
-    public String toString() {
-        return "%" + registerId;
+    public String getNameWithoutDot() {
+        if (name.contains(".")) {
+            String[] strings = name.split("\\.");
+            StringBuilder res = new StringBuilder();
+            for (int i = 0; i < strings.length - 2; i++)
+                res.append(strings[i]).append('.');
+            res.append(strings[strings.length - 2]);
+            return res.toString();
+        } else
+            throw new RuntimeException();
     }
 
-    @Override
-    public boolean isConst() {
-        return false;
+    public boolean isParameter() {
+        return isParameter;
+    }
+
+    public void setParameter(boolean parameter) {
+        isParameter = parameter;
     }
 }

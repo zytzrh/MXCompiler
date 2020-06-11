@@ -83,4 +83,14 @@ public class LLVMStructType extends LLVMtype {
         string.append(" }");
         return string.toString();
     }
+
+    public int calcOffset(int index) {
+        assert index >= 0 && index < members.size();
+        int offset = 0;
+        for (int i = 0; i <= index; i++) {
+            int typeSize = members.get(i).getByte();
+            offset = align(offset, typeSize) + (i == index ? 0 : typeSize);
+        }
+        return offset;
+    }
 }

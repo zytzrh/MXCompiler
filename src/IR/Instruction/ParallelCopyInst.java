@@ -2,6 +2,8 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
+import IR.LLVMoperand.Register;
+import Optimization.ConstOptim;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,4 +37,48 @@ public class ParallelCopyInst extends LLVMInstruction{
 
     @Override
     public void overrideObject(Object oldUse, Object newUse) { }
+
+    public HashSet<MoveInst> getMoves() {
+        return moves;
+    }
+
+    public void removeMove(MoveInst moveInst) {
+        assert moves.contains(moveInst);
+        moves.remove(moveInst);
+    }
+
+    public void setMoves(HashSet<MoveInst> moves) {
+        this.moves = moves;
+    }
+
+    public void appendMove(MoveInst moveInst) {
+        if (moveInst.getResult().equals(moveInst.getSource()))
+            return;
+        moves.add(moveInst);
+    }
+
+    public MoveInst findValidMove() {
+        for (MoveInst move1 : moves) {
+            boolean flag = true;
+            for (MoveInst move2 : moves) {
+                if (move2.getSource().equals(move1.getResult())) {
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag)
+                return move1;
+        }
+        return null;
+    }
+
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        return false;
+    }
+
+    @Override
+    public Register getResult() {
+        return null;
+    }
 }

@@ -4,6 +4,7 @@ import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
+import Optimization.ConstOptim;
 import Utility.Pair;
 
 import java.util.Set;
@@ -107,5 +108,22 @@ public class PhiInst extends LLVMInstruction {
 
     public void setResult(Register result) {
         this.result = result;
+    }
+
+    public void addBranch(Operand operand, Block block) {
+        branches.add(new Pair<>(operand, block));
+        operand.addUse(this);
+        block.addUse(this);
+    }
+
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        ConstOptim.Status status = constOptim.getStatus(result);
+        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
+            result.beOverriden(status.getOperand());
+            this.removeFromBlock();
+            return true;
+        } else
+            return false;
     }
 }

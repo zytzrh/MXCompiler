@@ -4,6 +4,7 @@ import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
+import Optimization.ConstOptim;
 
 public class AllocInst extends LLVMInstruction {
     private Register result;
@@ -44,5 +45,14 @@ public class AllocInst extends LLVMInstruction {
         this.llvMtype = llvMtype;
     }
 
-
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        ConstOptim.Status status = constOptim.getStatus(result);
+        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
+            result.beOverriden(status.getOperand());
+            this.removeFromBlock();
+            return true;
+        } else
+            return false;
+    }
 }

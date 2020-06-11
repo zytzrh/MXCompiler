@@ -2,9 +2,10 @@ package IR.Instruction;
 
 import IR.Block;
 import IR.IRVisitor;
-import IR.LLVMoperand.Operand;
-import IR.LLVMoperand.Register;
+import IR.LLVMoperand.*;
+import IR.TypeSystem.LLVMIntType;
 import IR.TypeSystem.LLVMtype;
+import Optimization.ConstOptim;
 
 public class IcmpInst extends LLVMInstruction{
     public enum IcmpName {
@@ -95,5 +96,52 @@ public class IcmpInst extends LLVMInstruction{
 
     public void setResult(Register result) {
         this.result = result;
+    }
+
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        ConstOptim.Status status = constOptim.getStatus(result);
+        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
+            result.beOverriden(status.getOperand());
+            this.removeFromBlock();
+            return true;
+        } else
+            return false;
+    }
+
+    public boolean shouldSwap(boolean assertOrNot) {
+        if (assertOrNot)
+            assert !(op1 instanceof Constant) || !(op2 instanceof Constant);
+        else {
+            if (op1 instanceof Constant && op2 instanceof Constant)
+                return false;
+        }
+        return op1 instanceof Constant;
+    }
+
+    public void swapOps() {
+        operator = operator == IcmpName.sgt ? IcmpName.slt
+                : operator == IcmpName.slt ? IcmpName.sgt
+                : operator == IcmpName.sge ? IcmpName.sle
+                : operator == IcmpName.sle ? IcmpName.sge
+                : operator;
+        Operand tmp = op1;
+        op1 = op2;
+        op2 = tmp;
+    }
+
+    public void convertLeGeToLtGt() {
+        if (op2 instanceof ConstBool)
+            return;
+        assert op2 instanceof ConstInt;
+        if (operator == IcmpName.sle) {
+            operator = IcmpName.slt;
+            assert ((ConstInt) op2).getValue() != Integer.MAX_VALUE;
+            this.op2 = new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), ((ConstInt) op2).getValue() + 1);
+        } else if (operator == IcmpName.sge) {
+            operator = IcmpName.sgt;
+            assert ((ConstInt) op2).getValue() != Integer.MIN_VALUE;
+            this.op2 = new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), ((ConstInt) op2).getValue() - 1);
+        }
     }
 }

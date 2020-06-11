@@ -1,8 +1,12 @@
 import AST.ProgramNode;
 import AST.Visit.ASTBuilder;
+import BackEnd.Construct.CodeEmitter;
+import BackEnd.Construct.InstructionSelector;
+import BackEnd.Construct.RegisterAllocator;
+import BackEnd.RISCVModule;
 import IR.IRBuilder;
-import IR.IRPrinter;
-import Optimization.CFGSimplifier;
+import IR.Module;
+import Optimization.*;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ExceptionHandle.ExceptionListener;
 import Semantic.ParserAndLexer.MXgrammarLexer;
@@ -12,7 +16,6 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -24,7 +27,7 @@ public class Main {
 
         InputStream is = System.in;
         /*for file*******************/
-        is = new FileInputStream("basic-2.mx");
+//        is = new FileInputStream("basic-2.mx");
         /*for file******************/
         ANTLRInputStream input = new ANTLRInputStream(is);
 
@@ -56,10 +59,44 @@ public class Main {
         }
         IRBuilder irBuilder = new IRBuilder(semanticCheck);
         irBuilder.visit(programNode);
-        CFGSimplifier cfgSimplifier = new CFGSimplifier(irBuilder.getModule());
+        Module module = irBuilder.getModule();
+        //        IRPrinter irPrinter = new IRPrinter("out.ll");
+        //        irPrinter.visit(irBuilder.getModule());
+
+
+        CFGSimplifier cfgSimplifier = new CFGSimplifier(module);
         cfgSimplifier.run();
-        IRPrinter irPrinter = new IRPrinter("out.ll");
-        irPrinter.visit(irBuilder.getModule());
+        DTreeConstructor dTreeConstructor = new DTreeConstructor(module);
+        dTreeConstructor.run();
+        SSAConstructor ssaConstructor = new SSAConstructor(module);
+        ssaConstructor.run();
+
+
+        LoopAnalysis loopAnalysis = new LoopAnalysis(module);
+        ConstOptim constOptim = new ConstOptim(module);
+        while(true){
+            boolean changed = false;
+            changed = constOptim.run();
+            changed |= cfgSimplifier.run();
+            changed |= loopAnalysis.run();
+            changed |= cfgSimplifier.run();
+            if (!changed)
+                break;
+        }
+
+        new SSADestructor(module).run();
+        InstructionSelector instructionSelector = new InstructionSelector();
+        module.accept(instructionSelector);
+        RISCVModule ASMRISCVModule = instructionSelector.getASMRISCVModule();
+
+        dTreeConstructor.run();
+        loopAnalysis.run();
+
+        new RegisterAllocator(ASMRISCVModule, loopAnalysis).run();
+        new CodeEmitter("output.s", true).run(ASMRISCVModule);
+
+
+
     }
 
 }

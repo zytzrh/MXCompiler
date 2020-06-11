@@ -35,7 +35,7 @@ public class Module {
             if(astType instanceof ClassType){
                 HashMap<String, Function> methods = ((ClassType) astType).getMethods();
                 for(HashMap.Entry<String, Function> method : methods.entrySet()){
-                    initMethod(((ClassType) astType).getName() + "." + method.getKey(),
+                    initMethod(((ClassType) astType).getName() + "$" + method.getKey(),
                             method.getValue(), (ClassType) astType);
                 }
             }
@@ -48,7 +48,7 @@ public class Module {
                 if(astType instanceof ClassType){
                     Function constructor = astType.getConstructor();
                     if(constructor.getCategory() != Function.Category.defaultConstructor)
-                        initMethod(((ClassType) astType).getName() + "." + ((ClassType) astType).getName(),
+                        initMethod(((ClassType) astType).getName() + "$" + ((ClassType) astType).getName(),
                             constructor, (ClassType) astType);
                 }
             }
@@ -115,12 +115,12 @@ public class Module {
         if(!(llvmReturnType instanceof LLVMVoidType)){
             Register returnAddr = new Register(new LLVMPointerType(llvmReturnType), "return$address");
             llvMfunction.setReturnAddr(returnAddr);
-            llvMfunction.registerVar(returnAddr.getRegisterId(), returnAddr);
+            llvMfunction.registerVar(returnAddr.getName(), returnAddr);
             initBlock.addInst(new AllocInst(initBlock, returnAddr, llvmReturnType));
             initBlock.addInst(new StoreInst(initBlock, function.getReturnType().getDefaultValue(), returnAddr));
 
             Register returnLoad = new Register(llvmReturnType, "return");
-            llvMfunction.registerVar(returnLoad.getRegisterId(), returnLoad);
+            llvMfunction.registerVar(returnLoad.getName(), returnLoad);
             returnBlock.addInst(new LoadInst(returnBlock, returnAddr, returnLoad));
             returnBlock.addInst(new ReturnInst(returnBlock, llvmReturnType, returnLoad));
         }else{
@@ -128,10 +128,11 @@ public class Module {
         }
         for(int i = 0; i < paras.size(); i++){
             Register para = paras.get(i);
+            para.setParameter(true);            //gugu changed:
             LLVMtype paraAddrType = para.getLlvMtype();
             Register allocAddr = new Register(new LLVMPointerType(paraAddrType),
-                    para.getRegisterId() + "$address");
-            llvMfunction.registerVar(allocAddr.getRegisterId(), allocAddr);
+                    para.getName() + "$address");
+            llvMfunction.registerVar(allocAddr.getName(), allocAddr);
             initBlock.addInst(new AllocInst(initBlock, allocAddr, paraAddrType));
             initBlock.addInst(new StoreInst(initBlock, para, allocAddr));
             function.getParas().get(i).setAllocAddr(allocAddr);         //
@@ -142,6 +143,7 @@ public class Module {
     public void initMethod(String functionName, Function function, ClassType classType){
         ArrayList<Register> paras = new ArrayList<Register>();
         Register thisRegiser = new Register(classType.convert2LLVM(typeMap), "this");
+        thisRegiser.setParameter(true);             //gugu changed
         paras.add(thisRegiser);                             //differ from normal function
         for(VariableEntity para : function.getParas()){
             LLVMtype llvmParaType = para.getType().convert2LLVM(typeMap);
@@ -149,7 +151,7 @@ public class Module {
         }
         LLVMtype llvmReturnType = function.getReturnType().convert2LLVM(typeMap);
         LLVMfunction llvMfunction = new LLVMfunction(functionName, paras, llvmReturnType);
-        llvMfunction.registerVar(thisRegiser.getRegisterId(), thisRegiser);
+        llvMfunction.registerVar(thisRegiser.getName(), thisRegiser);
         functionMap.put(functionName, llvMfunction);
         //initBlock
         Block initBlock = new Block("initBlock", llvMfunction);
@@ -161,12 +163,12 @@ public class Module {
         if(!(llvmReturnType instanceof LLVMVoidType)){
             Register returnAddr = new Register(new LLVMPointerType(llvmReturnType), "return$address");
             llvMfunction.setReturnAddr(returnAddr);
-            llvMfunction.registerVar(returnAddr.getRegisterId(), returnAddr);
+            llvMfunction.registerVar(returnAddr.getName(), returnAddr);
             initBlock.addInst(new AllocInst(initBlock, returnAddr, llvmReturnType));
             initBlock.addInst(new StoreInst(initBlock, function.getReturnType().getDefaultValue(), returnAddr));
 
             Register returnLoad = new Register(llvmReturnType, "return");
-            llvMfunction.registerVar(returnLoad.getRegisterId(), returnLoad);
+            llvMfunction.registerVar(returnLoad.getName(), returnLoad);
             returnBlock.addInst(new LoadInst(returnBlock, returnAddr, returnLoad));
             returnBlock.addInst(new ReturnInst(returnBlock, llvmReturnType, returnLoad));
         }else{
@@ -175,15 +177,16 @@ public class Module {
         //differ from normal function
         Register thisAddr = new Register(new LLVMPointerType(thisRegiser.getLlvMtype()), "this$address");
         llvMfunction.setThisAddr(thisAddr);
-        llvMfunction.registerVar(thisAddr.getRegisterId(), thisAddr);
+        llvMfunction.registerVar(thisAddr.getName(), thisAddr);
         initBlock.addInst(new AllocInst(initBlock, thisAddr, thisRegiser.getLlvMtype()));
         initBlock.addInst(new StoreInst(initBlock, thisRegiser, thisAddr));
         for(int i = 1; i < paras.size(); i++){
             Register para = paras.get(i);                                 //differ from normal funtion
+            para.setParameter(true);                //gugu changed
             LLVMtype paraAddrType = para.getLlvMtype();
             Register allocAddr = new Register(new LLVMPointerType(paraAddrType),
-                    para.getRegisterId() + "$address");
-            llvMfunction.registerVar(allocAddr.getRegisterId(), allocAddr);
+                    para.getName() + "$address");
+            llvMfunction.registerVar(allocAddr.getName(), allocAddr);
             initBlock.addInst(new AllocInst(initBlock, allocAddr, paraAddrType));
             initBlock.addInst(new StoreInst(initBlock, para, allocAddr));
             function.getParas().get(i-1).setAllocAddr(allocAddr);           //

@@ -5,6 +5,7 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
+import Optimization.ConstOptim;
 
 import java.util.ArrayList;
 import java.util.ListIterator;
@@ -92,5 +93,22 @@ public class CallInst extends LLVMInstruction {
 
     public void setParas(ArrayList<Operand> paras) {
         this.paras = paras;
+    }
+
+    public boolean isVoidCall() {
+        return result == null;
+    }
+
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        if (this.isVoidCall())
+            return false;
+        ConstOptim.Status status = constOptim.getStatus(result);
+        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
+            result.beOverriden(status.getOperand());
+            this.removeFromBlock();
+            return true;
+        } else
+            return false;
     }
 }

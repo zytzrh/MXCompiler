@@ -1,5 +1,6 @@
 package IR;
 
+import IR.Instruction.AllocInst;
 import IR.Instruction.LLVMInstruction;
 import IR.Instruction.ReturnInst;
 import IR.LLVMoperand.Register;
@@ -43,6 +44,12 @@ public class LLVMfunction {
     }
 
     public void registerBlock(String name, Block block){
+        registerBlockName(name, block);
+
+        addBlock(block);
+    }
+
+    public void registerBlockName(String name, Block block){
         HashMap<String, Block> sameNameMap;
         if(blockNameManager.containsKey(name)){
             sameNameMap = blockNameManager.get(name);
@@ -53,8 +60,6 @@ public class LLVMfunction {
         String newName = name + "." + sameNameMap.size();
         block.setName(newName);
         sameNameMap.put(newName, block);
-
-        addBlock(block);
     }
 
     public void registerVar(String name, Register register){
@@ -66,7 +71,7 @@ public class LLVMfunction {
             varNameManager.put(name, sameNameMap);
         }
         String newName = name + "." + sameNameMap.size();
-        register.setRegisterId(newName);
+        register.setName(newName);
         sameNameMap.put(newName, register);
     }
 
@@ -303,5 +308,36 @@ public class LLVMfunction {
 
     public void setExitBlock(Block exitBlock) {
         this.exitBlock = exitBlock;
+    }
+
+
+    public ArrayList<Block> getBlocks() {           //gugu changde: delete
+        ArrayList<Block> blocks = new ArrayList<>();
+
+        Block ptr = initBlock;
+        while (ptr != null) {
+            blocks.add(ptr);
+            ptr = ptr.getNext();
+        }
+        return blocks;
+    }
+
+    public ArrayList<AllocInst> getAllocaInstructions() {
+        ArrayList<AllocInst> allocaInst = new ArrayList<>();
+        LLVMInstruction ptr = initBlock.getInstHead();
+        while (ptr != null) {
+            if (ptr instanceof AllocInst)
+                allocaInst.add((AllocInst) ptr);
+            ptr = ptr.getPostInst();
+        }
+        return allocaInst;
+    }
+    public void addBasicBlockPrev(Block block1, Block block2) {
+        // Assume that block1 is in this function.
+        assert block1.getPrev() != null;
+        block2.setPrev(block1.getPrev());
+        block2.setNext(block1);
+        block1.getPrev().setNext(block2);
+        block1.setPrev(block2);
     }
 }
