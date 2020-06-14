@@ -5,7 +5,7 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import Optimization.Andersen;
+import Optimization.PointerAnalysis;
 import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
@@ -84,7 +84,7 @@ public class MoveInst extends LLVMInstruction{
     }
 
     @Override
-    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
 
     }
 

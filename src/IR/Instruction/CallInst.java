@@ -7,7 +7,7 @@ import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
-import Optimization.Andersen;
+import Optimization.PointerAnalysis;
 import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
@@ -143,12 +143,12 @@ public class CallInst extends LLVMInstruction {
     }
 
     @Override
-    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
         if (this.llvMfunction.isBuiltIn()) {
             if (!isVoidCall() && result.getLlvMtype() instanceof LLVMPointerType) {
                 assert nodeMap.containsKey(result);
-                Andersen.Node pointer = nodeMap.get(result);
-                Andersen.Node pointTo = new Andersen.Node(pointer.getName()
+                PointerAnalysis.Node pointer = nodeMap.get(result);
+                PointerAnalysis.Node pointTo = new PointerAnalysis.Node(pointer.getName()
                         + ".returnValue:" + llvMfunction.getFunctionName());
                 pointer.getPointsTo().add(pointTo);
                 nodes.add(pointTo);

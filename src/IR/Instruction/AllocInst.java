@@ -6,7 +6,7 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
-import Optimization.Andersen;
+import Optimization.PointerAnalysis;
 import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
@@ -57,10 +57,10 @@ public class AllocInst extends LLVMInstruction {
     }
 
     @Override
-    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
         assert nodeMap.containsKey(result);
-        Andersen.Node pointer = nodeMap.get(result);
-        Andersen.Node pointTo = new Andersen.Node(pointer.getName() + ".alloca");
+        PointerAnalysis.Node pointer = nodeMap.get(result);
+        PointerAnalysis.Node pointTo = new PointerAnalysis.Node(pointer.getName() + ".alloca");
         pointer.getPointsTo().add(pointTo);
         nodes.add(pointTo);
     }
