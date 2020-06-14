@@ -441,11 +441,11 @@ public class Module {
                     if (currentInst instanceof CallInst) {
                         CallInst callInst = (CallInst) currentInst;
                         LLVMfunction callee = callInst.getLlvMfunction();
-                        if(callee == builtInFunctionMap.get("toString")){
+//                        if(callee == builtInFunctionMap.get("toString")){
                             trivalCount++;
                             if(trivalCount > 300)
                                 return false;
-                        }
+//                        }
                     }
                     currentInst = currentInst.getPostInst();
                 }
