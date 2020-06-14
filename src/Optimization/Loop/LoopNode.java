@@ -19,12 +19,12 @@ public class LoopNode {
     private Block header;                   //
     private Set<Block> loopBlocks;
     private Set<Block> uniqueLoopBlocks;
-    private Set<Block> exitBlocks;
+    private Set<Block> exitBlocks;          //
 
     private LoopNode father;
     private ArrayList<LoopNode> children;
 
-    private int depth;
+    private int depth;                  //???
 
     private Block preHeader;            //
 

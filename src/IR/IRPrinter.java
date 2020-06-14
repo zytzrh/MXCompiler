@@ -15,7 +15,7 @@ public class IRPrinter implements IRVisitor {
 
     public IRPrinter(String filename) throws FileNotFoundException {
         stdout = System.out;
-        newout = new PrintStream("IRout.txt");;
+        newout = new PrintStream(filename);;
         indent = "    ";
     }
 

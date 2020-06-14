@@ -13,17 +13,17 @@ public class LoopAnalysis extends Pass {
 
     //************************************************************//
 
-    private Map<LLVMfunction, LoopNode> loopRoot;
+    private Map<LLVMfunction, LoopNode> rootNodes;
     private Map<Block, LoopNode> blockNodeMap;
-    private Map<Block, LoopNode> headerNodeMap;
+    private Map<Block, LoopNode> headerLoopNodeMap;
     private Set<Block> preHeaders;
 
     public LoopAnalysis(Module module) {
         super(module);
     }
 
-    public Map<LLVMfunction, LoopNode> getLoopRoot() {
-        return loopRoot;
+    public Map<LLVMfunction, LoopNode> getRootNodes() {
+        return rootNodes;
     }
 
     public Map<Block, LoopNode> getBlockNodeMap() {
@@ -34,10 +34,11 @@ public class LoopAnalysis extends Pass {
         return preHeaders != null && preHeaders.contains(block);
     }
 
-    public int getBlockDepth(ASMBlock ASMBlock) {
+    public int getBlockDepth(ASMBlock ASMBlock) {                                   //gugu
         Block irBlock = ASMBlock.getIrBlock();
         return blockNodeMap.get(irBlock).getDepth();
     }
+
 
     @Override
     public boolean run() {
@@ -46,77 +47,51 @@ public class LoopAnalysis extends Pass {
                 return false;
         }
 
-        loopRoot = new HashMap<>();
+        rootNodes = new HashMap<>();
         blockNodeMap = new HashMap<>();
-        headerNodeMap = new HashMap<>();
+        headerLoopNodeMap = new HashMap<>();
         preHeaders = new HashSet<>();
         for (LLVMfunction function : module.getFunctionMap().values())
-            loopRoot.put(function, constructLoopTree(function));
+            rootNodes.put(function, constructLoopTree(function));
 
 
         return false;
     }
 
     private LoopNode constructLoopTree(LLVMfunction function) {
-        LoopNode root = new LoopNode(function.getInitBlock(), this);
-        loopRoot.put(function, root);
+        LoopNode root = new LoopNode(function.getInitBlock(), this);        //
+        rootNodes.put(function, root);
 
-        dfsDetectNaturalLoop(function.getInitBlock(), new HashSet<>(), root);
-        dfsConstructLoopTree(function.getInitBlock(), new HashSet<>(), root);
+        detectNaturalLoop(function.getInitBlock(), new HashSet<>(), root);
+        constructLoopNestTree(function.getInitBlock(), new HashSet<>(), root);
         root.setDepth(0);
         dfsLoopTree(root);
 
         return root;
     }
 
-    private void dfsDetectNaturalLoop(Block block, Set<Block> visit, LoopNode root) {
+    private void detectNaturalLoop(Block block, Set<Block> visit, LoopNode root) {
         visit.add(block);
-        root.addLoopBlock(block);
+        root.addLoopBlock(block);           //always add to root
         for (Block successor : block.getSuccessors()) {
             if (successor.dominate(block)) {
-                // Means that a back edge is found.
+                // the back egde block->successor(header)
                 extractNaturalLoop(successor, block);
             } else if (!visit.contains(successor))
-                dfsDetectNaturalLoop(successor, visit, root);
+                detectNaturalLoop(successor, visit, root);
         }
     }
 
-    private void extractNaturalLoop(Block header, Block end) {
-        LoopNode loop = new LoopNode(header, this);
 
-        HashSet<Block> visit = new HashSet<>();
-        Queue<Block> queue = new LinkedList<>();
-        queue.offer(end);
-        visit.add(end);
-        while (!queue.isEmpty()) {
-            Block block = queue.poll();
-            if (header.dominate(block))
-                loop.addLoopBlock(block);
-
-            for (Block predecessor : block.getPredecessors()) {
-                if (predecessor != header && !visit.contains(predecessor)) {
-                    queue.offer(predecessor);
-                    visit.add(predecessor);
-                }
-            }
-        }
-        loop.addLoopBlock(header);
-
-        if (!headerNodeMap.containsKey(header))
-            headerNodeMap.put(header, loop);
-        else
-            headerNodeMap.get(header).mergeLoopNode(loop);
-    }
-
-    private void dfsConstructLoopTree(Block block, Set<Block> visit, LoopNode currentLoop) {
+    private void constructLoopNestTree(Block block, Set<Block> visit, LoopNode currentLoop) {
         visit.add(block);
 
         LoopNode child = null;
         if (block == currentLoop.getHeader()) {
-            // block == entrance block
-            currentLoop.setUniqueLoopBlocks(new HashSet<>(currentLoop.getLoopBlocks()));
-        } else if (headerNodeMap.containsKey(block)) {
-            child = headerNodeMap.get(block);
+            // block == entrance block????????
+            currentLoop.setUniqueLoopBlocks(new HashSet<>(currentLoop.getLoopBlocks()));    //???
+        } else if (headerLoopNodeMap.containsKey(block)) {
+            child = headerLoopNodeMap.get(block);
             child.setFather(currentLoop);
             currentLoop.addChild(child);
 
@@ -126,12 +101,17 @@ public class LoopAnalysis extends Pass {
 
         for (Block successor : block.getSuccessors()) {
             if (!visit.contains(successor)) {
-                LoopNode nextLoop = child != null ? child : currentLoop;
-                while (nextLoop != null && !nextLoop.getLoopBlocks().contains(successor))
-                    nextLoop = nextLoop.getFather();
-                assert nextLoop != null;
+                LoopNode nextLoopNode;
+                if(child != null)
+                    nextLoopNode = child;
+                else
+                    nextLoopNode = currentLoop;
 
-                dfsConstructLoopTree(successor, visit, nextLoop);
+                while (nextLoopNode != null && !nextLoopNode.getLoopBlocks().contains(successor))
+                    nextLoopNode = nextLoopNode.getFather();
+
+                assert nextLoopNode != null;
+                constructLoopNestTree(successor, visit, nextLoopNode);
             }
         }
     }
@@ -147,18 +127,19 @@ public class LoopAnalysis extends Pass {
         if (loop.hasFather() && !loop.hasPreHeader(blockNodeMap))
             loop.addPreHeader(blockNodeMap);
 
+        //set exitblock
         Set<Block> exitBlocks = new HashSet<>();
         if (loop.hasFather()) {
             for (LoopNode child : loop.getChildren()) {
-                for (Block exit : child.getExitBlocks()) {
-                    assert exit.getInstTail() instanceof BranchInst;
-                    BranchInst exitInst = ((BranchInst) exit.getInstTail());
+                for (Block exitBlock : child.getExitBlocks()) {
+                    assert exitBlock.getInstTail() instanceof BranchInst;
+                    BranchInst exitInst = ((BranchInst) exitBlock.getInstTail());
                     if (!loop.getLoopBlocks().contains(exitInst.getIfTrueBlock())) {
-                        exitBlocks.add(exit);
+                        exitBlocks.add(exitBlock);
                         break;
                     }
                     if (exitInst.getCondition() != null && !loop.getLoopBlocks().contains(exitInst.getIfFalseBlock())) {
-                        exitBlocks.add(exit);
+                        exitBlocks.add(exitBlock);
                         break;
                     }
                 }
@@ -179,20 +160,47 @@ public class LoopAnalysis extends Pass {
         loop.setExitBlocks(exitBlocks);
     }
 
-    public void setLoopRoot(Map<LLVMfunction, LoopNode> loopRoot) {
-        this.loopRoot = loopRoot;
+    private void extractNaturalLoop(Block header, Block end) {
+        LoopNode loop = new LoopNode(header, this);
+        loop.addLoopBlock(header);
+        HashSet<Block> visit = new HashSet<>();
+        Queue<Block> queue = new LinkedList<>();
+        queue.offer(end);
+        visit.add(end);
+        while (!queue.isEmpty()) {
+            Block block = queue.poll();
+            if (header.dominate(block))
+                loop.addLoopBlock(block);
+            for (Block predecessor : block.getPredecessors()) {
+                if (predecessor != header && !visit.contains(predecessor)) {
+                    queue.offer(predecessor);
+                    visit.add(predecessor);
+                }
+            }
+        }
+        //merge loop with the same header, the result may be not natural loop
+        if (!headerLoopNodeMap.containsKey(header))
+            headerLoopNodeMap.put(header, loop);
+        else{
+            LoopNode existingHeader = headerLoopNodeMap.get(header);
+            existingHeader.getLoopBlocks().addAll(loop.getLoopBlocks());
+        }
+    }
+
+    public void setRootNodes(Map<LLVMfunction, LoopNode> rootNodes) {
+        this.rootNodes = rootNodes;
     }
 
     public void setBlockNodeMap(Map<Block, LoopNode> blockNodeMap) {
         this.blockNodeMap = blockNodeMap;
     }
 
-    public Map<Block, LoopNode> getHeaderNodeMap() {
-        return headerNodeMap;
+    public Map<Block, LoopNode> getHeaderLoopNodeMap() {
+        return headerLoopNodeMap;
     }
 
-    public void setHeaderNodeMap(Map<Block, LoopNode> headerNodeMap) {
-        this.headerNodeMap = headerNodeMap;
+    public void setHeaderLoopNodeMap(Map<Block, LoopNode> headerLoopNodeMap) {
+        this.headerLoopNodeMap = headerLoopNodeMap;
     }
 
     public Set<Block> getPreHeaders() {

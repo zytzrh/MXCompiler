@@ -100,7 +100,7 @@ abstract public class LLVMInstruction implements Cloneable{
 
     abstract public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue);
 
-    public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {
+    public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {          //gugu changed
         removeFromBlock();
         return true;
     }

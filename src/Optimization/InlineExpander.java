@@ -1,10 +1,7 @@
 package Optimization;
 
 import IR.Block;
-import IR.Instruction.BranchInst;
-import IR.Instruction.CallInst;
-import IR.Instruction.LLVMInstruction;
-import IR.Instruction.ReturnInst;
+import IR.Instruction.*;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
@@ -15,68 +12,64 @@ import Utility.Pair;
 import java.util.*;
 
 public class InlineExpander extends Pass {
-    private final int instructionLimit = 200;
-
+    private final int instructionLimit = 100;
     private Map<LLVMfunction, Integer> instructionCnt;
     private Map<LLVMfunction, Set<LLVMfunction>> recursiveCalleeMap;
 
     public InlineExpander(Module module) {
         super(module);
+        instructionCnt = new HashMap<>();
+        recursiveCalleeMap = new HashMap<>();
     }
 
     @Override
     public boolean run() {
-        for (LLVMfunction function : module.getFunctionMap().values()) {
-            if (!function.isFunctional())
-                return false;
-        }
+        if(!module.checkNormalFunctional()) return false;
+        initMap();
+        changed = false;
+        if(nonRecursiveInline()) changed = true;
+        if(recursiveInline()) changed = true;
+        return false;
+    }
 
+    public void initMap(){
         instructionCnt = new HashMap<>();
         recursiveCalleeMap = new HashMap<>();
         for (LLVMfunction function : module.getFunctionMap().values())
             recursiveCalleeMap.put(function, new HashSet<>());
 
-        for (LLVMfunction function : module.getFunctionMap().values())
-            countInstructionsAndCalls(function);
-        for (LLVMfunction function : module.getFunctionMap().values())
-            computeRecursiveCallees(function);
-
-        changed = false;
-        changed = nonRecursiveInline();
-        changed |= recursiveInline();
-        return false;
-    }
-
-    private void countInstructionsAndCalls(LLVMfunction function) {
-        int instructionCnt = 0;
-        for (Block block : function.getBlocks()) {
-            LLVMInstruction ptr = block.getInstHead();
-            while (ptr != null) {
-                instructionCnt++;
-                if (ptr instanceof CallInst) {
-                    LLVMfunction callee = ((CallInst) ptr).getLlvMfunction();
-                    if(module.getFunctionMap().containsValue(callee))
-//                    if (!module.getExternalFunctionMap().containsValue(callee))
-                        recursiveCalleeMap.get(function).add(callee);
+        for (LLVMfunction function : module.getFunctionMap().values()){
+            //count instrcutionn in function
+            int instructionCount = 0;
+            for (Block block : function.getBlocks()) {
+                LLVMInstruction currentInst = block.getInstHead();
+                while (currentInst != null) {
+                    instructionCount++;
+                    if (currentInst instanceof CallInst) {
+                        CallInst callInst = (CallInst) currentInst;
+                        LLVMfunction callee = callInst.getLlvMfunction();
+                        if(module.getFunctionMap().containsValue(callee))
+                            recursiveCalleeMap.get(function).add(callee);
+                    }
+                    currentInst = currentInst.getPostInst();
                 }
-                ptr = ptr.getPostInst();
             }
+            this.instructionCnt.put(function, instructionCount);
         }
-        this.instructionCnt.put(function, instructionCnt);
-    }
+        for (LLVMfunction function : module.getFunctionMap().values()){
+            //init recursive function relationship
+            Queue<LLVMfunction> queue = new LinkedList<>();
+            Set<LLVMfunction> callees = recursiveCalleeMap.get(function);
+            for (LLVMfunction callee : callees)
+                queue.offer(callee);
 
-    private void computeRecursiveCallees(LLVMfunction function) {
-        Queue<LLVMfunction> queue = new LinkedList<>();
-        Set<LLVMfunction> callees = recursiveCalleeMap.get(function);
-        for (LLVMfunction callee : callees)
-            queue.offer(callee);
-
-        while (!queue.isEmpty()) {
-            LLVMfunction func = queue.poll();
-            for (LLVMfunction callee : recursiveCalleeMap.get(func)) {
-                if (!callees.contains(callee)) {
-                    callees.add(callee);
-                    queue.offer(callee);
+            while (!queue.isEmpty()) {
+                LLVMfunction func = queue.poll();
+                for (LLVMfunction callee : recursiveCalleeMap.get(func)) {
+                    if (!callees.contains(callee)) {
+                        callees.add(callee);
+                        queue.offer(callee);
+                    }
                 }
             }
         }
@@ -201,6 +194,16 @@ public class InlineExpander extends Pass {
         callInst.removeFromBlock();
         inlineDivergedBlock.addInst
                 (new BranchInst(inlineDivergedBlock, null, clonedBlocks.get(0), null));
+//        LLVMInstruction tmpInst = clonedBlocks.get(0).getInstHead();
+//        while(tmpInst instanceof PhiInst){
+//            PhiInst phiInst = (PhiInst) tmpInst;
+//            for(Pair<Operand, Block>branch : phiInst.getBranches()){
+//                if(branch.getSecond() == inlineDivergedBlock)
+//                    inlineDivergedBlock.addUse(tmpInst);
+//            }
+//            tmpInst = tmpInst.getPostInst();
+//        }
+
         clonedBlocks.get(blocksCnt - 1).addInst
                 (new BranchInst(clonedBlocks.get(blocksCnt - 1), null, inlineMergedBlock, null));
 

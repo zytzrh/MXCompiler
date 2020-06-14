@@ -164,7 +164,7 @@ public class RegisterAllocator extends ASMPass {
             ASMInstruction ptr = block.getInstHead();
             while (ptr != null) {
                 for (VirtualASMRegister def : ptr.getDef())
-                    def.increaseSpillCost(Math.pow(10, depth));
+                    def.increaseSpillCost(Math.pow(10, depth));         //gugu changed
                 for (VirtualASMRegister use : ptr.getUse())
                     use.increaseSpillCost(Math.pow(10, depth));
                 ptr = ptr.getNextInst();

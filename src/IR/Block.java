@@ -59,6 +59,7 @@ public class Block implements Cloneable{
     }
 
     public void addInst(LLVMInstruction newInstruction){
+        updateTerminal();
         if(!Terminal){
             if(instHead == null && instTail == null){
                 instHead = newInstruction;
@@ -74,6 +75,14 @@ public class Block implements Cloneable{
         }else{
             //is Terminal and do nothing
 
+        }
+    }
+
+    public void updateTerminal(){
+        if(instTail instanceof BranchInst || instTail instanceof ReturnInst){
+            Terminal = true;
+        }else{
+            Terminal = false;
         }
     }
 
@@ -616,7 +625,7 @@ public class Block implements Cloneable{
 
     public Block makeCopy(){
         Block block = new Block(this.getName(), this.function);
-
+        block.setUse(new LinkedHashMap<>());
         ArrayList<LLVMInstruction> instructions = new ArrayList<>();
         LLVMInstruction ptr = this.instHead;
         while (ptr != null) {
@@ -702,6 +711,10 @@ public class Block implements Cloneable{
 
     }
 
+    public void setUse(Map<LLVMInstruction, Integer> use) {
+        this.use = use;
+    }
+
     @Override
     public Object clone() {
         Block block;
@@ -711,7 +724,7 @@ public class Block implements Cloneable{
             e.printStackTrace();
             throw new RuntimeException(e.getMessage());
         }
-
+        block.setUse(new LinkedHashMap<>());
         ArrayList<LLVMInstruction> instructions = new ArrayList<>();
         LLVMInstruction ptr = this.instHead;
         while (ptr != null) {

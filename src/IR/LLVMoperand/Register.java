@@ -4,6 +4,7 @@ import IR.Instruction.LLVMInstruction;
 import IR.Instruction.ReturnInst;
 import IR.TypeSystem.LLVMtype;
 
+import java.util.LinkedHashMap;
 import java.util.Queue;
 import java.util.Set;
 
@@ -89,7 +90,9 @@ public class Register extends Operand implements Cloneable{
     }
 
     public Register makeCopy(){
-        return new Register(this.getLlvMtype(), this.name, this.def, this.isParameter);
+        Register newRegister = new Register(this.getLlvMtype(), this.name, this.def, this.isParameter);
+        newRegister.setUse(new LinkedHashMap<>());
+        return newRegister;
     }
 
     @Override
@@ -101,6 +104,7 @@ public class Register extends Operand implements Cloneable{
             e.printStackTrace();
             throw new RuntimeException(e.getMessage());
         }
+        register.setUse(new LinkedHashMap<>());         //gugu changed
         register.name = this.name;
         register.def = this.def;
         register.isParameter = this.isParameter;

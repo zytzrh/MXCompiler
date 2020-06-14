@@ -5,6 +5,7 @@ import BackEnd.Construct.InstructionSelector;
 import BackEnd.Construct.RegisterAllocator;
 import BackEnd.RISCVModule;
 import IR.IRBuilder;
+import IR.IRPrinter;
 import IR.Module;
 import Optimization.*;
 import Optimization.Loop.LoopAnalysis;
@@ -80,7 +81,9 @@ public class Main {
                 ConstOptim constOptim = new ConstOptim(module);
 //                MyInlineExpander myInlineExpander = new MyInlineExpander(module);
                 InlineExpander inlineExpander = new InlineExpander(module);
+                int optimizeCnt = 0;
                 while(true){
+                    optimizeCnt++;
                     boolean changed = false;
                     dTreeConstructor.run();
                     changed = constOptim.run();
@@ -88,11 +91,22 @@ public class Main {
                     changed |= cfgSimplifier.run();
                     loopAnalysis.run();
 //                    changed |= myInlineExpander.run();
-//                    changed |= inlineExpander.run();
+                    if(optimizeCnt == 1){
+                        IRPrinter irPrinter = new IRPrinter("preInline.txt");
+                        irPrinter.visit(module);
+                    }
+                    changed |= inlineExpander.run();
+                    if(optimizeCnt == 1){
+                        IRPrinter irPrinter = new IRPrinter("afterInline.txt");
+                        irPrinter.visit(module);
+                    }
                     changed |= cfgSimplifier.run();
                     if (!changed)
                         break;
                 }
+
+                IRPrinter irPrinter = new IRPrinter("IRout.txt");
+                irPrinter.visit(module);
 
                 new SSADestructor(module).run();
                 InstructionSelector instructionSelector = new InstructionSelector();

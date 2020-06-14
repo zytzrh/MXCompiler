@@ -36,7 +36,7 @@ public class Module {
                 HashMap<String, Function> methods = ((ClassType) astType).getMethods();
                 for(HashMap.Entry<String, Function> method : methods.entrySet()){
                     initMethod(((ClassType) astType).getName() + "$" + method.getKey(),
-                            method.getValue(), (ClassType) astType);
+                            method.getValue(), (ClassType) astType, false);
                 }
             }
         }
@@ -49,7 +49,7 @@ public class Module {
                     Function constructor = astType.getConstructor();
                     if(constructor.getCategory() != Function.Category.defaultConstructor)
                         initMethod(((ClassType) astType).getName() + "$" + ((ClassType) astType).getName(),
-                            constructor, (ClassType) astType);
+                            constructor, (ClassType) astType, true);
                 }
             }
         } catch (CompileError compileError) {
@@ -140,7 +140,7 @@ public class Module {
     }
 
     //can used for both method and constructor
-    public void initMethod(String functionName, Function function, ClassType classType){
+    public void initMethod(String functionName, Function function, ClassType classType, boolean inConstructor){
         ArrayList<Register> paras = new ArrayList<Register>();
         Register thisRegiser = new Register(classType.convert2LLVM(typeMap), "this");
         thisRegiser.setParameter(true);             //gugu changed
@@ -149,7 +149,11 @@ public class Module {
             LLVMtype llvmParaType = para.getType().convert2LLVM(typeMap);
             paras.add(new Register(llvmParaType, para.getId()));
         }
-        LLVMtype llvmReturnType = function.getReturnType().convert2LLVM(typeMap);
+        LLVMtype llvmReturnType;
+        if(inConstructor)
+            llvmReturnType = new LLVMVoidType();
+        else
+            llvmReturnType = function.getReturnType().convert2LLVM(typeMap);
         LLVMfunction llvMfunction = new LLVMfunction(functionName, paras, llvmReturnType);
         llvMfunction.registerVar(thisRegiser.getName(), thisRegiser);
         functionMap.put(functionName, llvMfunction);
@@ -418,5 +422,13 @@ public class Module {
 
     public void accept(IRVisitor visitor) throws IOException {
         visitor.visit(this);
+    }
+
+    public boolean checkNormalFunctional(){
+        for (LLVMfunction function : functionMap.values()) {
+            if (!function.isFunctional())
+                return false;
+        }
+        return true;
     }
 }

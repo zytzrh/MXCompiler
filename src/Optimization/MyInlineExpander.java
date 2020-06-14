@@ -23,11 +23,7 @@ public class MyInlineExpander extends Pass {
 
     @Override
     public boolean run() {
-        for (LLVMfunction function : module.getFunctionMap().values()) {
-            if (!function.isFunctional())
-                return false;
-        }
-
+        if(!module.checkNormalFunctional()) return false;
         instructionCnt = new HashMap<>();
         recursiveCalleeMap = new HashMap<>();
         for (LLVMfunction function : module.getFunctionMap().values())
