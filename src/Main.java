@@ -1,6 +1,6 @@
 import AST.ProgramNode;
 import AST.Visit.ASTBuilder;
-import BackEnd.Construct.CodeEmitter;
+import BackEnd.ASMPrinter;
 import BackEnd.Construct.InstructionSelector;
 import BackEnd.Construct.RegisterAllocator;
 import BackEnd.RISCVModule;
@@ -115,7 +115,8 @@ public class Main {
                 loopAnalysis.run();
 
                 new RegisterAllocator(ASMRISCVModule, loopAnalysis).run();
-                new CodeEmitter("output.s", true).run(ASMRISCVModule);
+                new ASMPrinter("output.s").run(ASMRISCVModule);
+                new ASMPrinter(null).run(ASMRISCVModule);
             }catch (Exception e){
 
             }

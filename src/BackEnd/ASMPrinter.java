@@ -1,76 +1,43 @@
-package BackEnd.Construct;
+package BackEnd;
 
-import BackEnd.ASMBlock;
-import BackEnd.ASMVisitor;
 import BackEnd.Instruction.*;
 import BackEnd.Instruction.BinaryInst.ITypeBinary;
 import BackEnd.Instruction.BinaryInst.RTypeBinary;
 import BackEnd.Instruction.Branch.BinaryBranch;
 import BackEnd.Instruction.Branch.UnaryBranch;
 import BackEnd.Operand.ASMGlobalVar;
-import BackEnd.RISCVFunction;
-import BackEnd.RISCVModule;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
-public class CodeEmitter implements ASMVisitor {
-    private File outputFile;
-    private OutputStream os;
-    private PrintWriter writer;
-    private String indent;
+public class ASMPrinter implements ASMVisitor{
+    PrintStream stdout;
+    PrintStream newout;
+    String indent;
+    private int functionCnt;            //gugu changed
 
-    private int functionCnt;
-    private boolean printRealASM;
-
-    public CodeEmitter(String filename, boolean printRealASM) {
-        this.printRealASM = printRealASM;
-        if (filename != null) {
-            try {
-                outputFile = new File(filename);
-                assert outputFile.exists() || outputFile.createNewFile();
-                os = new FileOutputStream(filename);
-                writer = new PrintWriter(os);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            os = null;
-            writer = null;
-        }
-
-        indent = "\t";
-    }
-
-    public void run(RISCVModule RISCVModule) {
-        RISCVModule.accept(this);
-
-        if (os != null) {
-            try {
-                writer.close();
-                os.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException(e.getMessage());
-            }
-        }
+    public ASMPrinter(String fileName) throws FileNotFoundException {
+        stdout = System.out;
+        indent = "    ";
+        if(fileName != null)
+            newout = new PrintStream(fileName);
+        else
+            newout = System.out;
     }
 
     private void print(String string) {
-        if (printRealASM)
             System.out.print(string);
-        if (os != null)
-            writer.print(string);
     }
 
     private void println(String string) {
-        if (printRealASM)
             System.out.println(string);
-        if (os != null)
-            writer.println(string);
+    }
+
+    public void run(RISCVModule RISCVModule) {
+        System.setOut(newout);
+        RISCVModule.accept(this);
+        System.setOut(stdout);
     }
 
     @Override
@@ -117,10 +84,7 @@ public class CodeEmitter implements ASMVisitor {
 
         ASMInstruction ptr = block.getInstHead();
         while (ptr != null) {
-            if (printRealASM)
                 println(ptr.emitCode());
-            else
-                println(indent + ptr.toString());
             ptr = ptr.getNextInst();
         }
     }
@@ -206,4 +170,3 @@ public class CodeEmitter implements ASMVisitor {
 
     }
 }
-

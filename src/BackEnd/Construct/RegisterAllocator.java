@@ -42,7 +42,6 @@ public class RegisterAllocator extends ASMPass {
     }
 
     final private int K = PhysicalASMRegister.allocatablePRs.size();
-    // K represents the number of allocatable physical registers.
 
     private BackEnd.RISCVFunction RISCVFunction;
     private final LoopAnalysis loopAnalysis;
@@ -53,7 +52,6 @@ public class RegisterAllocator extends ASMPass {
         this.loopAnalysis = loopAnalysis;
     }
 
-    // ------ Data Structures ------
     private Set<VirtualASMRegister> preColored;
     private Set<VirtualASMRegister> initial;
     private Set<VirtualASMRegister> simplifyWorkList;
@@ -74,13 +72,6 @@ public class RegisterAllocator extends ASMPass {
     private Set<ASMMoveInst> activeMoves;
 
     private Set<Edge> adjSet;
-    // adjList is contained in every VirtualRegister.
-    // degree is contained in every VirtualRegister.
-    // moveList is contained in every VirtualRegister.
-    // alias is contained in every VirtualRegister.
-    // color is contained in every VirtualRegister.
-
-    // ------ Data Structure End ------
 
     @Override
     public void run() {

@@ -86,7 +86,7 @@ public class RISCVFunction {
         ArrayList<Block> IRBlocks = IRFunction.getBlocks();
         for (Block IRBlock : IRBlocks) {
             ASMBlock block = new ASMBlock(this, IRBlock, IRBlock.getName(),
-                    ".LBB" + functionCnt + "_" + blockCnt);
+                    ".ASMBlock" + functionCnt + "_" + blockCnt);
             this.addBasicBlock(block);
             blockMap.put(block.getName(), block);
             blockCnt++;
