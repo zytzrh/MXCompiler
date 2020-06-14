@@ -1,10 +1,10 @@
 package BackEnd;
 
 import BackEnd.Instruction.*;
-import BackEnd.Instruction.BinaryInst.ITypeBinary;
-import BackEnd.Instruction.BinaryInst.RTypeBinary;
-import BackEnd.Instruction.Branch.BinaryBranch;
-import BackEnd.Instruction.Branch.UnaryBranch;
+import BackEnd.Instruction.BinaryInst.ITypeBinaryInst;
+import BackEnd.Instruction.BinaryInst.RTypeBinaryInst;
+import BackEnd.Instruction.Branch.BinaryBranchInst;
+import BackEnd.Instruction.Branch.UnaryBranchInst;
 import BackEnd.Operand.ASMGlobalVar;
 
 import java.io.FileNotFoundException;
@@ -111,12 +111,12 @@ public class ASMPrinter implements ASMVisitor{
     }
 
     @Override
-    public void visit(ITypeBinary inst) {
+    public void visit(ITypeBinaryInst inst) {
 
     }
 
     @Override
-    public void visit(RTypeBinary inst) {
+    public void visit(RTypeBinaryInst inst) {
 
     }
 
@@ -151,12 +151,12 @@ public class ASMPrinter implements ASMVisitor{
     }
 
     @Override
-    public void visit(BinaryBranch inst) {
+    public void visit(BinaryBranchInst inst) {
 
     }
 
     @Override
-    public void visit(UnaryBranch inst) {
+    public void visit(UnaryBranchInst inst) {
 
     }
 

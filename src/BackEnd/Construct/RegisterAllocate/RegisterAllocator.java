@@ -1,57 +1,32 @@
-package BackEnd.Construct;
+package BackEnd.Construct.RegisterAllocate;
 
 import BackEnd.ASMBlock;
+import BackEnd.Construct.ASMPass;
+import BackEnd.Construct.LivenessAnalysis;
 import BackEnd.Instruction.*;
-import BackEnd.Instruction.BinaryInst.ITypeBinary;
+import BackEnd.Instruction.BinaryInst.ITypeBinaryInst;
 import BackEnd.Operand.ASMRegister.PhysicalASMRegister;
 import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 import BackEnd.Operand.Address.StackLocation;
 import BackEnd.Operand.Immediate.IntImmediate;
 import BackEnd.RISCVFunction;
+import IR.Module;
 import Optimization.Loop.LoopAnalysis;
-import Utility.Pair;
 
 import java.util.*;
 
 public class RegisterAllocator extends ASMPass {
-    private static class Edge extends Pair<VirtualASMRegister, VirtualASMRegister> {
-        public Edge(VirtualASMRegister first, VirtualASMRegister second) {
-            super(first, second);
-            if (first.hashCode() > second.hashCode()) {
-                setFirst(second);
-                setSecond(first);
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return toString().hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof Edge))
-                return false;
-            return toString().equals(obj.toString());
-        }
-
-        @Override
-        public String toString() {
-            return "(" + getFirst().getName() + ", " + getSecond().getName() + ")";
-        }
-    }
-
+    final static int inf = 99999999;
     final private int K = PhysicalASMRegister.allocatablePRs.size();
 
     private BackEnd.RISCVFunction RISCVFunction;
     private final LoopAnalysis loopAnalysis;
 
 
-    public RegisterAllocator(BackEnd.RISCVModule RISCVModule, LoopAnalysis loopAnalysis) {
+    public RegisterAllocator(BackEnd.RISCVModule RISCVModule, Module module) {
         super(RISCVModule);
-        this.loopAnalysis = loopAnalysis;
+        this.loopAnalysis = new LoopAnalysis(module);
     }
-
     private Set<VirtualASMRegister> preColored;
     private Set<VirtualASMRegister> initial;
     private Set<VirtualASMRegister> simplifyWorkList;
@@ -62,36 +37,36 @@ public class RegisterAllocator extends ASMPass {
     private Set<VirtualASMRegister> coloredNodes;
     private Stack<VirtualASMRegister> selectStack;
 
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private Set<ASMMoveInst> coalescedMoves;
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private Set<ASMMoveInst> constrainedMoves;
-    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private Set<ASMMoveInst> frozenMoves;
     private Set<ASMMoveInst> workListMoves;
     private Set<ASMMoveInst> activeMoves;
 
-    private Set<Edge> adjSet;
+    private Set<directedEdge> adjSet;
 
     @Override
     public void run() {
+        loopAnalysis.run();
         for (RISCVFunction RISCVFunction : RISCVModule.getFunctionMap().values())
-            runGraphColoring(RISCVFunction);
+            GraphColoring(RISCVFunction);
     }
 
-    private void runGraphColoring(RISCVFunction RISCVFunction) {
+    private boolean shouldAssignColor(){
+        return simplifyWorkList.isEmpty() && workListMoves.isEmpty()
+                && freezeWorkList.isEmpty() && spillWorkList.isEmpty();
+    }
+
+    private void GraphColoring(RISCVFunction RISCVFunction) {
         this.RISCVFunction = RISCVFunction;
         while (true) {
             initializeDataStructures();
             computeSpillCost();
             new LivenessAnalysis(RISCVModule).run();
-            build();
+            constructInterferenceGraph();
             makeWorkList();
 
-            while (!simplifyWorkList.isEmpty()
-                    || !workListMoves.isEmpty()
-                    || !freezeWorkList.isEmpty()
-                    || !spillWorkList.isEmpty()) {
+            while (!shouldAssignColor()) {
                 if (!simplifyWorkList.isEmpty())
                     simplify();
                 else if (!workListMoves.isEmpty())
@@ -142,13 +117,12 @@ public class RegisterAllocator extends ASMPass {
 
         for (VirtualASMRegister vr : initial)
             vr.clearColoringData();
-        int inf = 1000000000;
         for (VirtualASMRegister vr : preColored)
             vr.setDegree(inf);
     }
 
-    // Compute the spill cost of every virtual register(\sum (10^depth * number of defs/uses)).
     private void computeSpillCost() {
+        // \sum (10^depth * number of defs/uses).
         ArrayList<ASMBlock> dfsOrder = RISCVFunction.getDFSOrder();
         for (ASMBlock block : dfsOrder) {
             int depth = loopAnalysis.getBlockDepth(block);
@@ -163,8 +137,8 @@ public class RegisterAllocator extends ASMPass {
         }
     }
 
-    // Build interference graph.
-    private void build() {
+
+    private void constructInterferenceGraph() {
         ArrayList<ASMBlock> dfsOrder = RISCVFunction.getDFSOrder();
         for (ASMBlock block : dfsOrder) {
             Set<VirtualASMRegister> live = block.getLiveOut();
@@ -191,11 +165,10 @@ public class RegisterAllocator extends ASMPass {
         }
     }
 
-    // Add edges (u, v) & (v, u) to interference graph.
     private void addEdge(VirtualASMRegister u, VirtualASMRegister v) {
-        if (!adjSet.contains(new Edge(u, v)) && u != v) {
-            adjSet.add(new Edge(u, v));
-            adjSet.add(new Edge(v, u));
+        if (!adjSet.contains(new directedEdge(u, v)) && u != v) {
+            adjSet.add(new directedEdge(u, v));
+            adjSet.add(new directedEdge(v, u));
             if (!preColored.contains(u)) {
                 u.getAdjList().add(v);
                 u.increaseDegree();
@@ -207,7 +180,7 @@ public class RegisterAllocator extends ASMPass {
         }
     }
 
-    // For each virtual register which is not pre-colored, add it to one of the work lists.
+
     private void makeWorkList() {
         for (VirtualASMRegister n : initial) {
             if (n.getDegree() >= K)
@@ -217,10 +190,9 @@ public class RegisterAllocator extends ASMPass {
             else
                 simplifyWorkList.add(n);
         }
-        // We don't have to clear "initial".
     }
 
-    // Get the current neighbors of a virtual register n.
+
     private Set<VirtualASMRegister> adjacent(VirtualASMRegister n) {
         Set<VirtualASMRegister> res = new HashSet<>(n.getAdjList());
         res.removeAll(selectStack);
@@ -228,7 +200,7 @@ public class RegisterAllocator extends ASMPass {
         return res;
     }
 
-    // Get the current move instructions related to a virtual register n.
+
     private Set<ASMMoveInst> nodeMoves(VirtualASMRegister n) {
         Set<ASMMoveInst> res = new HashSet<>(activeMoves);
         res.addAll(workListMoves);
@@ -236,12 +208,10 @@ public class RegisterAllocator extends ASMPass {
         return res;
     }
 
-    // Check whether a virtual register n has related move instructions.
     private boolean moveRelated(VirtualASMRegister n) {
         return !nodeMoves(n).isEmpty();
     }
 
-    // Remove a node whose current degree is no more than K from the interference graph.
     private void simplify() {
         assert !simplifyWorkList.isEmpty();
         VirtualASMRegister n = simplifyWorkList.iterator().next();
@@ -251,7 +221,6 @@ public class RegisterAllocator extends ASMPass {
             decrementDegree(m);
     }
 
-    // Decrease the degree of m by 1.
     private void decrementDegree(VirtualASMRegister m) {
         int d = m.getDegree();
         m.setDegree(d - 1);
@@ -267,7 +236,6 @@ public class RegisterAllocator extends ASMPass {
         }
     }
 
-    // Move some move instructions related to virtual register in nodes to workListMoves.
     private void enableMoves(Set<VirtualASMRegister> nodes) {
         for (VirtualASMRegister n : nodes) {
             for (ASMMoveInst m : nodeMoves(n)) {
@@ -279,7 +247,6 @@ public class RegisterAllocator extends ASMPass {
         }
     }
 
-    // Move a virtual register u from freezeWorkList to simplifyWorkList.
     private void addWorkList(VirtualASMRegister u) {
         if (!preColored.contains(u) && !moveRelated(u) && u.getDegree() < K) {
             freezeWorkList.remove(u);
@@ -287,12 +254,10 @@ public class RegisterAllocator extends ASMPass {
         }
     }
 
-    // George's condition for conservative coalescing.
     private boolean OK(VirtualASMRegister t, VirtualASMRegister r) {
-        return t.getDegree() < K || preColored.contains(t) || adjSet.contains(new Edge(t, r));
+        return t.getDegree() < K || preColored.contains(t) || adjSet.contains(new directedEdge(t, r));
     }
 
-    // Briggs's condition for conservative coalescing.
     private boolean conservative(Set<VirtualASMRegister> nodes) {
         int k = 0;
         for (VirtualASMRegister n : nodes) {
@@ -302,7 +267,6 @@ public class RegisterAllocator extends ASMPass {
         return k < K;
     }
 
-    // Try to coalesce rd and rs of a move instruction in workListMoves.
     private void coalesce() {
         assert !workListMoves.isEmpty();
         ASMMoveInst m = workListMoves.iterator().next();
@@ -325,7 +289,7 @@ public class RegisterAllocator extends ASMPass {
         if (u == v) {
             coalescedMoves.add(m);
             addWorkList(u);
-        } else if (preColored.contains(v) || adjSet.contains(new Edge(u, v))) {
+        } else if (preColored.contains(v) || adjSet.contains(new directedEdge(u, v))) {
             constrainedMoves.add(m);
             addWorkList(u);
             addWorkList(v);
@@ -338,7 +302,6 @@ public class RegisterAllocator extends ASMPass {
             activeMoves.add(m);
     }
 
-    // Check whether any adjacent node of v "t" satisfies that OK(t, u) is true.
     private boolean anyAdjacentNodeIsOK(VirtualASMRegister v, VirtualASMRegister u) {
         for (VirtualASMRegister t : adjacent(v)) {
             if (!OK(t, u))
@@ -347,7 +310,6 @@ public class RegisterAllocator extends ASMPass {
         return true;
     }
 
-    // Coalesce virtual registers u and v, where u may be pre-colored.
     private void combine(VirtualASMRegister u, VirtualASMRegister v) {
         if (freezeWorkList.contains(v))
             freezeWorkList.remove(v);
@@ -371,7 +333,6 @@ public class RegisterAllocator extends ASMPass {
         }
     }
 
-    // Get the alias of n. It is just a union-find set, so path contraction can be applied.
     private VirtualASMRegister getAlias(VirtualASMRegister n) {
         if (coalescedNodes.contains(n)) {
             VirtualASMRegister alias = getAlias(n.getAlias());
@@ -381,7 +342,6 @@ public class RegisterAllocator extends ASMPass {
             return n;
     }
 
-    // Try to freeze a virtual register so that coalescing is given up.
     private void freeze() {
         VirtualASMRegister u = freezeWorkList.iterator().next();
         freezeWorkList.remove(u);
@@ -389,7 +349,6 @@ public class RegisterAllocator extends ASMPass {
         freezeMoves(u);
     }
 
-    // Freeze a virtual register u.
     private void freezeMoves(VirtualASMRegister u) {
         for (ASMMoveInst m : nodeMoves(u)) {
             VirtualASMRegister x = m.getRd();
@@ -411,7 +370,6 @@ public class RegisterAllocator extends ASMPass {
         }
     }
 
-    // Select a virtual register from spillWorkList and then spill it.
     private void selectSpill() {
         VirtualASMRegister m = selectVRToBeSpilled();
         spillWorkList.remove(m);
@@ -419,7 +377,6 @@ public class RegisterAllocator extends ASMPass {
         freezeMoves(m);
     }
 
-    // Select a optimal virtual register to spill using spill metric.
     private VirtualASMRegister selectVRToBeSpilled() {
         double minRatio = Double.POSITIVE_INFINITY;
         VirtualASMRegister spilledVR = null;
@@ -457,7 +414,7 @@ public class RegisterAllocator extends ASMPass {
             n.setColorPR(getAlias(n).getColorPR());
     }
 
-    // Select an unused physical register, with caller-save registers always being selected first.
+    // caller-save registers being selected first.
     private PhysicalASMRegister selectColor(Set<PhysicalASMRegister> okColors) {
         assert !okColors.isEmpty();
         for (PhysicalASMRegister pr : okColors) {
@@ -533,13 +490,13 @@ public class RegisterAllocator extends ASMPass {
             return;
 
         VirtualASMRegister sp = PhysicalASMRegister.vrs.get("sp");
-        RISCVFunction.getEntranceBlock().addInstructionAtFront(new ITypeBinary(RISCVFunction.getEntranceBlock(),
-                ITypeBinary.OpName.addi, sp, new IntImmediate(-frameSize * 4), sp));
+        RISCVFunction.getEntranceBlock().addInstructionAtFront(new ITypeBinaryInst(RISCVFunction.getEntranceBlock(),
+                ITypeBinaryInst.OpName.addi, sp, new IntImmediate(-frameSize * 4), sp));
 
         for (ASMBlock block : RISCVFunction.getBlocks()) {
             if (block.getInstTail() instanceof ASMReturnInst) {
-                block.addInstructionPrev(block.getInstTail(), new ITypeBinary(block,
-                        ITypeBinary.OpName.addi, sp, new IntImmediate(frameSize * 4), sp));
+                block.addInstructionPrev(block.getInstTail(), new ITypeBinaryInst(block,
+                        ITypeBinaryInst.OpName.addi, sp, new IntImmediate(frameSize * 4), sp));
                 break;
             }
         }

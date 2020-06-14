@@ -6,11 +6,11 @@ import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 
 import java.util.Set;
 
-abstract public class Branch extends ASMInstruction {
+abstract public class ASMBranchInst extends ASMInstruction {
     private VirtualASMRegister rs1;
     private BackEnd.ASMBlock thenBlock;
 
-    public Branch(ASMBlock ASMBlock, VirtualASMRegister rs1, ASMBlock thenBlock) {
+    public ASMBranchInst(ASMBlock ASMBlock, VirtualASMRegister rs1, ASMBlock thenBlock) {
         super(ASMBlock);
         this.rs1 = rs1;
         this.thenBlock = thenBlock;

@@ -2,10 +2,10 @@ package BackEnd.Construct;
 
 import BackEnd.ASMBlock;
 import BackEnd.Instruction.*;
-import BackEnd.Instruction.BinaryInst.ITypeBinary;
-import BackEnd.Instruction.BinaryInst.RTypeBinary;
-import BackEnd.Instruction.Branch.BinaryBranch;
-import BackEnd.Instruction.Branch.UnaryBranch;
+import BackEnd.Instruction.BinaryInst.ITypeBinaryInst;
+import BackEnd.Instruction.BinaryInst.RTypeBinaryInst;
+import BackEnd.Instruction.Branch.BinaryBranchInst;
+import BackEnd.Instruction.Branch.UnaryBranchInst;
 import BackEnd.Operand.ASMGlobalVar;
 import BackEnd.Operand.ASMOperand;
 import BackEnd.Operand.ASMRegister.PhysicalASMRegister;
@@ -29,10 +29,10 @@ import IR.TypeSystem.*;
 import java.util.ArrayList;
 
 import static BackEnd.Instruction.ASMUnaryInst.OpName.*;
-import static BackEnd.Instruction.BinaryInst.ITypeBinary.OpName.*;
-import static BackEnd.Instruction.BinaryInst.RTypeBinary.OpName.*;
-import static BackEnd.Instruction.Branch.BinaryBranch.OpName.*;
-import static BackEnd.Instruction.Branch.UnaryBranch.OpName.beqz;
+import static BackEnd.Instruction.BinaryInst.ITypeBinaryInst.OpName.*;
+import static BackEnd.Instruction.BinaryInst.RTypeBinaryInst.OpName.*;
+import static BackEnd.Instruction.Branch.BinaryBranchInst.OpName.*;
+import static BackEnd.Instruction.Branch.UnaryBranchInst.OpName.beqz;
 
 public class InstructionSelector implements IRVisitor {
     private RISCVModule ASMRISCVModule;
@@ -219,7 +219,7 @@ public class InstructionSelector implements IRVisitor {
                                 currentBlock.addInstruction(new ASMLoadImmediate(currentBlock,
                                         rs2, new IntImmediate(value)));
                             } else {
-                                currentBlock.addInstruction(new ITypeBinary(currentBlock, addi, PhysicalASMRegister.zeroVR,
+                                currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, PhysicalASMRegister.zeroVR,
                                         new IntImmediate(value), rs2));
                             }
                         } else
@@ -235,19 +235,19 @@ public class InstructionSelector implements IRVisitor {
                 } else
                     throw new RuntimeException();
 
-                BinaryBranch.OpName branchOp = op == IcmpInst.IcmpName.eq ? bne
+                BinaryBranchInst.OpName branchOp = op == IcmpInst.IcmpName.eq ? bne
                         : op == IcmpInst.IcmpName.ne ? beq
                         : op == IcmpInst.IcmpName.sgt ? ble
                         : op == IcmpInst.IcmpName.sge ? blt
                         : op == IcmpInst.IcmpName.slt ? bge
                         : bgt;
-                currentBlock.addInstruction(new BinaryBranch(currentBlock, branchOp, rs1, rs2, elseBlock));
+                currentBlock.addInstruction(new BinaryBranchInst(currentBlock, branchOp, rs1, rs2, elseBlock));
                 currentBlock.addInstruction(new ASMJumpInst(currentBlock, thenBlock));
                 return;
             }
 
             VirtualASMRegister condVR = currentRISCVFunction.getVR(cond.getName());
-            currentBlock.addInstruction(new UnaryBranch(currentBlock, beqz, condVR, elseBlock));
+            currentBlock.addInstruction(new UnaryBranchInst(currentBlock, beqz, condVR, elseBlock));
             currentBlock.addInstruction(new ASMJumpInst(currentBlock, thenBlock));
         } else {
             ASMBlock thenBlock = currentRISCVFunction.getBlockMap().get(inst.getIfTrueBlock().getName());
@@ -277,14 +277,14 @@ public class InstructionSelector implements IRVisitor {
                             : instOp == BinaryOpInst.BinaryOpName.and ? andi
                             : instOp == BinaryOpInst.BinaryOpName.or ? ori
                             : xori;
-                    currentBlock.addInstruction(new ITypeBinary(currentBlock, ((ITypeBinary.OpName) opName),
+                    currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, ((ITypeBinaryInst.OpName) opName),
                             lhsOperand, ((Immediate) rhsOperand), result));
                 } else {
                     opName = instOp == BinaryOpInst.BinaryOpName.add ? add
                             : instOp == BinaryOpInst.BinaryOpName.and ? and
                             : instOp == BinaryOpInst.BinaryOpName.or ? or
                             : xor;
-                    currentBlock.addInstruction(new RTypeBinary(currentBlock, ((RTypeBinary.OpName) opName),
+                    currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, ((RTypeBinaryInst.OpName) opName),
                             lhsOperand, ((VirtualASMRegister) rhsOperand), result));
                 }
                 break;
@@ -294,20 +294,20 @@ public class InstructionSelector implements IRVisitor {
                 if (rhsOperand instanceof Immediate) {
                     assert rhsOperand instanceof IntImmediate;
                     ((IntImmediate) rhsOperand).minusImmediate();
-                    currentBlock.addInstruction(new ITypeBinary(currentBlock, addi,
+                    currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi,
                             lhsOperand, ((Immediate) rhsOperand), result));
                 } else {
-                    currentBlock.addInstruction(new RTypeBinary(currentBlock, RTypeBinary.OpName.sub,
+                    currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, RTypeBinaryInst.OpName.sub,
                             lhsOperand, ((VirtualASMRegister) rhsOperand), result));
                 }
                 break;
             case mul: case sdiv: case srem:
-                opName = instOp == BinaryOpInst.BinaryOpName.mul ? RTypeBinary.OpName.mul
-                        : instOp == BinaryOpInst.BinaryOpName.sdiv ? RTypeBinary.OpName.div
-                        : RTypeBinary.OpName.rem;
+                opName = instOp == BinaryOpInst.BinaryOpName.mul ? RTypeBinaryInst.OpName.mul
+                        : instOp == BinaryOpInst.BinaryOpName.sdiv ? RTypeBinaryInst.OpName.div
+                        : RTypeBinaryInst.OpName.rem;
                 lhsOperand = Operand2VR(lhs);
                 rhsOperand = Operand2VR(rhs);
-                currentBlock.addInstruction(new RTypeBinary(currentBlock, ((RTypeBinary.OpName) opName),
+                currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, ((RTypeBinaryInst.OpName) opName),
                         lhsOperand, ((VirtualASMRegister) rhsOperand), result));
                 break;
             case shl: case ashr:
@@ -317,11 +317,11 @@ public class InstructionSelector implements IRVisitor {
                 rhsOperand = getOperand(rhs);
                 if (rhsOperand instanceof Immediate) {
                     opName = instOp == BinaryOpInst.BinaryOpName.shl ? slli : srai;
-                    currentBlock.addInstruction(new ITypeBinary(currentBlock, ((ITypeBinary.OpName) opName),
+                    currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, ((ITypeBinaryInst.OpName) opName),
                             lhsOperand, ((Immediate) rhsOperand), result));
                 } else {
                     opName = instOp == BinaryOpInst.BinaryOpName.shl ? sll : sra;
-                    currentBlock.addInstruction(new RTypeBinary(currentBlock, ((RTypeBinary.OpName) opName),
+                    currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, ((RTypeBinaryInst.OpName) opName),
                             lhsOperand, ((VirtualASMRegister) rhsOperand), result));
                 }
                 break;
@@ -423,22 +423,22 @@ public class InstructionSelector implements IRVisitor {
                 long value = ((ConstInt) index).getValue() * 4; // 4 is the size of a pointer.
                 ASMOperand rs = getOperand(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), value));
                 if (rs instanceof Immediate)
-                    currentBlock.addInstruction(new ITypeBinary(currentBlock, addi, pointer, ((Immediate) rs), rd));
+                    currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, pointer, ((Immediate) rs), rd));
                 else {
                     assert rs instanceof VirtualASMRegister;
-                    currentBlock.addInstruction(new RTypeBinary(currentBlock, add, pointer,
+                    currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add, pointer,
                             ((VirtualASMRegister) rs), rd));
                 }
             } else {
                 VirtualASMRegister rs1 = currentRISCVFunction.getVR(index.getName());
                 VirtualASMRegister rs2 = new VirtualASMRegister("slli");
                 currentRISCVFunction.registerVRDuplicateName(rs2);
-                currentBlock.addInstruction(new ITypeBinary(currentBlock, slli, rs1, new IntImmediate(2), rs2));
-                currentBlock.addInstruction(new RTypeBinary(currentBlock, add, pointer, rs2, rd));
+                currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, slli, rs1, new IntImmediate(2), rs2));
+                currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add, pointer, rs2, rd));
             }
         } else { // gep class
             if (inst.getPointer() instanceof ConstNull) {
-                currentBlock.addInstruction(new ITypeBinary(currentBlock, addi, PhysicalASMRegister.zeroVR,
+                currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, PhysicalASMRegister.zeroVR,
                         new IntImmediate(((int) ((ConstInt) inst.getIndexs().get(1)).getValue())), rd));
             } else {
                 assert inst.getPointer().getLlvMtype() instanceof LLVMPointerType
@@ -457,10 +457,10 @@ public class InstructionSelector implements IRVisitor {
                 else {
                     ASMOperand rs = getOperand(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), offset));
                     if (rs instanceof Immediate)
-                        currentBlock.addInstruction(new ITypeBinary(currentBlock, addi, pointer, ((Immediate) rs), rd));
+                        currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, pointer, ((Immediate) rs), rd));
                     else {
                         assert rs instanceof VirtualASMRegister;
-                        currentBlock.addInstruction(new RTypeBinary(currentBlock, add,
+                        currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add,
                                 pointer, ((VirtualASMRegister) rs), rd));
                     }
                 }
@@ -514,9 +514,9 @@ public class InstructionSelector implements IRVisitor {
                         if (needToLoadImm(op2value)) {
                             currentRISCVFunction.registerVRDuplicateName(rs2);
                             currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(op2value)));
-                            currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs1, rs2, rd));
+                            currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, slt, rs1, rs2, rd));
                         } else if (op2value != 0) {
-                            currentBlock.addInstruction(new ITypeBinary(currentBlock, slti, rs1, new IntImmediate(op2value), rd));
+                            currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, slti, rs1, new IntImmediate(op2value), rd));
                         } else { // value == 0
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, sltz, rs1, rd));
                         }
@@ -525,12 +525,12 @@ public class InstructionSelector implements IRVisitor {
                         if (needToLoadImm(op2value)) {
                             currentRISCVFunction.registerVRDuplicateName(rs2);
                             currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(op2value)));
-                            currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs2, rs1, rd));
+                            currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, slt, rs2, rs1, rd));
                         } else if (op2value != 0) {
                             currentRISCVFunction.registerVRDuplicateName(rs2);
-                            currentBlock.addInstruction(new ITypeBinary(currentBlock, addi, PhysicalASMRegister.zeroVR,
+                            currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, PhysicalASMRegister.zeroVR,
                                     new IntImmediate(op2value), rs2));
-                            currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs2, rs1, rd));
+                            currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, slt, rs2, rs1, rd));
                         } else { // value == 0
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, sgtz, rs1, rd));
                         }
@@ -542,11 +542,11 @@ public class InstructionSelector implements IRVisitor {
                             currentRISCVFunction.registerVRDuplicateName(rs3);
 
                             currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(op2value)));
-                            currentBlock.addInstruction(new RTypeBinary(currentBlock, xor, rs1, rs2, rs3));
+                            currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, xor, rs1, rs2, rs3));
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, opName, rs3, rd));
                         } else if (op2value != 0) {
                             currentRISCVFunction.registerVRDuplicateName(rs3);
-                            currentBlock.addInstruction(new ITypeBinary(currentBlock, xori, rs1,
+                            currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, xori, rs1,
                                     new IntImmediate(op2value), rs3));
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, opName, rs3, rd));
                         } else { // value = 0
@@ -563,31 +563,31 @@ public class InstructionSelector implements IRVisitor {
                 VirtualASMRegister rs4 = new VirtualASMRegister("xor");
                 switch (op) {
                     case slt:
-                        currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs1, rs2, rd));
+                        currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, slt, rs1, rs2, rd));
                         break;
                     case sgt:
-                        currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs2, rs1, rd));
+                        currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, slt, rs2, rs1, rd));
                         break;
                     case sle:
                         currentRISCVFunction.registerVRDuplicateName(rs3);
-                        currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs2, rs1, rs3));
-                        currentBlock.addInstruction(new ITypeBinary(currentBlock, xori, rs3,
+                        currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, slt, rs2, rs1, rs3));
+                        currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, xori, rs3,
                                 new IntImmediate(1), rd));
                         break;
                     case sge:
                         currentRISCVFunction.registerVRDuplicateName(rs3);
-                        currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs1, rs2, rs3));
-                        currentBlock.addInstruction(new ITypeBinary(currentBlock, xori, rs3,
+                        currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, slt, rs1, rs2, rs3));
+                        currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, xori, rs3,
                                 new IntImmediate(1), rd));
                         break;
                     case eq:
                         currentRISCVFunction.registerVRDuplicateName(rs4);
-                        currentBlock.addInstruction(new RTypeBinary(currentBlock, xor, rs1, rs2, rs4));
+                        currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, xor, rs1, rs2, rs4));
                         currentBlock.addInstruction(new ASMUnaryInst(currentBlock, seqz, rs4, rd));
                         break;
                     case ne:
                         currentRISCVFunction.registerVRDuplicateName(rs4);
-                        currentBlock.addInstruction(new RTypeBinary(currentBlock, xor, rs1, rs2, rs4));
+                        currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, xor, rs1, rs2, rs4));
                         currentBlock.addInstruction(new ASMUnaryInst(currentBlock, snez, rs4, rd));
                         break;
                     default:
@@ -614,7 +614,7 @@ public class InstructionSelector implements IRVisitor {
                 VirtualASMRegister rs3 = new VirtualASMRegister("xor");
 
                 currentRISCVFunction.registerVRDuplicateName(rs3);
-                currentBlock.addInstruction(new RTypeBinary(currentBlock, xor, rs1, rs2, rs3));
+                currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, xor, rs1, rs2, rs3));
                 switch (op) {
                     case eq:
                         currentBlock.addInstruction(new ASMUnaryInst(currentBlock, seqz, rs3, rd));
@@ -642,7 +642,7 @@ public class InstructionSelector implements IRVisitor {
                         dest, ((VirtualASMRegister) src)));
             } else {
                 assert src instanceof Immediate;
-                currentBlock.addInstruction(new ITypeBinary(currentBlock, addi,
+                currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi,
                         PhysicalASMRegister.zeroVR, ((Immediate) src), dest));
             }
         } else {
@@ -678,7 +678,7 @@ public class InstructionSelector implements IRVisitor {
         if(boolValue){
             VirtualASMRegister constBool = new VirtualASMRegister("constBool");
             currentRISCVFunction.registerVRDuplicateName(constBool);
-            currentBlock.addInstruction(new ITypeBinary(currentBlock, addi,
+            currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi,
                     PhysicalASMRegister.zeroVR, new IntImmediate(1), constBool));
             return constBool;
         }else{
@@ -695,7 +695,7 @@ public class InstructionSelector implements IRVisitor {
             if (needToLoadImm(intValue)) {
                 currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, constInt, new IntImmediate(intValue)));
             } else {
-                currentBlock.addInstruction(new ITypeBinary(currentBlock, addi,
+                currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi,
                         PhysicalASMRegister.zeroVR, new IntImmediate(intValue), constInt));
             }
             return constInt;

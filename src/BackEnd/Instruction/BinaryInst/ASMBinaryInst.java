@@ -6,11 +6,11 @@ import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 
 import java.util.Set;
 
-abstract public class BinaryInst extends ASMInstruction {
+abstract public class ASMBinaryInst extends ASMInstruction {
     private VirtualASMRegister rd;
     private VirtualASMRegister rs1;
 
-    public BinaryInst(ASMBlock ASMBlock, VirtualASMRegister rd, VirtualASMRegister rs1) {
+    public ASMBinaryInst(ASMBlock ASMBlock, VirtualASMRegister rd, VirtualASMRegister rs1) {
         super(ASMBlock);
         this.rd = rd;
         this.rs1 = rs1;

@@ -6,7 +6,7 @@ import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 
 import java.util.Set;
 
-public class BinaryBranch extends Branch {
+public class BinaryBranchInst extends ASMBranchInst {
     public enum OpName {
         beq, bne, blt, bge, ble, bgt
     }
@@ -14,8 +14,8 @@ public class BinaryBranch extends Branch {
     private OpName op;
     private VirtualASMRegister rs2;
 
-    public BinaryBranch(BackEnd.ASMBlock ASMBlock, OpName op,
-                        VirtualASMRegister rs1, VirtualASMRegister rs2, ASMBlock thenBlock) {
+    public BinaryBranchInst(BackEnd.ASMBlock ASMBlock, OpName op,
+                            VirtualASMRegister rs1, VirtualASMRegister rs2, ASMBlock thenBlock) {
         super(ASMBlock, rs1, thenBlock);
         this.op = op;
         this.rs2 = rs2;

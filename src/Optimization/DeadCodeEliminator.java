@@ -15,14 +15,15 @@ public class DeadCodeEliminator extends Pass {
     private SideEffectChecker sideEffectChecker;
     private LoopAnalysis loopAnalysis;
 
-    public DeadCodeEliminator(Module module, SideEffectChecker sideEffectChecker, LoopAnalysis loopAnalysis) {
+    public DeadCodeEliminator(Module module, SideEffectChecker sideEffectChecker) {
         super(module);
         this.sideEffectChecker = sideEffectChecker;
-        this.loopAnalysis = loopAnalysis;
+        this.loopAnalysis = new LoopAnalysis(module);
     }
 
     @Override
     public boolean run() {
+        loopAnalysis.run();
         for (LLVMfunction function : module.getFunctionMap().values()) {
             if (!function.isFunctional())
                 return false;

@@ -1,9 +1,9 @@
 package BackEnd;
 
-import BackEnd.Instruction.BinaryInst.ITypeBinary;
-import BackEnd.Instruction.BinaryInst.RTypeBinary;
-import BackEnd.Instruction.Branch.BinaryBranch;
-import BackEnd.Instruction.Branch.UnaryBranch;
+import BackEnd.Instruction.BinaryInst.ITypeBinaryInst;
+import BackEnd.Instruction.BinaryInst.RTypeBinaryInst;
+import BackEnd.Instruction.Branch.BinaryBranchInst;
+import BackEnd.Instruction.Branch.UnaryBranchInst;
 import BackEnd.Instruction.*;
 import BackEnd.Operand.ASMGlobalVar;
 
@@ -16,8 +16,8 @@ public interface ASMVisitor {
 
     void visit(ASMMoveInst inst);
     void visit(ASMUnaryInst inst);
-    void visit(ITypeBinary inst);
-    void visit(RTypeBinary inst);
+    void visit(ITypeBinaryInst inst);
+    void visit(RTypeBinaryInst inst);
 
     void visit(ASMLoadAddressInst inst);
     void visit(ASMLoadImmediate inst);
@@ -27,8 +27,8 @@ public interface ASMVisitor {
     void visit(ASMStoreInst inst);
 
     void visit(ASMJumpInst inst);
-    void visit(BinaryBranch inst);
-    void visit(UnaryBranch inst);
+    void visit(BinaryBranchInst inst);
+    void visit(UnaryBranchInst inst);
     void visit(ASMCallInst inst);
     void visit(ASMReturnInst inst);
 }

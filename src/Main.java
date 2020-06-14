@@ -2,13 +2,11 @@ import AST.ProgramNode;
 import AST.Visit.ASTBuilder;
 import BackEnd.ASMPrinter;
 import BackEnd.Construct.InstructionSelector;
-import BackEnd.Construct.RegisterAllocator;
+import BackEnd.Construct.RegisterAllocate.RegisterAllocator;
 import BackEnd.RISCVModule;
 import IR.IRBuilder;
-import IR.IRPrinter;
 import IR.Module;
 import Optimization.*;
-import Optimization.Loop.LoopAnalysis;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ExceptionHandle.ExceptionListener;
 import Semantic.ParserAndLexer.MXgrammarLexer;
@@ -30,7 +28,7 @@ public class Main {
 
         InputStream is = System.in;
         /*for file*******************/
-        is = new FileInputStream("basic-2.mx");
+        is = new FileInputStream("MXcode.mx");
         /*for file******************/
         ANTLRInputStream input = new ANTLRInputStream(is);
 
@@ -68,16 +66,15 @@ public class Main {
 
         if(args[args.length-1].equals("codegen")){
             try{
-                CFGSimplifier cfgSimplifier = new CFGSimplifier(module);
-                cfgSimplifier.run();
+                CFGSimplifier cfgOptimizer = new CFGSimplifier(module);
+                cfgOptimizer.run();
                 DTreeConstructor dTreeConstructor = new DTreeConstructor(module);
                 dTreeConstructor.run();
                 SSAConstructor ssaConstructor = new SSAConstructor(module);
                 ssaConstructor.run();
 
                 SideEffectChecker sideEffectChecker = new SideEffectChecker(module);
-                LoopAnalysis loopAnalysis = new LoopAnalysis(module);
-                DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(module, sideEffectChecker, loopAnalysis);
+                DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(module, sideEffectChecker);
                 ConstOptim constOptim = new ConstOptim(module);
                 InlineExpander inlineExpander = new InlineExpander(module);
                 int optimizeCnt = 0;
@@ -87,8 +84,7 @@ public class Main {
                     dTreeConstructor.run();
                     changed |= constOptim.run();
                     changed |= deadCodeEliminator.run();
-                    changed |= cfgSimplifier.run();
-                    loopAnalysis.run();
+                    changed |= cfgOptimizer.run();
 //                    if(optimizeCnt == 1){
 //                        IRPrinter irPrinter = new IRPrinter("preInline.txt");
 //                        irPrinter.visit(module);
@@ -98,13 +94,12 @@ public class Main {
 //                        IRPrinter irPrinter = new IRPrinter("afterInline.txt");
 //                        irPrinter.visit(module);
 //                    }
-                    changed |= cfgSimplifier.run();
+                    changed |= cfgOptimizer.run();
                     if (!changed)
                         break;
                 }
-
-                IRPrinter irPrinter = new IRPrinter("IRout.txt");
-                irPrinter.visit(module);
+//                IRPrinter irPrinter = new IRPrinter("IRout.txt");
+//                irPrinter.visit(module);
 
                 new SSADestructor(module).run();
                 InstructionSelector instructionSelector = new InstructionSelector();
@@ -112,9 +107,8 @@ public class Main {
                 RISCVModule ASMRISCVModule = instructionSelector.getASMRISCVModule();
 
                 dTreeConstructor.run();
-                loopAnalysis.run();
 
-                new RegisterAllocator(ASMRISCVModule, loopAnalysis).run();
+                new RegisterAllocator(ASMRISCVModule, module).run();
                 new ASMPrinter("output.s").run(ASMRISCVModule);
                 new ASMPrinter(null).run(ASMRISCVModule);
             }catch (Exception e){

@@ -4,7 +4,7 @@ import BackEnd.ASMVisitor;
 import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 import BackEnd.Operand.Immediate.Immediate;
 
-public class ITypeBinary extends BinaryInst {
+public class ITypeBinaryInst extends ASMBinaryInst {
     public enum OpName {
         addi, slli, srai, andi, ori, xori, slti
     }
@@ -12,8 +12,8 @@ public class ITypeBinary extends BinaryInst {
     private OpName op;
     private Immediate immediate;
 
-    public ITypeBinary(BackEnd.ASMBlock ASMBlock, OpName op,
-                       VirtualASMRegister rs1, Immediate immediate, VirtualASMRegister rd) {
+    public ITypeBinaryInst(BackEnd.ASMBlock ASMBlock, OpName op,
+                           VirtualASMRegister rs1, Immediate immediate, VirtualASMRegister rd) {
         super(ASMBlock, rd, rs1);
         this.op = op;
         this.immediate = immediate;

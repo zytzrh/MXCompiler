@@ -4,14 +4,14 @@ import BackEnd.ASMBlock;
 import BackEnd.ASMVisitor;
 import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 
-public class UnaryBranch extends Branch {
+public class UnaryBranchInst extends ASMBranchInst {
     public enum OpName {
         beqz, bnez, bltz, bgez, blez, bgtz
     }
 
     private OpName op;
 
-    public UnaryBranch(BackEnd.ASMBlock ASMBlock, OpName op, VirtualASMRegister rs1, ASMBlock thenBlock) {
+    public UnaryBranchInst(BackEnd.ASMBlock ASMBlock, OpName op, VirtualASMRegister rs1, ASMBlock thenBlock) {
         super(ASMBlock, rs1, thenBlock);
         this.op = op;
     }
