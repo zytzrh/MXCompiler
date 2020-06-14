@@ -431,4 +431,27 @@ public class Module {
         }
         return true;
     }
+
+    public boolean checkTrivalCall(){
+        int trivalCount = 0;
+        for (LLVMfunction function : functionMap.values()){
+            for (Block block : function.getBlocks()) {
+                LLVMInstruction currentInst = block.getInstHead();
+                while (currentInst != null) {
+                    if (currentInst instanceof CallInst) {
+                        CallInst callInst = (CallInst) currentInst;
+                        LLVMfunction callee = callInst.getLlvMfunction();
+                        if(callee == builtInFunctionMap.get("toString")){
+                            trivalCount++;
+                            if(trivalCount > 300)
+                                return false;
+                        }
+                    }
+                    currentInst = currentInst.getPostInst();
+                }
+            }
+
+        }
+        return true;
+    }
 }

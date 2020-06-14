@@ -6,6 +6,8 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
+import Optimization.Andersen;
+import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
@@ -55,6 +57,15 @@ public class AllocInst extends LLVMInstruction {
     }
 
     @Override
+    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+        assert nodeMap.containsKey(result);
+        Andersen.Node pointer = nodeMap.get(result);
+        Andersen.Node pointTo = new Andersen.Node(pointer.getName() + ".alloca");
+        pointer.getPointsTo().add(pointTo);
+        nodes.add(pointTo);
+    }
+
+    @Override
     public boolean replaceResultWithConstant(ConstOptim constOptim) {
         ConstOptim.Status status = constOptim.getStatus(result);
         if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
@@ -90,6 +101,12 @@ public class AllocInst extends LLVMInstruction {
     @Override
     public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
         //do nothing
+    }
+
+    @Override
+    public CSE.Expression convertToExpression() {
+        assert false;
+        return null;
     }
 
     @Override

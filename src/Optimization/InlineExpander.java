@@ -13,6 +13,7 @@ import java.util.*;
 
 public class InlineExpander extends Pass {
     private final int instructionLimit = 100;
+    private final int inlineDepth = 3;
     private Map<LLVMfunction, Integer> instructionCnt;
     private Map<LLVMfunction, Set<LLVMfunction>> recursiveCalleeMap;
 
@@ -25,6 +26,7 @@ public class InlineExpander extends Pass {
     @Override
     public boolean run() {
         if(!module.checkNormalFunctional()) return false;
+        if(!module.checkTrivalCall()) return false;
         initMap();
         changed = false;
         if(nonRecursiveInline()) changed = true;
@@ -75,19 +77,16 @@ public class InlineExpander extends Pass {
         }
     }
 
-    private boolean canBeNonRecursiveInlined(LLVMfunction callee, LLVMfunction caller) {
+    private boolean shouldNormalInlined(LLVMfunction callee, LLVMfunction caller) {
         if (!caller.isFunctional() || !callee.isFunctional())
             return false;
-        return instructionCnt.get(callee) < instructionLimit
-                && callee != caller
-                && !recursiveCalleeMap.get(callee).contains(callee);
+        return instructionCnt.get(callee) < instructionLimit && callee != caller && !recursiveCalleeMap.get(callee).contains(callee);
     }
 
-    private boolean canBeRecursiveInlined(LLVMfunction callee, LLVMfunction caller) {
+    private boolean shouldRecursiveInlined(LLVMfunction callee, LLVMfunction caller) {
         if (!caller.isFunctional() || !callee.isFunctional())
             return false;
-        return instructionCnt.get(callee) < instructionLimit
-                && callee == caller;
+        return instructionCnt.get(callee) < instructionLimit && callee == caller;
     }
 
     private Pair<ArrayList<Block>, ReturnInst> cloneCallee(LLVMfunction caller,
@@ -106,7 +105,6 @@ public class InlineExpander extends Pass {
             clonedBlocks.add(clonedBlock);
 
             blockMap.put(block, clonedBlock);
-//            caller.getSymbolTable().put(clonedBlock.getNameWithoutDot(), clonedBlock);
             caller.registerBlockName(clonedBlock.getNameWithoutDot(), clonedBlock);
 
             LLVMInstruction ptr = block.getInstHead();
@@ -119,7 +117,6 @@ public class InlineExpander extends Pass {
                     assert (result == null && clonedResult == null) || (result != null && clonedResult != null);
                     if (result != null) {
                         operandMap.put(result, clonedResult);
-//                        caller.getSymbolTable().put(clonedResult.getNameWithoutDot(), clonedResult);
                         caller.registerVar(clonedResult.getNameWithoutDot(), clonedResult);
                     }
                 }
@@ -222,7 +219,7 @@ public class InlineExpander extends Pass {
                         if (ptr instanceof CallInst) {
                             LLVMfunction callee = ((CallInst) ptr).getLlvMfunction();
                             if (module.getFunctionMap().containsValue(callee)
-                                    && canBeNonRecursiveInlined(callee, function)) {
+                                    && shouldNormalInlined(callee, function)) {
                                 next = inlineFunction(((CallInst) ptr));
                                 instructionCnt.replace(function,
                                         instructionCnt.get(function) + instructionCnt.get(callee) - 2);
@@ -243,7 +240,6 @@ public class InlineExpander extends Pass {
 
     private boolean recursiveInline() {
         boolean changed = false;
-        final int inlineDepth = 3;
         for (int i = 0; i < inlineDepth; i++) {
             for (LLVMfunction function : module.getFunctionMap().values()) {
                 for (Block block : function.getBlocks()) {
@@ -253,7 +249,7 @@ public class InlineExpander extends Pass {
                         if (ptr instanceof CallInst) {
                             LLVMfunction callee = ((CallInst) ptr).getLlvMfunction();
                             if (module.getFunctionMap().containsValue(callee)
-                                    && canBeRecursiveInlined(callee, function)) {
+                                    && shouldRecursiveInlined(callee, function)) {
                                 next = inlineFunction(((CallInst) ptr));
                                 instructionCnt.replace(function,
                                         instructionCnt.get(function) + instructionCnt.get(callee) - 2);

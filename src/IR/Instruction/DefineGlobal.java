@@ -8,6 +8,8 @@ import IR.LLVMoperand.GlobalVar;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
+import Optimization.Andersen;
+import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
@@ -95,6 +97,7 @@ public class DefineGlobal extends LLVMInstruction {
         return super.dceRemoveFromBlock(loopAnalysis);
     }
 
+
     @Override
     public LLVMInstruction makeCopy() {
         assert false;
@@ -104,5 +107,15 @@ public class DefineGlobal extends LLVMInstruction {
     @Override
     public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
         assert false;
+    }
+
+    @Override
+    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+        assert false;
+    }
+
+    @Override
+    public CSE.Expression convertToExpression() {
+        return null;
     }
 }

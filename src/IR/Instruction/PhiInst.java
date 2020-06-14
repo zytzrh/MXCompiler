@@ -6,6 +6,9 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
+import IR.TypeSystem.LLVMPointerType;
+import Optimization.Andersen;
+import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 import Utility.Pair;
@@ -173,6 +176,26 @@ public class PhiInst extends LLVMInstruction {
                 queue.offer(pair.getSecond().getInstTail());
             }
         }
+    }
+
+    @Override
+    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+        if (!(result.getLlvMtype() instanceof LLVMPointerType))
+            return;
+        assert nodeMap.containsKey(result);
+        for (Pair<Operand, Block> pair : branches) {
+            Operand operand = pair.getFirst();
+            if (!(operand instanceof ConstNull)) {
+                assert nodeMap.containsKey(operand);
+                nodeMap.get(operand).getInclusiveEdge().add(nodeMap.get(result));
+            }
+        }
+    }
+
+    @Override
+    public CSE.Expression convertToExpression() {
+        assert false;
+        return null;
     }
 
     @Override

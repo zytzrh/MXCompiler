@@ -3,6 +3,8 @@ package IR;
 import IR.Instruction.AllocInst;
 import IR.Instruction.LLVMInstruction;
 import IR.Instruction.ReturnInst;
+import IR.LLVMoperand.ConstNull;
+import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
 
@@ -317,6 +319,13 @@ public class LLVMfunction {
 
     public void setBuiltIn(boolean builtIn) {
         this.builtIn = builtIn;
+    }
+
+    public Operand getActualReturnValue() {
+        if (exitBlock.getInstTail() instanceof ReturnInst)
+            return ((ReturnInst) exitBlock.getInstTail()).getReturnValue();
+        else
+            return new ConstNull();
     }
 
     public ArrayList<Block> getBlocks() {           //gugu changde: delete

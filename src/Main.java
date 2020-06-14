@@ -79,27 +79,25 @@ public class Main {
                 LoopAnalysis loopAnalysis = new LoopAnalysis(module);
                 DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(module, sideEffectChecker, loopAnalysis);
                 ConstOptim constOptim = new ConstOptim(module);
-//                MyInlineExpander myInlineExpander = new MyInlineExpander(module);
                 InlineExpander inlineExpander = new InlineExpander(module);
                 int optimizeCnt = 0;
                 while(true){
                     optimizeCnt++;
                     boolean changed = false;
                     dTreeConstructor.run();
-                    changed = constOptim.run();
+                    changed |= constOptim.run();
                     changed |= deadCodeEliminator.run();
                     changed |= cfgSimplifier.run();
                     loopAnalysis.run();
-//                    changed |= myInlineExpander.run();
-                    if(optimizeCnt == 1){
-                        IRPrinter irPrinter = new IRPrinter("preInline.txt");
-                        irPrinter.visit(module);
-                    }
+//                    if(optimizeCnt == 1){
+//                        IRPrinter irPrinter = new IRPrinter("preInline.txt");
+//                        irPrinter.visit(module);
+//                    }
                     changed |= inlineExpander.run();
-                    if(optimizeCnt == 1){
-                        IRPrinter irPrinter = new IRPrinter("afterInline.txt");
-                        irPrinter.visit(module);
-                    }
+//                    if(optimizeCnt == 1){
+//                        IRPrinter irPrinter = new IRPrinter("afterInline.txt");
+//                        irPrinter.visit(module);
+//                    }
                     changed |= cfgSimplifier.run();
                     if (!changed)
                         break;

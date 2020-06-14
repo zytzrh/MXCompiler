@@ -4,10 +4,13 @@ import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.ConstNull;
+import IR.LLVMoperand.GlobalVar;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
 import IR.TypeSystem.LLVMtype;
+import Optimization.Andersen;
+import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
@@ -132,6 +135,27 @@ public class GEPInst extends LLVMInstruction{
     }
 
     @Override
+    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+        assert result.getLlvMtype() instanceof LLVMPointerType;
+        assert pointer instanceof GlobalVar || pointer.getLlvMtype() instanceof LLVMPointerType;
+        if (!(pointer instanceof ConstNull)) {
+            assert nodeMap.containsKey(result);
+            assert nodeMap.containsKey(pointer);
+            nodeMap.get(pointer).getInclusiveEdge().add(nodeMap.get(result));
+        }
+    }
+
+    @Override
+    public CSE.Expression convertToExpression() {
+        String instructionName = "getelementptr";
+        ArrayList<String> operands = new ArrayList<>();
+        operands.add(pointer.toString());
+        for (Operand operand : indexs)
+            operands.add(operand.toString());
+        return new CSE.Expression(instructionName, operands);
+    }
+
+    @Override
     public LLVMInstruction makeCopy() {
         GEPInst gepInst = new GEPInst(this.getBlock(), this.pointer, new ArrayList<>(this.indexs), this.result.makeCopy());
         this.result.setDef(gepInst);
@@ -165,4 +189,6 @@ public class GEPInst extends LLVMInstruction{
         GEPInst.result.setDef(GEPInst);
         return GEPInst;
     }
+
+
 }

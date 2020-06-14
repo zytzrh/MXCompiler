@@ -6,10 +6,14 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
+import IR.TypeSystem.LLVMPointerType;
 import IR.TypeSystem.LLVMtype;
+import Optimization.Andersen;
+import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -108,6 +112,25 @@ public class BitCastInst extends LLVMInstruction{
     @Override
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         source.markBaseAsLive(live, queue);
+    }
+
+    @Override
+    public CSE.Expression convertToExpression() {
+        String instructionName = "bitcast";
+        ArrayList<String> operands = new ArrayList<>();
+        operands.add(source.toString());
+        operands.add(objectType.toString());
+        return new CSE.Expression(instructionName, operands);
+    }
+
+    @Override
+    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+        assert source.getLlvMtype() instanceof LLVMPointerType && result.getLlvMtype() instanceof LLVMPointerType;
+        if (!(source instanceof ConstNull)) {
+            assert nodeMap.containsKey(result);
+            assert nodeMap.containsKey(source);
+            nodeMap.get(source).getInclusiveEdge().add(nodeMap.get(result));
+        }
     }
 
     @Override

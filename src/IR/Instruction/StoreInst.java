@@ -3,10 +3,13 @@ package IR.Instruction;
 import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMfunction;
+import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
 import IR.TypeSystem.LLVMtype;
+import Optimization.Andersen;
+import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
@@ -88,9 +91,26 @@ public class StoreInst extends LLVMInstruction{
     }
 
     @Override
+    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+        if (!(value.getLlvMtype() instanceof LLVMPointerType))
+            return;
+        if (!(addr instanceof ConstNull) && !(value instanceof ConstNull)) {
+            assert nodeMap.containsKey(addr);
+            assert nodeMap.containsKey(value);
+            nodeMap.get(addr).getDereferenceRhs().add(nodeMap.get(value));
+        }
+    }
+
+    @Override
     public LLVMInstruction makeCopy() {
         StoreInst storeInst = new StoreInst(this.getBlock(), this.value, this.addr);
         return storeInst;
+    }
+
+    @Override
+    public CSE.Expression convertToExpression() {
+        assert false;
+        return null;
     }
 
     @Override

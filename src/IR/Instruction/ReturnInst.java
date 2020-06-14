@@ -7,6 +7,8 @@ import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMVoidType;
 import IR.TypeSystem.LLVMtype;
+import Optimization.Andersen;
+import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
@@ -83,6 +85,17 @@ public class ReturnInst extends LLVMInstruction{
     }
 
     @Override
+    public void addConstraintsForAndersen(Map<Operand, Andersen.Node> nodeMap, Set<Andersen.Node> nodes) {
+
+    }
+
+    @Override
+    public CSE.Expression convertToExpression() {
+        assert false;
+        return null;
+    }
+
+    @Override
     public LLVMInstruction makeCopy() {
         ReturnInst returnInst = new ReturnInst(this.getBlock(), this.returnType, this.returnValue);
         return returnInst;
@@ -98,6 +111,7 @@ public class ReturnInst extends LLVMInstruction{
             returnValue.addUse(this);
         }
     }
+
 
     @Override
     public Object clone() {
