@@ -16,20 +16,20 @@ import java.util.Set;
 
 public class BitCastInst extends LLVMInstruction{
     private Operand source;
-    private LLVMtype ObjectType;
+    private LLVMtype objectType;
     private Register result;
 
     public BitCastInst(Block block, Operand source, LLVMtype objectType, Register result) {
         super(block);
         this.source = source;
-        ObjectType = objectType;
+        this.objectType = objectType;
         this.result = result;
     }
 
     @Override
     public String toString() {
         return result.toString() + " = bitcast " + source.getLlvMtype().toString() + " " + source.toString() + " to "
-                + ObjectType.toString();
+                + objectType.toString();
     }
 
     @Override
@@ -60,11 +60,11 @@ public class BitCastInst extends LLVMInstruction{
     }
 
     public LLVMtype getObjectType() {
-        return ObjectType;
+        return objectType;
     }
 
     public void setObjectType(LLVMtype objectType) {
-        ObjectType = objectType;
+        this.objectType = objectType;
     }
 
     public Register getResult() {
@@ -108,5 +108,33 @@ public class BitCastInst extends LLVMInstruction{
     @Override
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         source.markBaseAsLive(live, queue);
+    }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        BitCastInst bitCastInst = new BitCastInst(this.getBlock(), this.source,     //gugu changed:
+                this.objectType, this.result.makeCopy());
+        bitCastInst.result.setDef(bitCastInst);
+        return bitCastInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        if (source instanceof Register) {
+            assert operandMap.containsKey(source);
+            source = operandMap.get(source);
+        }
+        source.addUse(this);
+    }
+
+    @Override
+    public Object clone() {
+        BitCastInst bitCastInst = ((BitCastInst) super.clone());
+        bitCastInst.source = this.source;               //???????
+        bitCastInst.objectType = this.objectType;
+        bitCastInst.result = (Register) this.result.clone();
+
+        bitCastInst.result.setDef(bitCastInst);
+        return bitCastInst;
     }
 }

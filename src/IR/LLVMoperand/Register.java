@@ -7,7 +7,7 @@ import IR.TypeSystem.LLVMtype;
 import java.util.Queue;
 import java.util.Set;
 
-public class Register extends Operand{
+public class Register extends Operand implements Cloneable{
     private String name;
     private LLVMInstruction def;
     private boolean isParameter;
@@ -19,6 +19,12 @@ public class Register extends Operand{
         isParameter = false;
     }
 
+    public Register(LLVMtype llvMtype, String name, LLVMInstruction def, boolean isParameter) {
+        super(llvMtype);
+        this.name = name;
+        this.def = def;
+        this.isParameter = isParameter;
+    }
 
     @Override
     public String toString() {
@@ -81,4 +87,24 @@ public class Register extends Operand{
             queue.offer(def.getBlock().getInstTail());
         }
     }
+
+    public Register makeCopy(){
+        return new Register(this.getLlvMtype(), this.name, this.def, this.isParameter);
+    }
+
+    @Override
+    public Object clone() {
+        Register register;
+        try {
+            register = (Register) super.clone();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
+        register.name = this.name;
+        register.def = this.def;
+        register.isParameter = this.isParameter;
+        return register;
+    }
+
 }

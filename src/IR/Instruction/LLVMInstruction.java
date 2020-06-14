@@ -6,14 +6,14 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import Optimization.ConstOptim;
-import Optimization.LoopAnalysis;
+import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
 
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-abstract public class LLVMInstruction {
+abstract public class LLVMInstruction implements Cloneable{
     private Block block;
     private LLVMInstruction preInst;
     private LLVMInstruction postInst;
@@ -103,5 +103,25 @@ abstract public class LLVMInstruction {
     public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {
         removeFromBlock();
         return true;
+    }
+
+    abstract public LLVMInstruction makeCopy();
+
+    abstract public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap);
+
+    @Override
+    public Object clone() {
+        LLVMInstruction instruction;
+        try {
+            instruction = (LLVMInstruction) super.clone();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
+
+//        instruction.block = this.block;
+//        instruction.preInst = this.preInst;
+//        instruction.postInst = this.postInst;
+        return instruction;
     }
 }

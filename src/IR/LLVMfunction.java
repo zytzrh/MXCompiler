@@ -26,6 +26,7 @@ public class LLVMfunction {
 
 
     private boolean sideEffect;
+    private boolean builtIn;
 
     public LLVMfunction(String functionName, ArrayList<Register> paras,
                         LLVMtype resultType) {
@@ -310,6 +311,13 @@ public class LLVMfunction {
         this.exitBlock = exitBlock;
     }
 
+    public boolean isBuiltIn() {
+        return builtIn;
+    }
+
+    public void setBuiltIn(boolean builtIn) {
+        this.builtIn = builtIn;
+    }
 
     public ArrayList<Block> getBlocks() {           //gugu changde: delete
         ArrayList<Block> blocks = new ArrayList<>();

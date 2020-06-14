@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PhysicalASMRegister extends ASMRegister {
+public class PhysicalASMRegister extends ASMRegister {          //gugu changed: too beautiful
     // ------ Static Member/Methods ------
     static public String[] prNames = {
             "zero", "ra", "sp", "gp", "tp",
@@ -18,7 +18,7 @@ public class PhysicalASMRegister extends ASMRegister {
             "t3", "t4", "t5", "t6"
     };
     static public String[] calleeSavePRNames = {
-            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"
+            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"        //so is also the fp
     };
     static public String[] allocatablePRNames = {
             // Except zero, sp, gp and tp.
@@ -35,7 +35,8 @@ public class PhysicalASMRegister extends ASMRegister {
 
     static public Map<String, VirtualASMRegister> vrs;
     static public VirtualASMRegister zeroVR;
-    static public VirtualASMRegister raVR;
+    static public VirtualASMRegister returnAddressVR;
+    static public VirtualASMRegister returnValueVR;
     static public ArrayList<VirtualASMRegister> argVR;
     static public ArrayList<VirtualASMRegister> calleeSaveVRs;
 
@@ -62,7 +63,8 @@ public class PhysicalASMRegister extends ASMRegister {
         }
 
         zeroVR = vrs.get("zero");
-        raVR = vrs.get("ra");
+        returnAddressVR = vrs.get("ra");
+        returnValueVR = vrs.get("a0");
         argVR = new ArrayList<>();
         for (int i = 0; i < 8; i++)
             argVR.add(vrs.get("a" + i));

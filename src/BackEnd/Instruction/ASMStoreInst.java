@@ -7,18 +7,18 @@ import BackEnd.Operand.Address.Address;
 import java.util.Set;
 
 public class ASMStoreInst extends ASMInstruction {
-    public enum ByteSize {
-        sb, sw
+    public enum ByteType {
+        sb, sw  //32bit and 8bit
     }
 
     private VirtualASMRegister rs;
-    private ASMStoreInst.ByteSize byteSize;
+    private ByteType byteType;
     private Address addr;
 
-    public ASMStoreInst(BackEnd.ASMBlock ASMBlock, VirtualASMRegister rs, ByteSize byteSize, Address addr) {
+    public ASMStoreInst(BackEnd.ASMBlock ASMBlock, VirtualASMRegister rs, ByteType byteType, Address addr) {
         super(ASMBlock);
         this.rs = rs;
-        this.byteSize = byteSize;
+        this.byteType = byteType;
         this.addr = addr;
 
         this.rs.addUse(this);
@@ -51,12 +51,12 @@ public class ASMStoreInst extends ASMInstruction {
 
     @Override
     public String emitCode() {
-        return "\t" + byteSize.name() + "\t" + rs.emitCode() + ", " + addr.emitCode();
+        return "\t" + byteType.name() + "\t" + rs.emitCode() + ", " + addr.emitCode();
     }
 
     @Override
     public String toString() {
-        return byteSize + " " + rs + ", " + addr;
+        return byteType + " " + rs + ", " + addr;
     }
 
     @Override

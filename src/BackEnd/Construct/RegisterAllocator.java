@@ -8,7 +8,7 @@ import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 import BackEnd.Operand.Address.StackLocation;
 import BackEnd.Operand.Immediate.IntImmediate;
 import BackEnd.RISCVFunction;
-import Optimization.LoopAnalysis;
+import Optimization.Loop.LoopAnalysis;
 import Utility.Pair;
 
 import java.util.*;
@@ -144,7 +144,7 @@ public class RegisterAllocator extends ASMPass {
         adjSet = new HashSet<>();
 
 
-        initial.addAll(RISCVFunction.getSymbolTable().getAllVRs());
+        initial.addAll(RISCVFunction.getAllVRSet());
         preColored.addAll(PhysicalASMRegister.vrs.values());
         initial.removeAll(preColored);
 
@@ -486,16 +486,16 @@ public class RegisterAllocator extends ASMPass {
             int cnt = 0;
             for (ASMInstruction inst : defs) {
                 VirtualASMRegister spilledVR = new VirtualASMRegister(vr.getName() + ".spill" + cnt);
-                RISCVFunction.getSymbolTable().putASMRename(spilledVR.getName(), spilledVR);
+                RISCVFunction.registerVRDuplicateName(spilledVR);
                 cnt++;
 
                 ASMBlock block = inst.getASMBlock();
                 inst.replaceDef(vr, spilledVR);
-                block.addInstructionNext(inst, new ASMStoreInst(block, spilledVR, ASMStoreInst.ByteSize.sw, stackLocation));
+                block.addInstructionNext(inst, new ASMStoreInst(block, spilledVR, ASMStoreInst.ByteType.sw, stackLocation));
             }
             for (ASMInstruction inst : uses) {
                 VirtualASMRegister spilledVR = new VirtualASMRegister(vr.getName() + ".spill" + cnt);
-                RISCVFunction.getSymbolTable().putASMRename(spilledVR.getName(), spilledVR);
+                RISCVFunction.registerVRDuplicateName(spilledVR);
                 cnt++;
 
                 ASMBlock block = inst.getASMBlock();
@@ -503,7 +503,7 @@ public class RegisterAllocator extends ASMPass {
                 block.addInstructionPrev(inst, new ASMLoadInst(block, spilledVR, ASMLoadInst.ByteSize.lw, stackLocation));
             }
             assert vr.getDef().isEmpty() && vr.getUse().isEmpty();
-            RISCVFunction.getSymbolTable().removeVR(vr);
+            RISCVFunction.removeVR(vr);
         }
     }
 

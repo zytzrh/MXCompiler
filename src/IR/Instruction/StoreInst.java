@@ -86,4 +86,33 @@ public class StoreInst extends LLVMInstruction{
         value.markBaseAsLive(live, queue);
         addr.markBaseAsLive(live, queue);
     }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        StoreInst storeInst = new StoreInst(this.getBlock(), this.value, this.addr);
+        return storeInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        if (value instanceof Register) {
+            assert operandMap.containsKey(value);
+            value = operandMap.get(value);
+        }
+        if (addr instanceof Register) {
+            assert operandMap.containsKey(addr);
+            addr = operandMap.get(addr);
+        }
+        value.addUse(this);
+        addr.addUse(this);
+    }
+
+    @Override
+    public Object clone() {
+        StoreInst storeInst = (StoreInst) super.clone();
+        storeInst.value = this.value;
+        storeInst.addr = this.addr;
+
+        return storeInst;
+    }
 }

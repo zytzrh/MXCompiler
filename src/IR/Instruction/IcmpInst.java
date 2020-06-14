@@ -19,15 +19,15 @@ public class IcmpInst extends LLVMInstruction{
     }
 
     private IcmpName operator;
-    private LLVMtype irType;
+    private LLVMtype compareType;
     private Operand op1;
     private Operand op2;
     private Register result;
 
-    public IcmpInst(Block block, IcmpName operator, LLVMtype irType, Operand op1, Operand op2, Register result) {
+    public IcmpInst(Block block, IcmpName operator, LLVMtype compareType, Operand op1, Operand op2, Register result) {
         super(block);
         this.operator = operator;
-        this.irType = irType;
+        this.compareType = compareType;
         this.op1 = op1;
         this.op2 = op2;
         this.result = result;
@@ -36,7 +36,7 @@ public class IcmpInst extends LLVMInstruction{
     @Override
     public String toString() {
         return result.toString() + " = icmp "
-                + operator.name() + " " + irType.toString() + " " + op1.toString() + ", " + op2.toString();
+                + operator.name() + " " + compareType.toString() + " " + op1.toString() + ", " + op2.toString();
     }
 
     @Override
@@ -72,12 +72,12 @@ public class IcmpInst extends LLVMInstruction{
         this.operator = operator;
     }
 
-    public LLVMtype getIrType() {
-        return irType;
+    public LLVMtype getCompareType() {
+        return compareType;
     }
 
-    public void setIrType(LLVMtype irType) {
-        this.irType = irType;
+    public void setCompareType(LLVMtype compareType) {
+        this.compareType = compareType;
     }
 
     public Operand getOp1() {
@@ -115,28 +115,36 @@ public class IcmpInst extends LLVMInstruction{
             return false;
     }
 
-    public boolean shouldSwap(boolean assertOrNot) {
-        if (assertOrNot)
-            assert !(op1 instanceof Constant) || !(op2 instanceof Constant);
-        else {
-            if (op1 instanceof Constant && op2 instanceof Constant)
-                return false;
+
+    public void swapOpIfNeed(){
+        if(op1 instanceof Constant){
+            switch (operator) {
+                case eq:
+                    //do nothing
+                    break;
+                case ne:
+                    //do nothing
+                    break;
+                case sgt:
+                    operator = IcmpName.slt;
+                    break;
+                case sge:
+                    operator = IcmpName.sle;
+                    break;
+                case slt:
+                    operator = IcmpName.sgt;
+                    break;
+                case sle:
+                    operator = IcmpName.sge;
+                    break;
+            }
+            Operand tmp = op1;
+            op1 = op2;
+            op2 = tmp;
         }
-        return op1 instanceof Constant;
     }
 
-    public void swapOps() {
-        operator = operator == IcmpName.sgt ? IcmpName.slt
-                : operator == IcmpName.slt ? IcmpName.sgt
-                : operator == IcmpName.sge ? IcmpName.sle
-                : operator == IcmpName.sle ? IcmpName.sge
-                : operator;
-        Operand tmp = op1;
-        op1 = op2;
-        op2 = tmp;
-    }
-
-    public void convertLeGeToLtGt() {
+    public void removeEqual() {
         if (op2 instanceof ConstBool)
             return;
         assert op2 instanceof ConstInt;
@@ -164,5 +172,41 @@ public class IcmpInst extends LLVMInstruction{
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         op1.markBaseAsLive(live, queue);
         op2.markBaseAsLive(live, queue);
+    }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        IcmpInst icmpInst = new IcmpInst(this.getBlock(), this.operator, this.compareType,
+                this.op1, this.op2, this.result.makeCopy());
+        icmpInst.result.setDef(icmpInst);
+        return icmpInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        if (op1 instanceof Register) {
+            assert operandMap.containsKey(op1);
+            op1 = operandMap.get(op1);
+        }
+        if (op2 instanceof Register) {
+            assert operandMap.containsKey(op2);
+            op2 = operandMap.get(op2);
+        }
+        op1.addUse(this);
+        op2.addUse(this);
+    }
+
+
+    @Override
+    public Object clone() {
+        IcmpInst icmpInst = (IcmpInst) super.clone();
+        icmpInst.operator = this.operator;
+        icmpInst.compareType = this.compareType;
+        icmpInst.op1 = this.op1;
+        icmpInst.op2 = this.op2;
+        icmpInst.result = (Register) this.result.clone();
+
+        icmpInst.result.setDef(icmpInst);
+        return icmpInst;
     }
 }

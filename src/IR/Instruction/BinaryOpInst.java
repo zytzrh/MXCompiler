@@ -146,4 +146,37 @@ public class BinaryOpInst extends LLVMInstruction{
         lhs.markBaseAsLive(live, queue);
         rhs.markBaseAsLive(live, queue);
     }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        BinaryOpInst binaryOpInst =  new BinaryOpInst(this.getBlock(), this.op, this.lhs, this.rhs, this.result);
+        binaryOpInst.result.setDef(binaryOpInst);
+        return binaryOpInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        if (lhs instanceof Register) {
+            assert operandMap.containsKey(lhs);
+            lhs = operandMap.get(lhs);
+        }
+        if (rhs instanceof Register) {
+            assert operandMap.containsKey(rhs);
+            rhs = operandMap.get(rhs);
+        }
+        lhs.addUse(this);
+        rhs.addUse(this);
+    }
+
+    @Override
+    public Object clone() {
+        BinaryOpInst binaryOpInst = (BinaryOpInst) super.clone();
+        binaryOpInst.op = this.op;
+        binaryOpInst.lhs = this.lhs;
+        binaryOpInst.rhs = this.rhs;
+        binaryOpInst.result = (Register) this.result.clone();
+
+        binaryOpInst.result.setDef(binaryOpInst);
+        return binaryOpInst;
+    }
 }

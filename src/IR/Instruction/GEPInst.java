@@ -130,4 +130,39 @@ public class GEPInst extends LLVMInstruction{
         for (Operand operand : indexs)
             operand.markBaseAsLive(live, queue);
     }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        GEPInst gepInst = new GEPInst(this.getBlock(), this.pointer, new ArrayList<>(this.indexs), this.result.makeCopy());
+        this.result.setDef(gepInst);
+        return gepInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        if (pointer instanceof Register) {
+            assert operandMap.containsKey(pointer);
+            pointer = operandMap.get(pointer);
+        }
+        pointer.addUse(this);
+        for (int i = 0; i < indexs.size(); i++) {
+            Operand aIndex = indexs.get(i);
+            if (aIndex instanceof Register) {
+                assert operandMap.containsKey(aIndex);
+                indexs.set(i, operandMap.get(aIndex));
+            }
+            indexs.get(i).addUse(this);
+        }
+    }
+
+    @Override
+    public Object clone() {
+        GEPInst GEPInst = (GEPInst) super.clone();
+        GEPInst.pointer = this.pointer;
+        GEPInst.indexs = new ArrayList<>(indexs);
+        GEPInst.result = (Register) this.result.clone();
+
+        GEPInst.result.setDef(GEPInst);
+        return GEPInst;
+    }
 }

@@ -1,5 +1,6 @@
 package IR.Instruction;
 
+import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.ConstString;
@@ -8,7 +9,7 @@ import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
 import Optimization.ConstOptim;
-import Optimization.LoopAnalysis;
+import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
 
 import java.util.Map;
@@ -92,5 +93,16 @@ public class DefineGlobal extends LLVMInstruction {
     @Override
     public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {
         return super.dceRemoveFromBlock(loopAnalysis);
+    }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        assert false;
+        return null;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        assert false;
     }
 }

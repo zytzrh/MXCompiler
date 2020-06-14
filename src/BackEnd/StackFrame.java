@@ -13,16 +13,20 @@ public class StackFrame {
 
     int size;
 
-    private final Map<VirtualASMRegister, StackLocation> spillLocations;
-    private final ArrayList<StackLocation> formalParameterLocations; // Fetch from caller's stack frame.
-    private final Map<RISCVFunction, ArrayList<StackLocation>> parameterLocation;
+    private Map<VirtualASMRegister, StackLocation> spillLocations;
+
+
+    private ArrayList<StackLocation> formalParaLocs; // Fetch from caller's stack frame.
+
+
+    private Map<RISCVFunction, ArrayList<StackLocation>> parameterLocation;       //gugu changed:??
 
     public StackFrame(RISCVFunction RISCVFunction) {
         this.RISCVFunction = RISCVFunction;
         size = 0;
 
         spillLocations = new LinkedHashMap<>();
-        formalParameterLocations = new ArrayList<>();
+        formalParaLocs = new ArrayList<>();
         parameterLocation = new HashMap<>();
     }
 
@@ -35,7 +39,7 @@ public class StackFrame {
     }
 
     public void addFormalParameterLocation(StackLocation stackLocation) {
-        formalParameterLocations.add(stackLocation);
+        formalParaLocs.add(stackLocation);
     }
 
     public Map<RISCVFunction, ArrayList<StackLocation>> getParameterLocation() {
@@ -50,8 +54,8 @@ public class StackFrame {
 
         size = maxSpilledActualParameter + spilledVRCnt;
 
-        for (int i = 0; i < formalParameterLocations.size(); i++) {
-            StackLocation stackLocation = formalParameterLocations.get(i);
+        for (int i = 0; i < formalParaLocs.size(); i++) {
+            StackLocation stackLocation = formalParaLocs.get(i);
             stackLocation.setOffset((size + i) * 4);
         }
         int j = 0;

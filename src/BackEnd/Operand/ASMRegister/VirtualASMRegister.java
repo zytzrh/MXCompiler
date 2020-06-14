@@ -13,7 +13,7 @@ public class VirtualASMRegister extends ASMRegister {
     private Map<ASMInstruction, Integer> use;
     private Map<ASMInstruction, Integer> def;
 
-    // Member used for Register Allocator.
+    // Register allocator
     private ArrayList<VirtualASMRegister> adjList;
     private int degree;
     private Set<ASMMoveInst> moveList;
@@ -36,6 +36,7 @@ public class VirtualASMRegister extends ASMRegister {
         colorPR = null;
         spillCost = 0;
     }
+
 
     public String getName() {
         return name;

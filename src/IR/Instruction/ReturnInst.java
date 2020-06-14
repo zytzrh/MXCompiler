@@ -81,4 +81,30 @@ public class ReturnInst extends LLVMInstruction{
         if (returnValue != null)
             returnValue.markBaseAsLive(live, queue);
     }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        ReturnInst returnInst = new ReturnInst(this.getBlock(), this.returnType, this.returnValue);
+        return returnInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        if (!(returnType instanceof LLVMVoidType)) {
+            if (returnValue instanceof Register) {
+                assert operandMap.containsKey(returnValue);
+                returnValue = operandMap.get(returnValue);
+            }
+            returnValue.addUse(this);
+        }
+    }
+
+    @Override
+    public Object clone() {
+        ReturnInst returnInst = (ReturnInst) super.clone();
+        returnInst.returnType = this.returnType;
+        returnInst.returnValue = this.returnValue;
+
+        return returnInst;
+    }
 }

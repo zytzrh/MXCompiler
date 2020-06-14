@@ -6,7 +6,7 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import Optimization.ConstOptim;
-import Optimization.LoopAnalysis;
+import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
 
 import java.util.Map;
@@ -148,5 +148,39 @@ public class BranchInst extends LLVMInstruction{
             return false;
         removeFromBlock();
         return true;
+    }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        BranchInst branchInst = new BranchInst(this.getBlock(), this.condition, this.ifTrueBlock, this.ifFalseBlock);
+        return branchInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        if (condition != null) {
+            if (condition instanceof Register) {
+                assert operandMap.containsKey(condition);
+                condition = operandMap.get(condition);
+            }
+            condition.addUse(this);
+
+            assert blockMap.containsKey(ifFalseBlock);
+            ifFalseBlock = blockMap.get(ifFalseBlock);
+            ifFalseBlock.addUse(this);
+        }
+        assert blockMap.containsKey(ifTrueBlock);
+        ifTrueBlock = blockMap.get(ifTrueBlock);
+        ifTrueBlock.addUse(this);
+    }
+
+    @Override
+    public Object clone() {
+        BranchInst branchInst = (BranchInst) super.clone();
+        branchInst.condition = this.condition;                //???
+        branchInst.ifTrueBlock = this.ifTrueBlock;
+        branchInst.ifFalseBlock = this.ifFalseBlock;
+
+        return branchInst;
     }
 }

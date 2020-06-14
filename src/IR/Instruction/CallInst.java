@@ -137,4 +137,44 @@ public class CallInst extends LLVMInstruction {
         for (Operand parameter : paras)
             parameter.markBaseAsLive(live, queue);
     }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        Register newResult = null;
+        if(this.result != null)
+            newResult = this.result.makeCopy();
+        CallInst callInst = new CallInst(this.getBlock(), newResult,
+                this.llvMfunction, new ArrayList<>(this.paras));
+
+        if(newResult != null)
+            newResult.setDef(callInst);
+        return callInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        for (int i = 0; i < paras.size(); i++) {
+            Operand operand = paras.get(i);
+            if (operand instanceof Register) {
+                assert operandMap.containsKey(operand);
+                paras.set(i, operandMap.get(operand));
+            }
+            paras.get(i).addUse(this);
+        }
+        llvMfunction.addUse(this);
+    }
+
+    @Override
+    public Object clone() {
+        CallInst callInst = (CallInst) super.clone();
+        callInst.llvMfunction = this.llvMfunction;
+        callInst.paras = new ArrayList<>(this.paras);
+        if (this.result != null) {
+            callInst.result = (Register) this.result.clone();
+            callInst.result.setDef(callInst);
+        } else
+            callInst.result = null;
+
+        return callInst;
+    }
 }

@@ -7,6 +7,7 @@ import BackEnd.RISCVModule;
 import IR.IRBuilder;
 import IR.Module;
 import Optimization.*;
+import Optimization.Loop.LoopAnalysis;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ExceptionHandle.ExceptionListener;
 import Semantic.ParserAndLexer.MXgrammarLexer;
@@ -77,6 +78,8 @@ public class Main {
                 LoopAnalysis loopAnalysis = new LoopAnalysis(module);
                 DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(module, sideEffectChecker, loopAnalysis);
                 ConstOptim constOptim = new ConstOptim(module);
+//                MyInlineExpander myInlineExpander = new MyInlineExpander(module);
+                InlineExpander inlineExpander = new InlineExpander(module);
                 while(true){
                     boolean changed = false;
                     dTreeConstructor.run();
@@ -84,6 +87,8 @@ public class Main {
                     changed |= deadCodeEliminator.run();
                     changed |= cfgSimplifier.run();
                     loopAnalysis.run();
+//                    changed |= myInlineExpander.run();
+//                    changed |= inlineExpander.run();
                     changed |= cfgSimplifier.run();
                     if (!changed)
                         break;

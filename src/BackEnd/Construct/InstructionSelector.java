@@ -81,33 +81,10 @@ public class InstructionSelector implements IRVisitor {
             }
 
         }
-//        for (GlobalVariable IRGlobalVariable : module.getGlobalVariableMap().values()) {
-//            String name = IRGlobalVariable.getName();
-//            ASMGlobalVar gv = new ASMGlobalVar(name);
-//            ASMRISCVModule.getGlobalVariableMap().put(name, gv);
-//
-//            Operand init = IRGlobalVariable.getInit();
-//            assert init != null;
-//
-//            if (IRGlobalVariable.getLlvMtype() instanceof LLVMArrayType) {
-//                assert IRGlobalVariable.getInit() instanceof ConstString;
-//                gv.setString(((ConstString) init).getValue());
-//            } else if (IRGlobalVariable.getLlvMtype() instanceof LLVMIntType
-//                    && ((LLVMIntType) IRGlobalVariable.getLlvMtype()).getBitWidth() == LLVMIntType.BitWidth.int1) {
-//                assert init instanceof ConstBool;
-//                gv.setBool(((ConstBool) init).getValue() ? 1 : 0);
-//            } else if (IRGlobalVariable.getLlvMtype() instanceof LLVMIntType
-//                    && ((LLVMIntType) IRGlobalVariable.getLlvMtype()).getBitWidth() == LLVMIntType.BitWidth.int32) {
-//                assert init instanceof ConstInt;
-//                gv.setInt(((int) ((ConstInt) init).getValue()));
-//            } else if (IRGlobalVariable.getLlvMtype() instanceof LLVMPointerType) {
-//                assert init instanceof ConstNull;
-//                gv.setInt(0);
-//            }
-//        }
+
         for (LLVMfunction IRExternalFunction : module.getBuiltInFunctionMap().values()) {
             String name = IRExternalFunction.getFunctionName();
-            ASMRISCVModule.getExternalFunctionMap().put(name,
+            ASMRISCVModule.getBuiltInFunctionMap().put(name,
                     new RISCVFunction(ASMRISCVModule, name, null));
         }
         for (LLVMfunction IRFunction : module.getFunctionMap().values()) {
@@ -130,36 +107,48 @@ public class InstructionSelector implements IRVisitor {
         StackFrame stackFrame = new StackFrame(currentRISCVFunction);
         currentRISCVFunction.setStackFrame(stackFrame);
 
-        // ------ Save return address ------
-        VirtualASMRegister savedRA = new VirtualASMRegister(PhysicalASMRegister.raVR.getName() + ".save");
-        currentRISCVFunction.getSymbolTable().putASM(savedRA.getName(), savedRA);
+        // Save return address
+        VirtualASMRegister tmpRA = new VirtualASMRegister(PhysicalASMRegister.returnAddressVR.getName() + ".tmp");
+        currentRISCVFunction.registerVR(tmpRA);           //gugu changed
         currentBlock.addInstruction(new ASMMoveInst(currentBlock,
-                savedRA, PhysicalASMRegister.raVR));
+                tmpRA, PhysicalASMRegister.returnAddressVR));
 
-        // ------ Save callee-save registers ------
+        // Save callee-save registers
         for (VirtualASMRegister vr : PhysicalASMRegister.calleeSaveVRs) {
-            VirtualASMRegister savedVR = new VirtualASMRegister(vr.getName() + ".save");
-            currentRISCVFunction.getSymbolTable().putASM(savedVR.getName(), savedVR);
+            VirtualASMRegister savedVR = new VirtualASMRegister(vr.getName() + ".tmp");
+            currentRISCVFunction.registerVR(savedVR);
             currentBlock.addInstruction(new ASMMoveInst(currentBlock, savedVR, vr));
         }
 
-        // ------ Parameters ------
+        // Parameters
         ArrayList<Register> IRParameters = function.getParas();
-        // Fix the color of the first 8 parameters.
-        for (int i = 0; i < Integer.min(IRParameters.size(), 8); i++) {
-            Register parameter = IRParameters.get(i);
-            VirtualASMRegister vr = currentRISCVFunction.getSymbolTable().getVR(parameter.getName());
-            currentBlock.addInstruction(new ASMMoveInst(currentBlock,
-                    vr, PhysicalASMRegister.argVR.get(i)));
-        }
-        // Load spilled parameters from the frame of the caller.
-        for (int i = 8; i < IRParameters.size(); i++) {
-            Register parameter = IRParameters.get(i);
-            VirtualASMRegister vr = currentRISCVFunction.getSymbolTable().getVR(parameter.getName());
-            StackLocation stackLocation = new StackLocation(parameter.getName() + ".para");
-            stackFrame.addFormalParameterLocation(stackLocation);
-            currentBlock.addInstruction(new ASMLoadInst(currentBlock, vr,
-                    ASMLoadInst.ByteSize.lw, stackLocation));
+        int paraNum = IRParameters.size();
+        if(paraNum <= 8){
+            for(int i = 0; i < paraNum; i++){
+                // Fix the color of the parameters.
+                Register parameter = IRParameters.get(i);
+                VirtualASMRegister vr = currentRISCVFunction.getVR(parameter.getName());
+                currentBlock.addInstruction(new ASMMoveInst(currentBlock,
+                        vr, PhysicalASMRegister.argVR.get(i)));
+            }
+        }else{
+            for(int i = 0; i < 8; i++){
+                // Fix the color of the parameters.
+                Register parameter = IRParameters.get(i);
+                VirtualASMRegister vr = currentRISCVFunction.getVR(parameter.getName());
+                currentBlock.addInstruction(new ASMMoveInst(currentBlock,
+                        vr, PhysicalASMRegister.argVR.get(i)));
+            }
+            for (int i = 8; i < paraNum; i++) {
+                Register parameter = IRParameters.get(i);
+                VirtualASMRegister vr = currentRISCVFunction.getVR(parameter.getName());
+
+                StackLocation stackLocation = new StackLocation(parameter.getName() + ".para");
+                stackFrame.addFormalParameterLocation(stackLocation);
+
+                currentBlock.addInstruction(new ASMLoadInst(currentBlock, vr,
+                        ASMLoadInst.ByteSize.lw, stackLocation));
+            }
         }
 
         // ------ Blocks ------
@@ -180,21 +169,21 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(ReturnInst inst) {
         if (!(inst.getReturnType() instanceof LLVMVoidType)) {
-            VirtualASMRegister returnValue = getVROfOperand(inst.getReturnValue());
+            VirtualASMRegister returnValue = Operand2VR(inst.getReturnValue());
             currentBlock.addInstruction(new ASMMoveInst(currentBlock,
                     PhysicalASMRegister.argVR.get(0), returnValue));
         }
 
-        // ------ Recover saved callee-save registers ------
+        // recover callee-save regsiter
         for (VirtualASMRegister vr : PhysicalASMRegister.calleeSaveVRs) {
-            VirtualASMRegister savedVR = currentRISCVFunction.getSymbolTable().getVR(vr.getName() + ".save");
+            VirtualASMRegister savedVR = currentRISCVFunction.getVR(vr.getName() + ".tmp");
             currentBlock.addInstruction(new ASMMoveInst(currentBlock, vr, savedVR));
         }
 
-        VirtualASMRegister savedRA = currentRISCVFunction.getSymbolTable().getVR(
-                PhysicalASMRegister.raVR.getName() + ".save");
+        VirtualASMRegister savedRA = currentRISCVFunction.getVR(
+                PhysicalASMRegister.returnAddressVR.getName() + ".tmp");
         currentBlock.addInstruction(new ASMMoveInst(currentBlock,
-                PhysicalASMRegister.raVR, savedRA));
+                PhysicalASMRegister.returnAddressVR, savedRA));
 
         currentBlock.addInstruction(new ASMReturnInst(currentBlock));
     }
@@ -210,14 +199,13 @@ public class InstructionSelector implements IRVisitor {
                     && ((Register) cond).getDef() instanceof IcmpInst
                     && cond.onlyHaveOneBranchUse()) {
                 IcmpInst icmp = ((IcmpInst) ((Register) cond).getDef());
-                if (icmp.shouldSwap(true))
-                    icmp.swapOps();
+                icmp.swapOpIfNeed();
 
-                LLVMtype type = icmp.getIrType();
+                LLVMtype type = icmp.getCompareType();
                 IcmpInst.IcmpName op = icmp.getOperator();
                 Operand op1 = icmp.getOp1();
                 Operand op2 = icmp.getOp2();
-                VirtualASMRegister rs1 = currentRISCVFunction.getSymbolTable().getVR(op1.getName());
+                VirtualASMRegister rs1 = currentRISCVFunction.getVR(op1.getName());
                 VirtualASMRegister rs2;
                 if (type instanceof LLVMIntType) {
                     if (op2 instanceof Constant) {
@@ -226,8 +214,8 @@ public class InstructionSelector implements IRVisitor {
 
                         if (value != 0) {
                             rs2 = new VirtualASMRegister("loadImmediate");
-                            currentRISCVFunction.getSymbolTable().putASMRename(rs2.getName(), rs2);
-                            if (needToLoadImmediate(value)) {
+                            currentRISCVFunction.registerVRDuplicateName(rs2);
+                            if (needToLoadImm(value)) {
                                 currentBlock.addInstruction(new ASMLoadImmediate(currentBlock,
                                         rs2, new IntImmediate(value)));
                             } else {
@@ -237,13 +225,13 @@ public class InstructionSelector implements IRVisitor {
                         } else
                             rs2 = PhysicalASMRegister.zeroVR;
                     } else
-                        rs2 = currentRISCVFunction.getSymbolTable().getVR(op2.getName());
+                        rs2 = currentRISCVFunction.getVR(op2.getName());
                 } else if (type instanceof LLVMPointerType) {
                     if (op2 instanceof Constant) {
                         assert op2 instanceof ConstNull;
                         rs2 = PhysicalASMRegister.zeroVR;
                     } else
-                        rs2 = currentRISCVFunction.getSymbolTable().getVR(op2.getName());
+                        rs2 = currentRISCVFunction.getVR(op2.getName());
                 } else
                     throw new RuntimeException();
 
@@ -258,7 +246,7 @@ public class InstructionSelector implements IRVisitor {
                 return;
             }
 
-            VirtualASMRegister condVR = currentRISCVFunction.getSymbolTable().getVR(cond.getName());
+            VirtualASMRegister condVR = currentRISCVFunction.getVR(cond.getName());
             currentBlock.addInstruction(new UnaryBranch(currentBlock, beqz, condVR, elseBlock));
             currentBlock.addInstruction(new ASMJumpInst(currentBlock, thenBlock));
         } else {
@@ -276,13 +264,13 @@ public class InstructionSelector implements IRVisitor {
         Operand rhs = inst.getRhs();
         VirtualASMRegister lhsOperand;
         ASMOperand rhsOperand;
-        VirtualASMRegister result = currentRISCVFunction.getSymbolTable().getVR(inst.getResult().getName());
+        VirtualASMRegister result = currentRISCVFunction.getVR(inst.getResult().getName());
 
         Object opName;
         BinaryOpInst.BinaryOpName instOp = inst.getOp();
         switch (instOp) {
             case add: case and: case or: case xor:
-                lhsOperand = getVROfOperand(lhs);
+                lhsOperand = Operand2VR(lhs);
                 rhsOperand = getOperand(rhs);
                 if (rhsOperand instanceof Immediate) {
                     opName = instOp == BinaryOpInst.BinaryOpName.add ? addi
@@ -301,7 +289,7 @@ public class InstructionSelector implements IRVisitor {
                 }
                 break;
             case sub:
-                lhsOperand = getVROfOperand(lhs);
+                lhsOperand = Operand2VR(lhs);
                 rhsOperand = getOperand(rhs);
                 if (rhsOperand instanceof Immediate) {
                     assert rhsOperand instanceof IntImmediate;
@@ -317,15 +305,15 @@ public class InstructionSelector implements IRVisitor {
                 opName = instOp == BinaryOpInst.BinaryOpName.mul ? RTypeBinary.OpName.mul
                         : instOp == BinaryOpInst.BinaryOpName.sdiv ? RTypeBinary.OpName.div
                         : RTypeBinary.OpName.rem;
-                lhsOperand = getVROfOperand(lhs);
-                rhsOperand = getVROfOperand(rhs);
+                lhsOperand = Operand2VR(lhs);
+                rhsOperand = Operand2VR(rhs);
                 currentBlock.addInstruction(new RTypeBinary(currentBlock, ((RTypeBinary.OpName) opName),
                         lhsOperand, ((VirtualASMRegister) rhsOperand), result));
                 break;
             case shl: case ashr:
                 if (rhs instanceof ConstInt && (((ConstInt) rhs).getValue() >= 32 || ((ConstInt) rhs).getValue() <= 0))
                     break;
-                lhsOperand = getVROfOperand(lhs);
+                lhsOperand = Operand2VR(lhs);
                 rhsOperand = getOperand(rhs);
                 if (rhsOperand instanceof Immediate) {
                     opName = instOp == BinaryOpInst.BinaryOpName.shl ? slli : srai;
@@ -349,7 +337,7 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(LoadInst inst) {
-        VirtualASMRegister rd = currentRISCVFunction.getSymbolTable().getVR(inst.getResult().getName());
+        VirtualASMRegister rd = currentRISCVFunction.getVR(inst.getResult().getName());
         assert inst.getType() instanceof LLVMIntType || inst.getType() instanceof LLVMPointerType;
         ASMLoadInst.ByteSize size = inst.getType().getByte() == 1
                 ? ASMLoadInst.ByteSize.lb
@@ -359,7 +347,7 @@ public class InstructionSelector implements IRVisitor {
             ASMGlobalVar gv =
                     ASMRISCVModule.getGlobalVariableMap().get(inst.getAddr().getName());
             VirtualASMRegister lui = new VirtualASMRegister("luiHigh");
-            currentRISCVFunction.getSymbolTable().putASMRename(lui.getName(), lui);
+            currentRISCVFunction.registerVRDuplicateName(lui);
             currentBlock.addInstruction(new ASMLoadUpperImmediate(currentBlock, lui,
                     new RelocationImmediate(RelocationImmediate.Type.high, gv)));
             currentBlock.addInstruction(new ASMLoadInst(currentBlock, rd, size,
@@ -370,7 +358,7 @@ public class InstructionSelector implements IRVisitor {
                         new BaseOffsetAddr(PhysicalASMRegister.zeroVR, new IntImmediate(0))));
             } else {
                 assert inst.getAddr() instanceof Register;
-                VirtualASMRegister pointer = currentRISCVFunction.getSymbolTable().getVR(inst.getAddr().getName());
+                VirtualASMRegister pointer = currentRISCVFunction.getVR(inst.getAddr().getName());
                 if (currentRISCVFunction.getGepAddrMap().containsKey(pointer)) {
                     BaseOffsetAddr addr = currentRISCVFunction.getGepAddrMap().get(pointer);
                     currentBlock.addInstruction(new ASMLoadInst(currentBlock,
@@ -385,18 +373,18 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(StoreInst inst) {
-        VirtualASMRegister value = getVROfOperand(inst.getValue());
+        VirtualASMRegister value = Operand2VR(inst.getValue());
         LLVMtype irType = inst.getValue().getLlvMtype();
         assert irType instanceof LLVMIntType || irType instanceof LLVMPointerType;
-        ASMStoreInst.ByteSize size = irType.getByte() == 1
-                ? ASMStoreInst.ByteSize.sb
-                : ASMStoreInst.ByteSize.sw;
+        ASMStoreInst.ByteType size = irType.getByte() == 1
+                ? ASMStoreInst.ByteType.sb
+                : ASMStoreInst.ByteType.sw;
 
         if (inst.getAddr() instanceof GlobalVar) {
             ASMGlobalVar gv =
                     ASMRISCVModule.getGlobalVariableMap().get(inst.getAddr().getName());
             VirtualASMRegister lui = new VirtualASMRegister("luiHigh");
-            currentRISCVFunction.getSymbolTable().putASMRename(lui.getName(), lui);
+            currentRISCVFunction.registerVRDuplicateName(lui);
             currentBlock.addInstruction(new ASMLoadUpperImmediate(currentBlock, lui,
                     new RelocationImmediate(RelocationImmediate.Type.high, gv)));
             currentBlock.addInstruction(new ASMStoreInst(currentBlock, value, size,
@@ -407,7 +395,7 @@ public class InstructionSelector implements IRVisitor {
                         new BaseOffsetAddr(PhysicalASMRegister.zeroVR, new IntImmediate(0))));
             } else {
                 assert inst.getAddr() instanceof Register;
-                VirtualASMRegister pointer = currentRISCVFunction.getSymbolTable().getVR(inst.getAddr().getName());
+                VirtualASMRegister pointer = currentRISCVFunction.getVR(inst.getAddr().getName());
                 if (currentRISCVFunction.getGepAddrMap().containsKey(pointer)) {
                     BaseOffsetAddr addr = currentRISCVFunction.getGepAddrMap().get(pointer);
                     currentBlock.addInstruction(new ASMStoreInst(currentBlock,
@@ -422,13 +410,13 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(GEPInst inst) {
-        VirtualASMRegister rd = currentRISCVFunction.getSymbolTable().getVR(inst.getResult().getName());
+        VirtualASMRegister rd = currentRISCVFunction.getVR(inst.getResult().getName());
 
         if (inst.getPointer() instanceof GlobalVar) { // gep string
             currentBlock.addInstruction(new ASMLoadAddressInst(currentBlock, rd,
                     ASMRISCVModule.getGlobalVariableMap().get(inst.getPointer().getName())));
         } else if (inst.getIndexs().size() == 1) { // gep array
-            VirtualASMRegister pointer = currentRISCVFunction.getSymbolTable().getVR(inst.getPointer().getName());
+            VirtualASMRegister pointer = currentRISCVFunction.getVR(inst.getPointer().getName());
             Operand index = inst.getIndexs().get(0);
             if (index instanceof Constant) {
                 assert index instanceof ConstInt;
@@ -442,9 +430,9 @@ public class InstructionSelector implements IRVisitor {
                             ((VirtualASMRegister) rs), rd));
                 }
             } else {
-                VirtualASMRegister rs1 = currentRISCVFunction.getSymbolTable().getVR(index.getName());
+                VirtualASMRegister rs1 = currentRISCVFunction.getVR(index.getName());
                 VirtualASMRegister rs2 = new VirtualASMRegister("slli");
-                currentRISCVFunction.getSymbolTable().putASMRename(rs2.getName(), rs2);
+                currentRISCVFunction.registerVRDuplicateName(rs2);
                 currentBlock.addInstruction(new ITypeBinary(currentBlock, slli, rs1, new IntImmediate(2), rs2));
                 currentBlock.addInstruction(new RTypeBinary(currentBlock, add, pointer, rs2, rd));
             }
@@ -459,7 +447,7 @@ public class InstructionSelector implements IRVisitor {
                 assert inst.getIndexs().get(0) instanceof ConstInt
                         && ((ConstInt) inst.getIndexs().get(0)).getValue() == 0;
                 assert inst.getIndexs().get(1) instanceof ConstInt;
-                VirtualASMRegister pointer = currentRISCVFunction.getSymbolTable().getVR(inst.getPointer().getName());
+                VirtualASMRegister pointer = currentRISCVFunction.getVR(inst.getPointer().getName());
                 LLVMStructType LLVMStructType = ((LLVMStructType) ((LLVMPointerType)
                         inst.getPointer().getLlvMtype()).getBaseType());
                 int index = ((int) ((ConstInt) inst.getIndexs().get(1)).getValue());
@@ -482,8 +470,8 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(BitCastInst inst) {
-        VirtualASMRegister src = currentRISCVFunction.getSymbolTable().getVR(inst.getSource().getName());
-        VirtualASMRegister dest = currentRISCVFunction.getSymbolTable().getVR(inst.getResult().getName());
+        VirtualASMRegister src = currentRISCVFunction.getVR(inst.getSource().getName());
+        VirtualASMRegister dest = currentRISCVFunction.getVR(inst.getResult().getName());
         currentBlock.addInstruction(new ASMMoveInst(currentBlock, dest, src));
     }
 
@@ -493,48 +481,55 @@ public class InstructionSelector implements IRVisitor {
             // Do nothing. Wait until dealing with BranchInst.
             return;
         }
-
-        if (inst.shouldSwap(true))
-            inst.swapOps();
-
-        LLVMtype type = inst.getIrType();
+        
+        LLVMtype type = inst.getCompareType();
+        inst.swapOpIfNeed();
         Operand op1 = inst.getOp1();
         Operand op2 = inst.getOp2();
-        VirtualASMRegister rd = currentRISCVFunction.getSymbolTable().getVR(inst.getResult().getName());
+        VirtualASMRegister rd = currentRISCVFunction.getVR(inst.getResult().getName());
         if (type instanceof LLVMIntType) {
-            VirtualASMRegister rs1 = currentRISCVFunction.getSymbolTable().getVR(op1.getName());
-            if (op2 instanceof Constant) { // I-type
-                inst.convertLeGeToLtGt();
+            VirtualASMRegister rs1 = currentRISCVFunction.getVR(op1.getName());
+            if (op2 instanceof Constant) {
+                //Constant  ->  I-type instruction
+                inst.removeEqual();
                 op1 = inst.getOp1();
                 op2 = inst.getOp2();
                 IcmpInst.IcmpName op = inst.getOperator();
+                //find op2value
+                long op2value;
+                if(op2 instanceof ConstBool){
+                    if(((ConstBool) op2).getValue())
+                        op2value = 1;
+                    else
+                        op2value = 0;
+                }else{
+                    assert op2 instanceof ConstInt;
+                    op2value = ((ConstInt) op2).getValue();
+                }
 
-                long value = op2 instanceof ConstBool
-                        ? (((ConstBool) op2).getValue() ? 1 : 0) : ((ConstInt) op2).getValue();
-                VirtualASMRegister rs2 = new VirtualASMRegister("loadImmediate");
+                VirtualASMRegister rs2 = new VirtualASMRegister("loadImm");
                 VirtualASMRegister rs3 = new VirtualASMRegister("xor");
                 switch (op) {
                     case slt:
-                        if (needToLoadImmediate(value)) {
-                            currentRISCVFunction.getSymbolTable().putASMRename(rs2.getName(), rs2);
-                            currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(value)));
+                        if (needToLoadImm(op2value)) {
+                            currentRISCVFunction.registerVRDuplicateName(rs2);
+                            currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(op2value)));
                             currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs1, rs2, rd));
-                        } else if (value != 0) {
-                            currentBlock.addInstruction(new ITypeBinary(currentBlock, slti, rs1,
-                                    new IntImmediate(value), rd));
+                        } else if (op2value != 0) {
+                            currentBlock.addInstruction(new ITypeBinary(currentBlock, slti, rs1, new IntImmediate(op2value), rd));
                         } else { // value == 0
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, sltz, rs1, rd));
                         }
                         break;
                     case sgt:
-                        if (needToLoadImmediate(value)) {
-                            currentRISCVFunction.getSymbolTable().putASMRename(rs2.getName(), rs2);
-                            currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(value)));
+                        if (needToLoadImm(op2value)) {
+                            currentRISCVFunction.registerVRDuplicateName(rs2);
+                            currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(op2value)));
                             currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs2, rs1, rd));
-                        } else if (value != 0) {
-                            currentRISCVFunction.getSymbolTable().putASMRename(rs2.getName(), rs2);
+                        } else if (op2value != 0) {
+                            currentRISCVFunction.registerVRDuplicateName(rs2);
                             currentBlock.addInstruction(new ITypeBinary(currentBlock, addi, PhysicalASMRegister.zeroVR,
-                                    new IntImmediate(value), rs2));
+                                    new IntImmediate(op2value), rs2));
                             currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs2, rs1, rd));
                         } else { // value == 0
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, sgtz, rs1, rd));
@@ -542,31 +537,28 @@ public class InstructionSelector implements IRVisitor {
                         break;
                     case eq: case ne:
                         ASMUnaryInst.OpName opName = op == IcmpInst.IcmpName.eq ? seqz : snez;
-                        if (needToLoadImmediate(value)) {
-                            currentRISCVFunction.getSymbolTable().putASMRename(rs2.getName(), rs2);
-                            currentRISCVFunction.getSymbolTable().putASMRename(rs3.getName(), rs3);
+                        if (needToLoadImm(op2value)) {
+                            currentRISCVFunction.registerVRDuplicateName(rs2);
+                            currentRISCVFunction.registerVRDuplicateName(rs3);
 
-                            currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(value)));
+                            currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, rs2, new IntImmediate(op2value)));
                             currentBlock.addInstruction(new RTypeBinary(currentBlock, xor, rs1, rs2, rs3));
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, opName, rs3, rd));
-                        } else if (value != 0) {
-                            currentRISCVFunction.getSymbolTable().putASMRename(rs3.getName(), rs3);
+                        } else if (op2value != 0) {
+                            currentRISCVFunction.registerVRDuplicateName(rs3);
                             currentBlock.addInstruction(new ITypeBinary(currentBlock, xori, rs1,
-                                    new IntImmediate(value), rs3));
+                                    new IntImmediate(op2value), rs3));
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, opName, rs3, rd));
                         } else { // value = 0
                             currentBlock.addInstruction(new ASMUnaryInst(currentBlock, opName, rs1, rd));
                         }
                         break;
                     default:
-                        System.out.println(op);
-                        System.out.println(op1);
-                        System.out.println(op2);
                         throw new RuntimeException();
                 }
             } else {
                 IcmpInst.IcmpName op = inst.getOperator();
-                VirtualASMRegister rs2 = currentRISCVFunction.getSymbolTable().getVR(op2.getName());
+                VirtualASMRegister rs2 = currentRISCVFunction.getVR(op2.getName());
                 VirtualASMRegister rs3 = new VirtualASMRegister("slt");
                 VirtualASMRegister rs4 = new VirtualASMRegister("xor");
                 switch (op) {
@@ -577,24 +569,24 @@ public class InstructionSelector implements IRVisitor {
                         currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs2, rs1, rd));
                         break;
                     case sle:
-                        currentRISCVFunction.getSymbolTable().putASMRename(rs3.getName(), rs3);
+                        currentRISCVFunction.registerVRDuplicateName(rs3);
                         currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs2, rs1, rs3));
                         currentBlock.addInstruction(new ITypeBinary(currentBlock, xori, rs3,
                                 new IntImmediate(1), rd));
                         break;
                     case sge:
-                        currentRISCVFunction.getSymbolTable().putASMRename(rs3.getName(), rs3);
+                        currentRISCVFunction.registerVRDuplicateName(rs3);
                         currentBlock.addInstruction(new RTypeBinary(currentBlock, slt, rs1, rs2, rs3));
                         currentBlock.addInstruction(new ITypeBinary(currentBlock, xori, rs3,
                                 new IntImmediate(1), rd));
                         break;
                     case eq:
-                        currentRISCVFunction.getSymbolTable().putASMRename(rs4.getName(), rs4);
+                        currentRISCVFunction.registerVRDuplicateName(rs4);
                         currentBlock.addInstruction(new RTypeBinary(currentBlock, xor, rs1, rs2, rs4));
                         currentBlock.addInstruction(new ASMUnaryInst(currentBlock, seqz, rs4, rd));
                         break;
                     case ne:
-                        currentRISCVFunction.getSymbolTable().putASMRename(rs4.getName(), rs4);
+                        currentRISCVFunction.registerVRDuplicateName(rs4);
                         currentBlock.addInstruction(new RTypeBinary(currentBlock, xor, rs1, rs2, rs4));
                         currentBlock.addInstruction(new ASMUnaryInst(currentBlock, snez, rs4, rd));
                         break;
@@ -603,7 +595,7 @@ public class InstructionSelector implements IRVisitor {
                 }
             }
         } else if (type instanceof LLVMPointerType) {
-            VirtualASMRegister rs1 = currentRISCVFunction.getSymbolTable().getVR(op1.getName());
+            VirtualASMRegister rs1 = currentRISCVFunction.getVR(op1.getName());
             IcmpInst.IcmpName op = inst.getOperator();
             if (op2 instanceof Constant) {
                 assert op2 instanceof ConstNull;
@@ -618,10 +610,10 @@ public class InstructionSelector implements IRVisitor {
                         throw new RuntimeException();
                 }
             } else {
-                VirtualASMRegister rs2 = currentRISCVFunction.getSymbolTable().getVR(op2.getName());
+                VirtualASMRegister rs2 = currentRISCVFunction.getVR(op2.getName());
                 VirtualASMRegister rs3 = new VirtualASMRegister("xor");
 
-                currentRISCVFunction.getSymbolTable().putASMRename(rs3.getName(), rs3);
+                currentRISCVFunction.registerVRDuplicateName(rs3);
                 currentBlock.addInstruction(new RTypeBinary(currentBlock, xor, rs1, rs2, rs3));
                 switch (op) {
                     case eq:
@@ -638,66 +630,11 @@ public class InstructionSelector implements IRVisitor {
             throw new RuntimeException();
     }
 
-    @Override
-    public void visit(PhiInst inst) {
-        // Do nothing.
-    }
 
-    @Override
-    public void visit(DefineGlobal defineGlobal) {
-        //gugu changed
-    }
-
-    @Override
-    public void visit(CallInst inst) {
-        RISCVFunction callee;
-        if (ASMRISCVModule.getFunctionMap().containsKey(inst.getLlvMfunction().getFunctionName()))
-            callee = ASMRISCVModule.getFunctionMap().get(inst.getLlvMfunction().getFunctionName());
-        else
-            callee = ASMRISCVModule.getExternalFunctionMap().get(inst.getLlvMfunction().getFunctionName());
-        ArrayList<Operand> parameters = inst.getParas();
-
-        for (int i = 0; i < Integer.min(8, parameters.size()); i++) {
-            VirtualASMRegister parameter = getVROfOperand(parameters.get(i));
-            currentBlock.addInstruction(new ASMMoveInst(currentBlock,
-                    PhysicalASMRegister.argVR.get(i), parameter));
-        }
-
-        StackFrame stackFrame = currentRISCVFunction.getStackFrame();
-        if (stackFrame.getParameterLocation().containsKey(callee)) {
-            ArrayList<StackLocation> stackLocations = stackFrame.getParameterLocation().get(callee);
-            for (int i = 8; i < parameters.size(); i++) {
-                VirtualASMRegister parameter = getVROfOperand(parameters.get(i));
-                currentBlock.addInstruction(new ASMStoreInst(currentBlock, parameter,
-                        ASMStoreInst.ByteSize.sw, stackLocations.get(i - 8)));
-            }
-        } else {
-            ArrayList<StackLocation> stackLocations = new ArrayList<>();
-            for (int i = 8; i < parameters.size(); i++) {
-                VirtualASMRegister parameter = getVROfOperand(parameters.get(i));
-                StackLocation stackLocation = new StackLocation(".para" + i);
-                stackLocations.add(stackLocation);
-
-                currentBlock.addInstruction(new ASMStoreInst(currentBlock, parameter,
-                        ASMStoreInst.ByteSize.sw, stackLocation));
-            }
-            stackFrame.getParameterLocation().put(callee, stackLocations);
-        }
-
-        ASMCallInst ASMCallInst = new ASMCallInst(currentBlock,
-                callee);
-        currentBlock.addInstruction(ASMCallInst);
-
-        if (!inst.isVoidCall()) {
-            VirtualASMRegister result = currentRISCVFunction.getSymbolTable().getVR(inst.getResult().getName());
-            currentBlock.addInstruction(new ASMMoveInst(currentBlock,
-                    result, PhysicalASMRegister.argVR.get(0)));
-        }
-    }
 
     @Override
     public void visit(MoveInst inst) {
-        VirtualASMRegister dest = currentRISCVFunction.getSymbolTable().getVR(inst.getResult().getName());
+        VirtualASMRegister dest = currentRISCVFunction.getVR(inst.getResult().getName());
         if (inst.getSource() instanceof Constant) {
             ASMOperand src = getOperand(inst.getSource());
             if (src instanceof VirtualASMRegister) {
@@ -709,56 +646,63 @@ public class InstructionSelector implements IRVisitor {
                         PhysicalASMRegister.zeroVR, ((Immediate) src), dest));
             }
         } else {
-            VirtualASMRegister src = currentRISCVFunction.getSymbolTable().getVR(inst.getSource().getName());
+            VirtualASMRegister src = currentRISCVFunction.getVR(inst.getSource().getName());
             currentBlock.addInstruction(new ASMMoveInst(currentBlock, dest, src));
         }
     }
 
-    @Override
-    public void visit(ParallelCopyInst parallelCopyInst) {
-        //gugu changed
-    }
 
-    static private boolean needToLoadImmediate(long value) {
+
+    static private boolean needToLoadImm(long value) {
         return value >= (1 << 11) || value < -(1 << 11);
     }
 
-    private VirtualASMRegister getVROfOperand(Operand operand) {
+    private VirtualASMRegister Operand2VR(Operand operand) {
+        assert !(operand instanceof GlobalVar);
         if (operand instanceof ConstBool) {
-            if (((ConstBool) operand).getValue()) {
-                VirtualASMRegister constBool = new VirtualASMRegister("constBool");
-                currentRISCVFunction.getSymbolTable().putASMRename(constBool.getName(), constBool);
-                currentBlock.addInstruction(new ITypeBinary(currentBlock, addi,
-                        PhysicalASMRegister.zeroVR, new IntImmediate(1), constBool));
-                return constBool;
-            } else
-                return PhysicalASMRegister.zeroVR;
+            boolean boolValue = ((ConstBool) operand).getValue();
+            return boolVR(boolValue);
         } else if (operand instanceof ConstInt) {
-            long value = ((ConstInt) operand).getValue();
-            if (value == 0)
-                return PhysicalASMRegister.zeroVR;
-            else {
-                VirtualASMRegister constInt = new VirtualASMRegister("constInt");
-                currentRISCVFunction.getSymbolTable().putASMRename(constInt.getName(), constInt);
-                if (needToLoadImmediate(value)) {
-                    currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, constInt, new IntImmediate(value)));
-                } else {
-                    currentBlock.addInstruction(new ITypeBinary(currentBlock, addi,
-                            PhysicalASMRegister.zeroVR, new IntImmediate(value), constInt));
-                }
-                return constInt;
-            }
+            long intValue = ((ConstInt) operand).getValue();
+            return intVR(intValue);
         } else if (operand instanceof ConstNull) {
             return PhysicalASMRegister.zeroVR;
-        } else if (operand instanceof GlobalVar) {
-            throw new RuntimeException();
-        } else if (operand instanceof Register && ((Register) operand).isParameter()) {
-            return currentRISCVFunction.getSymbolTable().getVR(operand.getName());
         } else if (operand instanceof Register) {
-            return currentRISCVFunction.getSymbolTable().getVR(operand.getName());
-        } else
+            return currentRISCVFunction.getVR(operand.getName());
+        } else{
             throw new RuntimeException();
+        }
     }
+
+    private VirtualASMRegister boolVR(Boolean boolValue){
+        if(boolValue){
+            VirtualASMRegister constBool = new VirtualASMRegister("constBool");
+            currentRISCVFunction.registerVRDuplicateName(constBool);
+            currentBlock.addInstruction(new ITypeBinary(currentBlock, addi,
+                    PhysicalASMRegister.zeroVR, new IntImmediate(1), constBool));
+            return constBool;
+        }else{
+            return PhysicalASMRegister.zeroVR;
+        }
+    }
+
+    private VirtualASMRegister intVR(long intValue){
+        if (intValue == 0)
+            return PhysicalASMRegister.zeroVR;
+        else {
+            VirtualASMRegister constInt = new VirtualASMRegister("constInt");
+            currentRISCVFunction.registerVRDuplicateName(constInt);
+            if (needToLoadImm(intValue)) {
+                currentBlock.addInstruction(new ASMLoadImmediate(currentBlock, constInt, new IntImmediate(intValue)));
+            } else {
+                currentBlock.addInstruction(new ITypeBinary(currentBlock, addi,
+                        PhysicalASMRegister.zeroVR, new IntImmediate(intValue), constInt));
+            }
+            return constInt;
+        }
+
+    }
+
 
     private ASMOperand getOperand(Operand operand) {
         if (operand instanceof ConstBool) {
@@ -766,8 +710,8 @@ public class InstructionSelector implements IRVisitor {
             return new IntImmediate(value ? 1 : 0);
         } else if (operand instanceof ConstInt) {
             long value = ((ConstInt) operand).getValue();
-            if (needToLoadImmediate(value))
-                return getVROfOperand(operand);
+            if (needToLoadImm(value))
+                return Operand2VR(operand);
             else
                 return new IntImmediate(value);
         } else if (operand instanceof ConstNull) {
@@ -775,8 +719,75 @@ public class InstructionSelector implements IRVisitor {
         } else if (operand instanceof GlobalVar) {
             throw new RuntimeException();
         } else if (operand instanceof Register) {
-            return getVROfOperand(operand);
+            return Operand2VR(operand);
         } else
             throw new RuntimeException();
+    }
+
+
+    @Override
+    public void visit(CallInst inst) {
+        RISCVFunction callee = ASMRISCVModule.getFunction(inst.getLlvMfunction().getFunctionName());
+        ArrayList<Operand> paras = inst.getParas();
+        int paraSize = paras.size();
+        if(paraSize <= 8){
+            for (int i = 0; i < paraSize; i++) {
+                VirtualASMRegister parameter = Operand2VR(paras.get(i));
+                currentBlock.addInstruction(new ASMMoveInst(currentBlock,
+                        PhysicalASMRegister.argVR.get(i), parameter));
+            }
+        }else{
+            for (int i = 0; i < 8; i++) {
+                VirtualASMRegister parameter = Operand2VR(paras.get(i));
+                currentBlock.addInstruction(new ASMMoveInst(currentBlock,
+                        PhysicalASMRegister.argVR.get(i), parameter));
+            }
+
+            StackFrame stackFrame = currentRISCVFunction.getStackFrame();                   //current stackframe
+            if (stackFrame.getParameterLocation().containsKey(callee)) {
+                ArrayList<StackLocation> stackLocations = stackFrame.getParameterLocation().get(callee);
+                for (int i = 8; i < paraSize; i++) {
+                    Operand para = paras.get(i);
+                    VirtualASMRegister parameter = Operand2VR(para);
+                    currentBlock.addInstruction(new ASMStoreInst(currentBlock, parameter,
+                            ASMStoreInst.ByteType.sw, stackLocations.get(i - 8)));
+                }
+            } else {
+                ArrayList<StackLocation> stackLocations = new ArrayList<>();
+                for (int i = 8; i < paras.size(); i++) {
+                    VirtualASMRegister parameter = Operand2VR(paras.get(i));
+                    StackLocation stackLocation = new StackLocation(".para" + i);
+                    stackLocations.add(stackLocation);
+
+                    currentBlock.addInstruction(new ASMStoreInst(currentBlock, parameter,
+                            ASMStoreInst.ByteType.sw, stackLocation));
+                }
+                stackFrame.getParameterLocation().put(callee, stackLocations);
+            }
+        }
+
+        //call inst
+        ASMCallInst ASMCallInst = new ASMCallInst(currentBlock, callee);
+        currentBlock.addInstruction(ASMCallInst);
+        //
+        if (!inst.isVoidCall()) {
+            VirtualASMRegister result = currentRISCVFunction.getVR(inst.getResult().getName());
+            currentBlock.addInstruction(new ASMMoveInst(currentBlock, result, PhysicalASMRegister.returnValueVR));
+        }
+    }
+
+    @Override
+    public void visit(PhiInst inst) {
+        // Do nothing.
+    }
+
+    @Override
+    public void visit(DefineGlobal defineGlobal) {
+        //gugu changed
+    }
+
+    @Override
+    public void visit(ParallelCopyInst parallelCopyInst) {
+        //gugu changed
     }
 }

@@ -104,4 +104,30 @@ public class LoadInst extends LLVMInstruction{
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         addr.markBaseAsLive(live, queue);
     }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        LoadInst loadInst = new LoadInst(this.getBlock(), this.addr, this.result.makeCopy());
+        loadInst.result.setDef(loadInst);
+        return loadInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        if (addr instanceof Register) {
+            assert operandMap.containsKey(addr);
+            addr = operandMap.get(addr);
+        }
+        addr.addUse(this);
+    }
+
+    @Override
+    public Object clone() {
+        LoadInst loadInst = (LoadInst) super.clone();
+        loadInst.addr = this.addr;
+        loadInst.result = (Register) this.result.clone();
+
+        loadInst.result.setDef(loadInst);
+        return loadInst;
+    }
 }

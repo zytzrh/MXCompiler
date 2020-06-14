@@ -24,6 +24,8 @@ public class AllocInst extends LLVMInstruction {
     }
 
 
+
+
     @Override
     public String toString() {
         return result.toString() + " = alloca " + llvMtype.toString();
@@ -76,5 +78,27 @@ public class AllocInst extends LLVMInstruction {
     @Override
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         //do nothing
+    }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        AllocInst allocInst = new AllocInst(this.getBlock(), result.makeCopy(), this.llvMtype);//block will be modified later
+        allocInst.result.setDef(allocInst);
+        return allocInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        //do nothing
+    }
+
+    @Override
+    public Object clone() {
+        AllocInst allocInst = (AllocInst) super.clone();
+        allocInst.result = (Register) this.result.clone();
+        allocInst.llvMtype = this.llvMtype;
+
+        allocInst.result.setDef(allocInst);
+        return allocInst;
     }
 }

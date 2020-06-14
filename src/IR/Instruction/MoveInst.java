@@ -80,4 +80,15 @@ public class MoveInst extends LLVMInstruction{
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         // Do nothing.
     }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        assert false;
+        return null;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        //do nothing
+    }
 }

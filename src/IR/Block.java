@@ -7,7 +7,7 @@ import Utility.Pair;
 
 import java.util.*;
 
-public class Block {
+public class Block implements Cloneable{
     private String name;
     private LLVMfunction function;
 
@@ -604,6 +604,141 @@ public class Block {
             successor.getPredecessors().add(predecessor);
         }
         return true;
+    }
+
+    public void fixBlockOfInstruction(){
+        LLVMInstruction ptr = instHead;
+        while (ptr != null) {
+            ptr.setBlock(this);
+            ptr = ptr.getPostInst();
+        }
+    }
+
+    public Block makeCopy(){
+        Block block = new Block(this.getName(), this.function);
+
+        ArrayList<LLVMInstruction> instructions = new ArrayList<>();
+        LLVMInstruction ptr = this.instHead;
+        while (ptr != null) {
+            instructions.add((LLVMInstruction) ptr.makeCopy());
+            ptr = ptr.getPostInst();
+        }
+        for (int i = 0; i < instructions.size(); i++) {
+            LLVMInstruction instruction = instructions.get(i);
+            instruction.setPreInst(i != 0 ? instructions.get(i - 1) : null);
+            instruction.setPostInst(i != instructions.size() - 1 ? instructions.get(i + 1) : null);
+            instruction.setBlock(block);
+        }
+
+        if (instructions.isEmpty()) {
+            block.instHead = null;
+            block.instTail = null;
+        } else {
+            block.instHead = instructions.get(0);
+            block.instTail = instructions.get(instructions.size() - 1);
+        }
+        block.prev = this.prev;
+        block.next = this.next;
+        block.predecessors = new HashSet<>(this.predecessors);
+        block.successors = new HashSet<>(this.successors);
+        return block;
+    }
+
+
+
+
+
+    public Block split(LLVMInstruction instruction){
+        Block splitBlock = new Block("inlineMergeBlock", function);
+        function.registerBlockName(splitBlock.getName(), splitBlock);
+//        function.getSymbolTable().put(splitBlock.getName(), splitBlock);
+        for (Block successor : this.successors) {
+            splitBlock.getSuccessors().add(successor);
+            successor.getPredecessors().remove(this);
+            successor.getPredecessors().add(splitBlock);
+
+            LLVMInstruction ptr = successor.getInstHead();
+            while (ptr instanceof PhiInst) {
+                Operand operand = null;
+                for (Pair<Operand, Block> pair : ((PhiInst) ptr).getBranches()) {
+                    if (pair.getSecond() == this) {
+                        operand = pair.getFirst();
+                    }
+                }
+                assert operand != null;
+                ((PhiInst) ptr).cutBlock(this);
+                ((PhiInst) ptr).addBranch(operand, splitBlock);
+                ptr = ptr.getPostInst();
+            }
+        }
+
+
+        splitBlock.setInstHead(instruction.getPostInst());
+        splitBlock.setInstTail(this.instTail);
+        this.setInstTail(instruction);
+
+        instruction.getPostInst().setPreInst(null);
+        instruction.setPostInst(null);
+
+        splitBlock.setNext(this.next);
+        if (this.next != null)
+            this.next.setPrev(splitBlock);
+        splitBlock.setPrev(this);
+        this.setNext(splitBlock);
+
+        if (this.getFunction().getExitBlock() == this)
+            this.getFunction().setExitBlock(splitBlock);
+
+        this.successors = new LinkedHashSet<>();
+
+
+        LLVMInstruction ptr = splitBlock.getInstHead();
+        while (ptr != null) {
+            ptr.setBlock(splitBlock);
+            ptr = ptr.getPostInst();
+        }
+
+        return splitBlock;
+
+    }
+
+    @Override
+    public Object clone() {
+        Block block;
+        try {
+            block = ((Block) super.clone());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e.getMessage());
+        }
+
+        ArrayList<LLVMInstruction> instructions = new ArrayList<>();
+        LLVMInstruction ptr = this.instHead;
+        while (ptr != null) {
+            instructions.add((LLVMInstruction) ptr.clone());
+            ptr = ptr.getPostInst();
+        }
+        for (int i = 0; i < instructions.size(); i++) {
+            LLVMInstruction instruction = instructions.get(i);
+            instruction.setPreInst(i != 0 ? instructions.get(i - 1) : null);
+            instruction.setPostInst(i != instructions.size() - 1 ? instructions.get(i + 1) : null);
+            instruction.setBlock(block);
+        }
+
+        block.function = this.function;
+        block.name = this.name;
+        if (instructions.isEmpty()) {
+            block.instHead = null;
+            block.instTail = null;
+        } else {
+            block.instHead = instructions.get(0);
+            block.instTail = instructions.get(instructions.size() - 1);
+        }
+        block.prev = this.prev;
+        block.next = this.next;
+        block.predecessors = new HashSet<>(this.predecessors);
+        block.successors = new HashSet<>(this.successors);
+        return block;
     }
 }
 

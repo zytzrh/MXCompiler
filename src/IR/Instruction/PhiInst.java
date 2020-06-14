@@ -10,6 +10,7 @@ import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 import Utility.Pair;
 
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -172,5 +173,44 @@ public class PhiInst extends LLVMInstruction {
                 queue.offer(pair.getSecond().getInstTail());
             }
         }
+    }
+
+    @Override
+    public LLVMInstruction makeCopy() {
+        PhiInst phiInst = new PhiInst(this.getBlock(), new LinkedHashSet<>(this.branches), this.getResult().makeCopy());
+        phiInst.getResult().setDef(phiInst);
+        return phiInst;
+    }
+
+    @Override
+    public void clonedUseReplace(Map<Block, Block> blockMap, Map<Operand, Operand> operandMap) {
+        Set<Pair<Operand, Block>> newBranch = new LinkedHashSet<>();
+        for (Pair<Operand, Block> pair : branches) {
+            Operand operand;
+            Block block;
+            if (pair.getFirst() instanceof Register) {
+                assert operandMap.containsKey(pair.getFirst());
+                operand = operandMap.get(pair.getFirst());
+            } else
+                operand = pair.getFirst();
+            operand.addUse(this);
+
+            assert blockMap.containsKey(pair.getSecond());
+            block = blockMap.get(pair.getSecond());
+            block.addUse(this);
+
+            newBranch.add(new Pair<>(operand, block));
+        }
+        this.branches = newBranch;
+    }
+
+    @Override
+    public Object clone() {
+        PhiInst phiInst = (PhiInst) super.clone();
+        phiInst.branches = new LinkedHashSet<>(this.branches);
+        phiInst.result = (Register) this.result.clone();
+
+        phiInst.result.setDef(phiInst);
+        return phiInst;
     }
 }

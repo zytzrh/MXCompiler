@@ -10,7 +10,6 @@ public class StackLocation extends Address {
     }
 
     public void setOffset(int offset) {
-        assert this.offset == -1;
         this.offset = offset;
     }
 

@@ -21,11 +21,53 @@ public class RISCVFunction {
     private ASMBlock exitBlock;
 
     private Map<String, ASMBlock> blockMap;
-    private SymbolTable symbolTable;
     private Set<PhysicalASMRegister> usedCalleeRegister;
 
     private Map<VirtualASMRegister, BaseOffsetAddr> gepAddrMap;
 
+    private Map<String, VirtualASMRegister> VRSymbolTable;
+
+    //for VRsymboltable
+    public void registerVR(VirtualASMRegister virtualASMRegister){
+        String name = virtualASMRegister.getName();
+        assert !VRSymbolTable.containsKey(name);
+        VRSymbolTable.put(name, virtualASMRegister);
+    }
+
+    public void registerVRDuplicateName(VirtualASMRegister virtualASMRegister){
+        int postfix = 0;
+        String newName = name + "." + postfix;
+        while(VRSymbolTable.containsKey(newName)){
+            postfix++;
+            newName = name + "." + postfix;
+        }
+        virtualASMRegister.setName(newName);
+        VRSymbolTable.put(newName, virtualASMRegister);
+    }
+
+    public boolean contains(String name){
+        return VRSymbolTable.containsKey(name);
+    }
+
+    public VirtualASMRegister getVR(String name) {
+        return VRSymbolTable.get(name);
+    }
+
+    public Set<VirtualASMRegister> getAllVRSet() {
+        Set<VirtualASMRegister> VRs = new HashSet<>();
+        for (VirtualASMRegister virtualASMRegister : VRSymbolTable.values()) {
+            if (!virtualASMRegister.getDef().isEmpty())
+                VRs.add(virtualASMRegister);
+        }
+        return VRs;
+    }
+
+    public void removeVR(VirtualASMRegister vr) {
+        assert VRSymbolTable.containsKey(vr.getName());
+        VRSymbolTable.remove(vr.getName());
+    }
+
+    //
     public RISCVFunction(RISCVModule RISCVModule, String name, LLVMfunction IRFunction) {
         this.RISCVModule = RISCVModule;
         this.name = name;
@@ -63,10 +105,10 @@ public class RISCVFunction {
         exitBlock = blockMap.get(IRBlocks.get(IRBlocks.size() - 1).getName());
 
 
-        symbolTable = new SymbolTable();
+        VRSymbolTable = new HashMap<>();
         for (Register parameter : IRFunction.getParas()) {
             VirtualASMRegister vr = new VirtualASMRegister(parameter.getName());
-            symbolTable.putASM(parameter.getName(), vr);
+            registerVR(vr);
         }
         for (Block IRBlock : IRBlocks) {
             LLVMInstruction ptr = IRBlock.getInstHead();
@@ -75,11 +117,11 @@ public class RISCVFunction {
                     String registerName = ptr.getResult().getName();
                     if (!(ptr instanceof MoveInst)) {
                         VirtualASMRegister vr = new VirtualASMRegister(registerName);
-                        symbolTable.putASM(registerName, vr);
+                        registerVR(vr);
                     } else { // "Move" is special.
-                        if (!symbolTable.contains(registerName)) {
+                        if (!contains(registerName)) {
                             VirtualASMRegister vr = new VirtualASMRegister(registerName);
-                            symbolTable.putASM(registerName, vr);
+                            registerVR(vr);
                         }
                     }
                 }
@@ -108,9 +150,6 @@ public class RISCVFunction {
         return blockMap;
     }
 
-    public SymbolTable getSymbolTable() {
-        return symbolTable;
-    }
 
     public Map<VirtualASMRegister, BaseOffsetAddr> getGepAddrMap() {
         return gepAddrMap;

@@ -4,6 +4,7 @@ import IR.Block;
 import IR.Instruction.*;
 import IR.LLVMfunction;
 import IR.Module;
+import Optimization.Loop.LoopAnalysis;
 
 import java.util.HashSet;
 import java.util.LinkedList;

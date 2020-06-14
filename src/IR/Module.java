@@ -206,6 +206,7 @@ public class Module {
         function = new LLVMfunction("print", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(true);
+        function.setBuiltIn(true);
 
 
         // void println(string str);
@@ -215,6 +216,7 @@ public class Module {
         function = new LLVMfunction("println", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(true);
+        function.setBuiltIn(true);
 
         // void printInt(int n);
         returnType = new LLVMVoidType();
@@ -223,6 +225,7 @@ public class Module {
         function = new LLVMfunction("printInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(true);
+        function.setBuiltIn(true);
 
         // void printlnInt(int n);
         returnType = new LLVMVoidType();
@@ -231,6 +234,7 @@ public class Module {
         function = new LLVMfunction("printlnInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(true);
+        function.setBuiltIn(true);
 
         // string getString();
         returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
@@ -238,7 +242,7 @@ public class Module {
         function = new LLVMfunction("getString", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(true);
-        //gugu changed: lack side effect false??
+        function.setBuiltIn(true);
 
         // int getInt();
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
@@ -246,7 +250,7 @@ public class Module {
         function = new LLVMfunction("getInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(true);
-        //gugu changed: lack side effect false??
+        function.setBuiltIn(true);
 
         // string toString(int i);
         returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
@@ -255,6 +259,7 @@ public class Module {
         function = new LLVMfunction("toString", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // byte* malloc(int size);
         returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
@@ -263,6 +268,7 @@ public class Module {
         function = new LLVMfunction("malloc", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // string string.concatenate(string str1, string str2);
         returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
@@ -272,6 +278,7 @@ public class Module {
         function = new LLVMfunction("__string_concatenate", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // bool string.equal(string str1, string str2);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
@@ -281,6 +288,7 @@ public class Module {
         function = new LLVMfunction("__string_equal", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // bool string.notEqual(string str1, string str2);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
@@ -290,6 +298,7 @@ public class Module {
         function = new LLVMfunction("__string_notEqual", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // bool string.lessThan(string str1, string str2);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
@@ -299,6 +308,7 @@ public class Module {
         function = new LLVMfunction("__string_lessThan", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // bool string.greaterThan(string str1, string str2);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
@@ -308,7 +318,7 @@ public class Module {
         function = new LLVMfunction("__string_greaterThan", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
-
+        function.setBuiltIn(true);
 
         // bool string.lessEqual(string str1, string str2);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
@@ -318,6 +328,7 @@ public class Module {
         function = new LLVMfunction("__string_lessEqual", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // bool string.greaterEqual(string str1, string str2);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int1);
@@ -327,6 +338,7 @@ public class Module {
         function = new LLVMfunction("__string_greaterEqual", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
 
         // int string.length(string str);
@@ -336,6 +348,7 @@ public class Module {
         function = new LLVMfunction("__string_length", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // string string.substring(string str, int left, int right);
         returnType = new LLVMPointerType(new LLVMIntType(LLVMIntType.BitWidth.int8));
@@ -346,6 +359,7 @@ public class Module {
         function = new LLVMfunction("__string_substring", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // int string.parseInt(string str);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
@@ -354,6 +368,7 @@ public class Module {
         function = new LLVMfunction("__string_parseInt", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // int ord(string str, int pos);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
@@ -363,6 +378,7 @@ public class Module {
         function = new LLVMfunction("__string_ord", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
         // int array.size(array arr);
         returnType = new LLVMIntType(LLVMIntType.BitWidth.int32);
@@ -371,6 +387,7 @@ public class Module {
         function = new LLVMfunction("__array_size", parameters, returnType);
         this.builtInFunctionMap.put(function.getFunctionName(), function);
         function.setSideEffect(false);
+        function.setBuiltIn(true);
 
 
     }
