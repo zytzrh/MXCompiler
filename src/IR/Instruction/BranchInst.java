@@ -5,7 +5,7 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import Optimization.ConstOptim;
+import Optimization.ConstOptim.ConstPropagation;
 import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
 
@@ -115,7 +115,7 @@ public class BranchInst extends LLVMInstruction{
     }
 
     @Override
-    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+    public boolean result2Constant(ConstPropagation constPropagation) {
         // Do nothing.
         return false;
     }

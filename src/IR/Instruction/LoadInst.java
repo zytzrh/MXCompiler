@@ -7,7 +7,8 @@ import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
-import Optimization.ConstOptim;
+import Optimization.ConstOptim.ConstPropagation;
+import Optimization.ConstOptim.OpStatus;
 import Optimization.SideEffectChecker;
 
 import java.util.Map;
@@ -66,10 +67,10 @@ public class LoadInst extends LLVMInstruction{
     }
 
     @Override
-    public boolean replaceResultWithConstant(ConstOptim constOptim) {
-        ConstOptim.Status status = constOptim.getStatus(result);
-        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
-            result.beOverriden(status.getOperand());
+    public boolean result2Constant(ConstPropagation constPropagation) {
+        OpStatus opStatus = constPropagation.getNowStatus(result);
+        if (opStatus.getStatus() == OpStatus.Status.constant) {
+            result.beOverriden(opStatus.getOperand());
             this.removeFromBlock();
             return true;
         } else

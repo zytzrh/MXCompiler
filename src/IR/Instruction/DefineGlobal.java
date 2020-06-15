@@ -8,7 +8,7 @@ import IR.LLVMoperand.GlobalVar;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
-import Optimization.ConstOptim;
+import Optimization.ConstOptim.ConstPropagation;
 import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
 
@@ -53,7 +53,7 @@ public class DefineGlobal extends LLVMInstruction {
     }
 
     @Override
-    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+    public boolean result2Constant(ConstPropagation constPropagation) {
         assert false;           //gugu changed
         return false;
     }

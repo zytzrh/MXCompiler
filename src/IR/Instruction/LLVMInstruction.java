@@ -5,7 +5,7 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import Optimization.ConstOptim;
+import Optimization.ConstOptim.ConstPropagation;
 import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
 
@@ -90,7 +90,7 @@ abstract public class LLVMInstruction implements Cloneable{
                 || this instanceof MoveInst;
     }
 
-    abstract public boolean replaceResultWithConstant(ConstOptim constOptim);
+    abstract public boolean result2Constant(ConstPropagation constPropagation);
 
 
     abstract public Register getResult();

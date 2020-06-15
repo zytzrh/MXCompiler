@@ -7,7 +7,7 @@ import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
 import IR.TypeSystem.LLVMtype;
-import Optimization.ConstOptim;
+import Optimization.ConstOptim.ConstPropagation;
 import Optimization.SideEffectChecker;
 
 import java.util.Map;
@@ -66,7 +66,7 @@ public class StoreInst extends LLVMInstruction{
     }
 
     @Override
-    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+    public boolean result2Constant(ConstPropagation constPropagation) {
         // Do nothing.
         return false;
     }

@@ -7,6 +7,7 @@ import BackEnd.RISCVModule;
 import IR.IRBuilder;
 import IR.Module;
 import Optimization.*;
+import Optimization.ConstOptim.ConstPropagation;
 import Semantic.ExceptionHandle.CompileError;
 import Semantic.ExceptionHandle.ExceptionListener;
 import Semantic.ParserAndLexer.MXgrammarLexer;
@@ -74,14 +75,14 @@ public class Main {
                 ssaConstructor.run();
 
                 DCE DCE = new DCE(module);
-                ConstOptim constOptim = new ConstOptim(module);
+                ConstPropagation constPropagation = new ConstPropagation(module);
                 InlineExpansion inlineExpansion = new InlineExpansion(module);
                 int optimizeCnt = 0;
                 while(true){
                     optimizeCnt++;
                     boolean changed = false;
                     dTreeConstructor.run();
-                    changed |= constOptim.run();
+                    changed |= constPropagation.run();
                     changed |= DCE.run();
                     changed |= cfgOptim.run();
 //                    if(optimizeCnt == 1){

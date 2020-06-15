@@ -5,7 +5,7 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import Optimization.ConstOptim;
+import Optimization.ConstOptim.ConstPropagation;
 import Optimization.SideEffectChecker;
 
 import java.util.Map;
@@ -66,7 +66,7 @@ public class MoveInst extends LLVMInstruction{
     }
 
     @Override
-    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+    public boolean result2Constant(ConstPropagation constPropagation) {
         //do nothing
         return false;
     }

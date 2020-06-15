@@ -5,7 +5,8 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import Optimization.ConstOptim;
+import Optimization.ConstOptim.ConstPropagation;
+import Optimization.ConstOptim.OpStatus;
 import Optimization.SideEffectChecker;
 
 import java.util.*;
@@ -100,12 +101,12 @@ public class CallInst extends LLVMInstruction {
     }
 
     @Override
-    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+    public boolean result2Constant(ConstPropagation constPropagation) {
         if (this.isVoidCall())
             return false;
-        ConstOptim.Status status = constOptim.getStatus(result);
-        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
-            result.beOverriden(status.getOperand());
+        OpStatus opStatus = constPropagation.getNowStatus(result);
+        if (opStatus.getStatus() == OpStatus.Status.constant) {
+            result.beOverriden(opStatus.getOperand());
             this.removeFromBlock();
             return true;
         } else
