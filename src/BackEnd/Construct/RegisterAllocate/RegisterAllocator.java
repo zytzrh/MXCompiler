@@ -27,7 +27,7 @@ public class RegisterAllocator extends ASMPass {
         super(RISCVModule);
         this.loopAnalysis = new LoopAnalysis(module);
     }
-    private Set<VirtualASMRegister> preColored;
+    private Set<VirtualASMRegister> preColoredNode;
     private Set<VirtualASMRegister> initial;
     private Set<VirtualASMRegister> simplifyWorkList;
     private Set<VirtualASMRegister> freezeWorkList;
@@ -43,7 +43,7 @@ public class RegisterAllocator extends ASMPass {
     private Set<ASMMoveInst> workListMoves;
     private Set<ASMMoveInst> activeMoves;
 
-    private Set<directedEdge> adjSet;
+    private Set<directedEdge> adjacentSet;
 
     @Override
     public void run() {
@@ -91,7 +91,7 @@ public class RegisterAllocator extends ASMPass {
     }
 
     private void initializeDataStructures() {
-        preColored = new HashSet<>();
+        preColoredNode = new HashSet<>();
         initial = new HashSet<>();
         simplifyWorkList = new LinkedHashSet<>();
         freezeWorkList = new LinkedHashSet<>();
@@ -107,17 +107,17 @@ public class RegisterAllocator extends ASMPass {
         workListMoves = new LinkedHashSet<>();
         activeMoves = new HashSet<>();
 
-        adjSet = new HashSet<>();
+        adjacentSet = new HashSet<>();
 
 
         initial.addAll(RISCVFunction.getAllVRSet());
-        preColored.addAll(PhysicalASMRegister.vrs.values());
-        initial.removeAll(preColored);
+        preColoredNode.addAll(PhysicalASMRegister.vrs.values());
+        initial.removeAll(preColoredNode);
 
 
         for (VirtualASMRegister vr : initial)
             vr.clearColoringData();
-        for (VirtualASMRegister vr : preColored)
+        for (VirtualASMRegister vr : preColoredNode)
             vr.setDegree(inf);
     }
 
@@ -166,14 +166,14 @@ public class RegisterAllocator extends ASMPass {
     }
 
     private void addEdge(VirtualASMRegister u, VirtualASMRegister v) {
-        if (!adjSet.contains(new directedEdge(u, v)) && u != v) {
-            adjSet.add(new directedEdge(u, v));
-            adjSet.add(new directedEdge(v, u));
-            if (!preColored.contains(u)) {
+        if (!adjacentSet.contains(new directedEdge(u, v)) && u != v) {
+            adjacentSet.add(new directedEdge(u, v));
+            adjacentSet.add(new directedEdge(v, u));
+            if (!preColoredNode.contains(u)) {
                 u.getAdjList().add(v);
                 u.increaseDegree();
             }
-            if (!preColored.contains(v)) {
+            if (!preColoredNode.contains(v)) {
                 v.getAdjList().add(u);
                 v.increaseDegree();
             }
@@ -248,14 +248,14 @@ public class RegisterAllocator extends ASMPass {
     }
 
     private void addWorkList(VirtualASMRegister u) {
-        if (!preColored.contains(u) && !moveRelated(u) && u.getDegree() < K) {
+        if (!preColoredNode.contains(u) && !moveRelated(u) && u.getDegree() < K) {
             freezeWorkList.remove(u);
             simplifyWorkList.add(u);
         }
     }
 
     private boolean OK(VirtualASMRegister t, VirtualASMRegister r) {
-        return t.getDegree() < K || preColored.contains(t) || adjSet.contains(new directedEdge(t, r));
+        return t.getDegree() < K || preColoredNode.contains(t) || adjacentSet.contains(new directedEdge(t, r));
     }
 
     private boolean conservative(Set<VirtualASMRegister> nodes) {
@@ -276,7 +276,7 @@ public class RegisterAllocator extends ASMPass {
 
         VirtualASMRegister u;
         VirtualASMRegister v;
-        if (preColored.contains(y)) {
+        if (preColoredNode.contains(y)) {
             u = y;
             v = x;
         } else {
@@ -289,12 +289,12 @@ public class RegisterAllocator extends ASMPass {
         if (u == v) {
             coalescedMoves.add(m);
             addWorkList(u);
-        } else if (preColored.contains(v) || adjSet.contains(new directedEdge(u, v))) {
+        } else if (preColoredNode.contains(v) || adjacentSet.contains(new directedEdge(u, v))) {
             constrainedMoves.add(m);
             addWorkList(u);
             addWorkList(v);
-        } else if ((preColored.contains(u) && anyAdjacentNodeIsOK(v, u))
-                || (!preColored.contains(u) && conservative(unionAdjacentNode))) {
+        } else if ((preColoredNode.contains(u) && anyAdjacentNodeIsOK(v, u))
+                || (!preColoredNode.contains(u) && conservative(unionAdjacentNode))) {
             coalescedMoves.add(m);
             combine(u, v);
             addWorkList(u);
@@ -397,7 +397,7 @@ public class RegisterAllocator extends ASMPass {
             Set<PhysicalASMRegister> okColors = new LinkedHashSet<>(PhysicalASMRegister.allocatablePRs.values());
             for (VirtualASMRegister w : n.getAdjList()) {
                 Set<VirtualASMRegister> union = new HashSet<>(coloredNodes);
-                union.addAll(preColored);
+                union.addAll(preColoredNode);
                 if (union.contains(getAlias(w)))
                     okColors.remove(getAlias(w).getColorPR());
             }
