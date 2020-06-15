@@ -53,33 +53,7 @@ public class InstructionSelector implements IRVisitor {
     @Override
     public void visit(Module module) {
         for(DefineGlobal defineGlobal : module.getDefineGlobals()){
-            GlobalVar globalVar = defineGlobal.getGlobalVar();
-            String name = globalVar.getName();
-            ASMGlobalVar gv = new ASMGlobalVar(name);
-            ASMRISCVModule.getGlobalVariableMap().put(name, gv);
-
-            Operand init = defineGlobal.getInit();
-            assert init != null;
-
-            assert globalVar.getLlvMtype() instanceof LLVMPointerType;
-            LLVMtype globalVarType = ((LLVMPointerType) globalVar.getLlvMtype()).getBaseType();
-
-            if (globalVarType instanceof LLVMArrayType) {
-                assert defineGlobal.getInit() instanceof ConstString;
-                gv.setString(((ConstString) init).getValue());
-            } else if (globalVarType instanceof LLVMIntType
-                    && ((LLVMIntType) globalVarType).getBitWidth() == LLVMIntType.BitWidth.int1) {
-                assert init instanceof ConstBool;
-                gv.setBool(((ConstBool) init).getValue() ? 1 : 0);
-            } else if (globalVarType instanceof LLVMIntType
-                    && ((LLVMIntType) globalVarType).getBitWidth() == LLVMIntType.BitWidth.int32) {
-                assert init instanceof ConstInt;
-                gv.setInt(((int) ((ConstInt) init).getValue()));
-            } else if (globalVarType instanceof LLVMPointerType) {
-                assert init instanceof ConstNull;
-                gv.setInt(0);
-            }
-
+            defineGlobal.accept(this);
         }
 
         for (LLVMfunction IRExternalFunction : module.getBuiltInFunctionMap().values()) {
@@ -97,13 +71,15 @@ public class InstructionSelector implements IRVisitor {
             IRFunction.accept(this);
     }
 
+
+
     @Override
     public void visit(LLVMfunction function) {
         String functionName = function.getFunctionName();
         currentRISCVFunction = ASMRISCVModule.getFunctionMap().get(functionName);
         currentBlock = currentRISCVFunction.getEntranceBlock();
 
-        // ------ Stack Frame ------
+        //Stack Frame
         StackFrame stackFrame = new StackFrame(currentRISCVFunction);
         currentRISCVFunction.setStackFrame(stackFrame);
 
@@ -151,7 +127,7 @@ public class InstructionSelector implements IRVisitor {
             }
         }
 
-        // ------ Blocks ------
+        //Blocks
         for (Block block : function.getBlocks())
             block.accept(this);
     }
@@ -330,10 +306,6 @@ public class InstructionSelector implements IRVisitor {
         }
     }
 
-    @Override
-    public void visit(AllocInst inst) {
-        // Do nothing.
-    }
 
     @Override
     public void visit(LoadInst inst) {
@@ -410,59 +382,72 @@ public class InstructionSelector implements IRVisitor {
 
     @Override
     public void visit(GEPInst inst) {
-        VirtualASMRegister rd = currentRISCVFunction.getVR(inst.getResult().getName());
+        if (inst.getPointer() instanceof GlobalVar) {
+            gepString(inst);
+        } else if (inst.getIndexs().size() == 1) {
+            gepArray(inst);
+        } else {
+            gepClass(inst);
+        }
+    }
 
-        if (inst.getPointer() instanceof GlobalVar) { // gep string
-            currentBlock.addInstruction(new ASMLoadAddressInst(currentBlock, rd,
-                    ASMRISCVModule.getGlobalVariableMap().get(inst.getPointer().getName())));
-        } else if (inst.getIndexs().size() == 1) { // gep array
+    void gepString(GEPInst inst){
+        VirtualASMRegister rd = currentRISCVFunction.getVR(inst.getResult().getName());
+        currentBlock.addInstruction(new ASMLoadAddressInst(currentBlock, rd,
+                ASMRISCVModule.getGlobalVariableMap().get(inst.getPointer().getName())));
+    }
+
+    void gepArray(GEPInst inst){
+        VirtualASMRegister rd = currentRISCVFunction.getVR(inst.getResult().getName());
+        VirtualASMRegister pointer = currentRISCVFunction.getVR(inst.getPointer().getName());
+        Operand index = inst.getIndexs().get(0);
+        if (index instanceof Constant) {
+            assert index instanceof ConstInt;
+            long value = ((ConstInt) index).getValue() * 4; // 4 is the size of a pointer.
+            ASMOperand rs = getOperand(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), value));
+            if (rs instanceof Immediate)
+                currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, pointer, ((Immediate) rs), rd));
+            else {
+                assert rs instanceof VirtualASMRegister;
+                currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add, pointer,
+                        ((VirtualASMRegister) rs), rd));
+            }
+        } else {
+            VirtualASMRegister rs1 = currentRISCVFunction.getVR(index.getName());
+            VirtualASMRegister rs2 = new VirtualASMRegister("slli");
+            currentRISCVFunction.registerVRDuplicateName(rs2);
+            currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, slli, rs1, new IntImmediate(2), rs2));
+            currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add, pointer, rs2, rd));
+        }
+    }
+
+    void gepClass(GEPInst inst){
+        VirtualASMRegister rd = currentRISCVFunction.getVR(inst.getResult().getName());
+        if (inst.getPointer() instanceof ConstNull) {
+            currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, PhysicalASMRegister.zeroVR,
+                    new IntImmediate(((int) ((ConstInt) inst.getIndexs().get(1)).getValue())), rd));
+        } else {
+            assert inst.getPointer().getLlvMtype() instanceof LLVMPointerType
+                    && ((LLVMPointerType) inst.getPointer().getLlvMtype()).getBaseType() instanceof LLVMStructType;
+            assert inst.getIndexs().size() == 2;
+            assert inst.getIndexs().get(0) instanceof ConstInt
+                    && ((ConstInt) inst.getIndexs().get(0)).getValue() == 0;
+            assert inst.getIndexs().get(1) instanceof ConstInt;
             VirtualASMRegister pointer = currentRISCVFunction.getVR(inst.getPointer().getName());
-            Operand index = inst.getIndexs().get(0);
-            if (index instanceof Constant) {
-                assert index instanceof ConstInt;
-                long value = ((ConstInt) index).getValue() * 4; // 4 is the size of a pointer.
-                ASMOperand rs = getOperand(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), value));
+            LLVMStructType LLVMStructType = ((LLVMStructType) ((LLVMPointerType)
+                    inst.getPointer().getLlvMtype()).getBaseType());
+            int index = ((int) ((ConstInt) inst.getIndexs().get(1)).getValue());
+            int offset = LLVMStructType.calcOffset(index);
+            if (!(LLVMStructType.getMembers().get(index) instanceof LLVMPointerType))
+                currentRISCVFunction.getGepAddrMap().put(rd, new BaseOffsetAddr(pointer, new IntImmediate(offset)));
+            else {
+                ASMOperand rs = getOperand(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), offset));
                 if (rs instanceof Immediate)
                     currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, pointer, ((Immediate) rs), rd));
                 else {
                     assert rs instanceof VirtualASMRegister;
-                    currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add, pointer,
-                            ((VirtualASMRegister) rs), rd));
-                }
-            } else {
-                VirtualASMRegister rs1 = currentRISCVFunction.getVR(index.getName());
-                VirtualASMRegister rs2 = new VirtualASMRegister("slli");
-                currentRISCVFunction.registerVRDuplicateName(rs2);
-                currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, slli, rs1, new IntImmediate(2), rs2));
-                currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add, pointer, rs2, rd));
-            }
-        } else { // gep class
-            if (inst.getPointer() instanceof ConstNull) {
-                currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, PhysicalASMRegister.zeroVR,
-                        new IntImmediate(((int) ((ConstInt) inst.getIndexs().get(1)).getValue())), rd));
-            } else {
-                assert inst.getPointer().getLlvMtype() instanceof LLVMPointerType
-                        && ((LLVMPointerType) inst.getPointer().getLlvMtype()).getBaseType() instanceof LLVMStructType;
-                assert inst.getIndexs().size() == 2;
-                assert inst.getIndexs().get(0) instanceof ConstInt
-                        && ((ConstInt) inst.getIndexs().get(0)).getValue() == 0;
-                assert inst.getIndexs().get(1) instanceof ConstInt;
-                VirtualASMRegister pointer = currentRISCVFunction.getVR(inst.getPointer().getName());
-                LLVMStructType LLVMStructType = ((LLVMStructType) ((LLVMPointerType)
-                        inst.getPointer().getLlvMtype()).getBaseType());
-                int index = ((int) ((ConstInt) inst.getIndexs().get(1)).getValue());
-                int offset = LLVMStructType.calcOffset(index);
-                if (!(LLVMStructType.getMembers().get(index) instanceof LLVMPointerType))
-                    currentRISCVFunction.getGepAddrMap().put(rd, new BaseOffsetAddr(pointer, new IntImmediate(offset)));
-                else {
-                    ASMOperand rs = getOperand(new ConstInt(new LLVMIntType(LLVMIntType.BitWidth.int32), offset));
-                    if (rs instanceof Immediate)
-                        currentBlock.addInstruction(new ITypeBinaryInst(currentBlock, addi, pointer, ((Immediate) rs), rd));
-                    else {
-                        assert rs instanceof VirtualASMRegister;
-                        currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add,
-                                pointer, ((VirtualASMRegister) rs), rd));
-                    }
+                    currentBlock.addInstruction(new RTypeBinaryInst(currentBlock, add,
+                            pointer, ((VirtualASMRegister) rs), rd));
                 }
             }
         }
@@ -777,17 +762,46 @@ public class InstructionSelector implements IRVisitor {
     }
 
     @Override
-    public void visit(PhiInst inst) {
-        // Do nothing.
+    public void visit(DefineGlobal defineGlobal) {
+        GlobalVar globalVar = defineGlobal.getGlobalVar();
+        String name = globalVar.getName();
+        ASMGlobalVar gv = new ASMGlobalVar(name);
+        ASMRISCVModule.getGlobalVariableMap().put(name, gv);
+
+        Operand init = defineGlobal.getInit();
+        assert init != null;
+
+        assert globalVar.getLlvMtype() instanceof LLVMPointerType;
+        LLVMtype globalVarType = ((LLVMPointerType) globalVar.getLlvMtype()).getBaseType();
+
+        if (globalVarType instanceof LLVMArrayType) {
+            assert defineGlobal.getInit() instanceof ConstString;
+            gv.setString(((ConstString) init).getValue());
+        } else if (globalVarType instanceof LLVMIntType
+                && ((LLVMIntType) globalVarType).getBitWidth() == LLVMIntType.BitWidth.int1) {
+            assert init instanceof ConstBool;
+            gv.setBool(((ConstBool) init).getValue() ? 1 : 0);
+        } else if (globalVarType instanceof LLVMIntType
+                && ((LLVMIntType) globalVarType).getBitWidth() == LLVMIntType.BitWidth.int32) {
+            assert init instanceof ConstInt;
+            gv.setInt(((int) ((ConstInt) init).getValue()));
+        } else if (globalVarType instanceof LLVMPointerType) {
+            assert init instanceof ConstNull;
+            gv.setInt(0);
+        }
     }
 
     @Override
-    public void visit(DefineGlobal defineGlobal) {
-        //gugu changed
+    public void visit(PhiInst inst) {
     }
+
 
     @Override
     public void visit(ParallelCopyInst parallelCopyInst) {
         //gugu changed
+    }
+
+    @Override
+    public void visit(AllocInst inst) {
     }
 }
