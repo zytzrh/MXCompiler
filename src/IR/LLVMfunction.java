@@ -1,6 +1,5 @@
 package IR;
 
-import IR.Instruction.AllocInst;
 import IR.Instruction.LLVMInstruction;
 import IR.Instruction.ReturnInst;
 import IR.LLVMoperand.ConstNull;
@@ -339,16 +338,6 @@ public class LLVMfunction {
         return blocks;
     }
 
-    public ArrayList<AllocInst> getAllocaInstructions() {
-        ArrayList<AllocInst> allocaInst = new ArrayList<>();
-        LLVMInstruction ptr = initBlock.getInstHead();
-        while (ptr != null) {
-            if (ptr instanceof AllocInst)
-                allocaInst.add((AllocInst) ptr);
-            ptr = ptr.getPostInst();
-        }
-        return allocaInst;
-    }
     public void addBasicBlockPrev(Block block1, Block block2) {
         // Assume that block1 is in this function.
         assert block1.getPrev() != null;

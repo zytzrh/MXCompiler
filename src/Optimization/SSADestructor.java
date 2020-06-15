@@ -20,73 +20,77 @@ public class SSADestructor extends IRPass {
     @Override
     public boolean run() {
         for (LLVMfunction function : module.getFunctionMap().values()) {
-            splitCriticalEdges(function);
-            sequentializePC(function);
+            destructFunction(function);
         }
 
         return false;
     }
 
-    private void splitCriticalEdges(LLVMfunction function) {
-        for (Block block : function.getDFSOrder()) {
-            Set<Block> predecessors = new HashSet<>(block.getPredecessors());
-            if (predecessors.size() == 0)
-                continue;
+    public void destructFunction(LLVMfunction mfunction){
+        for(Block block : mfunction.getDFSOrder()){
+            addCriticalBlock(block);
+        }
+        for (Block block : mfunction.getBlocks()) {
+            parallelCopy2move(block);
+        }
+    }
 
-            ArrayList<PhiInst> phiNodes = new ArrayList<>();
-            LLVMInstruction phiPtr = block.getInstHead();
-            while (phiPtr instanceof PhiInst) {
-                phiNodes.add(((PhiInst) phiPtr));
-                phiPtr = phiPtr.getPostInst();
+    private void addCriticalBlock(Block block) {
+        Set<Block> predecessors = new HashSet<>(block.getPredecessors());
+        ArrayList<PhiInst> phiInsts = new ArrayList<>();
+        if (predecessors.size() == 0)
+            return;
+
+        LLVMInstruction phiPtr = block.getInstHead();
+        while (phiPtr instanceof PhiInst) {
+            phiInsts.add(((PhiInst) phiPtr));
+            phiPtr = phiPtr.getPostInst();
+        }
+        if (phiInsts.size() == 0)
+            return;
+
+        if (predecessors.size() == 1) {
+            for (PhiInst phiInst : phiInsts) {
+                assert phiInst.getBranches().size() == 1;
+                Operand imcomeResult = phiInst.getBranches().iterator().next().getFirst();
+                phiInst.getResult().beOverriden(imcomeResult);
+                phiInst.removeFromBlock();
             }
-            if (phiNodes.size() == 0)
-                continue;
-
-            if (predecessors.size() == 1) {
-                for (PhiInst phi : phiNodes) {
-                    assert phi.getBranches().size() == 1;
-                    phi.getResult().beOverriden(phi.getBranches().iterator().next().getFirst());
-                    phi.removeFromBlock();
-                }
-                continue;
-            }
-
+        }else{
             for (Block predecessor : predecessors) {
-                ParallelCopyInst pc;
+                ParallelCopyInst parallelCopyInst;
                 if (predecessor.getSuccessors().size() > 1) {
-                    // critical edge
                     Block criticalBlock = new Block("criticalBlock",block.getFunction());
-//                    block.getFunction().getSymbolTable().put(criticalBlock.getName(), criticalBlock);
                     block.getFunction().registerBlockName(criticalBlock.getName(), criticalBlock);
                     BranchInst branch = new BranchInst(criticalBlock, null, block, null);
-                    pc = new ParallelCopyInst(criticalBlock);
+                    parallelCopyInst = new ParallelCopyInst(criticalBlock);
 
-                    criticalBlock.addInst(pc);
+                    criticalBlock.addInst(parallelCopyInst);
                     criticalBlock.addInst(branch);
 
                     if (predecessor.getInstTail() instanceof BranchInst)
                         predecessor.getInstTail().overrideObject(block, criticalBlock);
-
+                    //fix the block relationship
                     criticalBlock.getPredecessors().add(predecessor);
                     criticalBlock.getSuccessors().add(block);
                     block.getPredecessors().remove(predecessor);
                     block.getPredecessors().add(criticalBlock);
                     predecessor.getSuccessors().remove(block);
                     predecessor.getSuccessors().add(criticalBlock);
-                    for (PhiInst phi : phiNodes)
+                    for (PhiInst phi : phiInsts)
                         phi.overrideObject(predecessor, criticalBlock);
 
                     block.getFunction().addBasicBlockPrev(block, criticalBlock);
                 } else {
-                    pc = new ParallelCopyInst(predecessor);
+                    parallelCopyInst = new ParallelCopyInst(predecessor);
                     if (predecessor.getInstTail() == null || !predecessor.getInstTail().isTerminalInst())
-                        predecessor.addInst(pc);
+                        predecessor.addInst(parallelCopyInst);
                     else
-                        predecessor.addInstructionPrev(predecessor.getInstTail(), pc);
+                        predecessor.addInstructionPrev(predecessor.getInstTail(), parallelCopyInst);
                 }
             }
 
-            for (PhiInst phi : phiNodes) {
+            for (PhiInst phi : phiInsts) {
                 for (Pair<Operand, Block> branch : phi.getBranches()) {
                     Block predecessor = branch.getSecond();
                     Operand source = branch.getFirst();
@@ -97,24 +101,21 @@ public class SSADestructor extends IRPass {
         }
     }
 
-    private void sequentializePC(LLVMfunction function) {
-        for (Block block : function.getBlocks()) {
-            ParallelCopyInst pc = block.getParallelCopy();
-            if (pc == null)
-                continue;
-
+    private void parallelCopy2move(Block block) {
+        ParallelCopyInst parallelCopy = block.getParallelCopy();
+        if (parallelCopy != null){
             ArrayList<MoveInst> moves = new ArrayList<>();
-            while (!pc.getMoves().isEmpty()) {
-                MoveInst move = pc.findValidMove();
+            while (!parallelCopy.getMoves().isEmpty()) {
+                MoveInst move = parallelCopy.findValidMove();
                 if (move != null) {
                     moves.add(move);
-                    pc.removeMove(move);
+                    parallelCopy.removeMove(move);
                 } else {
-                    move = pc.getMoves().iterator().next();
+                    move = parallelCopy.getMoves().iterator().next();
                     Operand source = move.getSource();
 
                     Register cycle = new Register(source.getLlvMtype(), "breakCycle");
-                    function.registerVar(cycle.getName(), cycle);
+                    block.getFunction().registerVar(cycle.getName(), cycle);
 
                     moves.add(new MoveInst(block, source, cycle));
                     move.setSource(cycle);
@@ -127,7 +128,7 @@ public class SSADestructor extends IRPass {
                 for (MoveInst move : moves)
                     block.addInstructionPrev(block.getInstTail(), move);
             }
-            pc.removeFromBlock();
+            parallelCopy.removeFromBlock();
         }
     }
 }

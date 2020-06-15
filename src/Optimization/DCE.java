@@ -22,33 +22,30 @@ public class DCE extends IRPass {
 
     @Override
     public boolean run() {
-        loopAnalysis.run();
-        for (LLVMfunction function : module.getFunctionMap().values()) {
-            if (!function.isFunctional())
-                return false;
-        }
-
-        changed = false;
-        sideEffectChecker.run();
-
+        if(!module.checkNormalFunctional()) return false;
         liveInstsSet = new HashMap<>();
+        loopAnalysis.run();
+        sideEffectChecker.run();
+        changed = false;
         for (LLVMfunction function : module.getFunctionMap().values()){
             liveInstsSet.put(function, new HashSet<LLVMInstruction>());
+            roughMarkLiveInst(function);
             changed |= deadCodeElimination(function);
         }
         return changed;
     }
 
-    private boolean deadCodeElimination(LLVMfunction function) {
+    private void roughMarkLiveInst(LLVMfunction function){
         Set<LLVMInstruction> liveInsts = liveInstsSet.get(function);
         Queue<LLVMInstruction> queue = new LinkedList<>();
         for (Block block : function.getBlocks())
-            addLiveInstructions(block, liveInsts, queue);
-
+            roughMarkLiveForBLock(block, liveInsts, queue);
+        //for branchInst
         while (!queue.isEmpty()) {
             LLVMInstruction instruction = queue.poll();
             instruction.markUseAsLive(liveInsts, queue);
-            for (Block block : instruction.getBlock().getPostDF()) {        //find the post dominance frontier
+            for (Block block : instruction.getBlock().getPostDF()) {
+                // ance frontier
                 assert block.getInstTail() instanceof BranchInst;
                 if (!liveInsts.contains(block.getInstTail())) {
                     liveInsts.add(block.getInstTail());
@@ -57,6 +54,10 @@ public class DCE extends IRPass {
             }
         }
 
+    }
+
+    private boolean deadCodeElimination(LLVMfunction function) {
+        Set<LLVMInstruction> liveInsts = liveInstsSet.get(function);
         boolean changed = false;
         for (Block block : function.getBlocks()){
             LLVMInstruction currentInst = block.getInstHead();
@@ -69,7 +70,7 @@ public class DCE extends IRPass {
         return changed;
     }
 
-    private void addLiveInstructions(Block block, Set<LLVMInstruction> liveInsts, Queue<LLVMInstruction> queue) {
+    private void roughMarkLiveForBLock(Block block, Set<LLVMInstruction> liveInsts, Queue<LLVMInstruction> queue) {
         LLVMInstruction currentInst = block.getInstHead();
         while (currentInst != null) {
             boolean liveBlock = false;

@@ -10,12 +10,16 @@ import IR.Module;
 import java.util.*;
 
 public class SSAConstructor extends IRPass {
-    private ArrayList<AllocInst> allocaInst;
-    private Map<Block, Map<AllocInst, PhiInst>> phiInstMap;
+    //for a function
+    //allocInst can represent a variable
+    private ArrayList<AllocInst> allocaInsts;
     private Map<LoadInst, AllocInst> useAlloca;
     private Map<StoreInst, AllocInst> defAlloca;
+    private Map<Block, Map<AllocInst, PhiInst>> phiInstMap;
+
+
+
     private Map<Block, Map<AllocInst, Operand>> renameTable;
-    private Set<Block> visit;
 
     public SSAConstructor(Module module) {
         super(module);
@@ -23,17 +27,25 @@ public class SSAConstructor extends IRPass {
 
     @Override
     public boolean run() {
-        for (LLVMfunction function : module.getFunctionMap().values()) {
-            if (!function.isFunctional())
-                return false;
-        }
+        if(!module.checkNormalFunctional()) return false;
         for (LLVMfunction function : module.getFunctionMap().values())
             constructSSA(function);
         return true;
     }
 
+    public ArrayList<AllocInst> getAllocaInsts(LLVMfunction llvMfunction) {
+        ArrayList<AllocInst> allocaInst = new ArrayList<>();
+        LLVMInstruction currentInst = llvMfunction.getInitBlock().getInstHead();
+        while (currentInst != null) {
+            if (currentInst instanceof AllocInst)
+                allocaInst.add((AllocInst) currentInst);
+            currentInst = currentInst.getPostInst();
+        }
+        return allocaInst;
+    }
+
     private void constructSSA(LLVMfunction function) {
-        allocaInst = function.getAllocaInstructions();
+        allocaInsts = getAllocaInsts(function);
         phiInstMap = new HashMap<>();
         useAlloca = new HashMap<>();
         defAlloca = new HashMap<>();
@@ -44,58 +56,54 @@ public class SSAConstructor extends IRPass {
             renameTable.put(block, new HashMap<>());
         }
 
-        for (AllocInst alloca : allocaInst) {
-            ArrayList<StoreInst> defs = new ArrayList<>();
-            for (LLVMInstruction useInst : alloca.getResult().getUse().keySet()) {
-                assert useInst instanceof LoadInst || useInst instanceof StoreInst;
-                if (useInst instanceof LoadInst)
-                    useAlloca.put((LoadInst) useInst, alloca);
-                else {
-                    defs.add((StoreInst) useInst);
-                    defAlloca.put((StoreInst) useInst, alloca);
-                }
-            }
+        for (AllocInst allocaInst : allocaInsts) {
+            addPhiForVar(allocaInst);
+        }
 
-            Queue<Block> queue = new LinkedList<>();
-            HashSet<Block> visitSet = new HashSet<>();
-            HashSet<Block> phiSet = new HashSet<>();
-            for (StoreInst def : defs) {
-                queue.offer(def.getBlock());
-                visitSet.add(def.getBlock());
-            }
-            while (!queue.isEmpty()) {
-                Block block = queue.poll();
-                assert block != null;
+        loadInstElimination(function);
+        rename(function.getInitBlock(), null, new HashSet<>());
+    }
 
-                for (Block df : block.getDF()) {
-                    if (!phiSet.contains(df)) {
-                        addPhiInst(df, alloca);
-                        phiSet.add(df);
-                        if (!visitSet.contains(df)) {
-                            queue.offer(df);
-                            visitSet.add(df);
-                        }
+    void addPhiForVar(AllocInst allocInst){
+        ArrayList<StoreInst> defs = new ArrayList<>();
+        for (LLVMInstruction useInst : allocInst.getResult().getUse().keySet()) {
+            if (useInst instanceof LoadInst)
+                useAlloca.put((LoadInst) useInst, allocInst);
+            else if(useInst instanceof StoreInst){
+                defs.add((StoreInst) useInst);
+                defAlloca.put((StoreInst) useInst, allocInst);
+            }else{
+                throw new RuntimeException();
+            }
+        }
+        Queue<Block> queue = new LinkedList<>();
+        HashSet<Block> visitSet = new HashSet<>();
+        HashSet<Block> phiSet = new HashSet<>();
+        for (StoreInst def : defs) {
+            queue.offer(def.getBlock());
+            visitSet.add(def.getBlock());
+        }
+        while (!queue.isEmpty()) {
+            Block block = queue.poll();
+            for (Block df : block.getDF()) {
+                if (!phiSet.contains(df)) {
+                    addPhiInst(df, allocInst);
+                    phiSet.add(df);
+                    if (!visitSet.contains(df)) {
+                        queue.offer(df);
+                        visitSet.add(df);
                     }
                 }
             }
-
-            alloca.removeFromBlock();
         }
-
-        // Remove some redundant loads first to insure no exception occurs during renaming.
-        // A very simple dead code elimination which only removes loads.
-        // Why? Avoid using a variable before any of its definition.
-        loadInstElimination(function);
-
-        visit = new HashSet<>();
-        rename(function.getInitBlock(), null);
+        allocInst.removeFromBlock();        //optimize
     }
 
-    private void addPhiInst(Block block, AllocInst alloca) {
-        String name = alloca.getResult().getName().split("\\$")[0];
-        Register result = new Register(alloca.getLlvMtype(), name);
-        phiInstMap.get(block).put(alloca, new PhiInst(block, new LinkedHashSet<>(), result));
+    private void addPhiInst(Block block, AllocInst allocInst) {
+        String name = allocInst.getResult().getName().split("\\$")[0];
+        Register result = new Register(allocInst.getLlvMtype(), name);
         block.getFunction().registerVar(result.getName(), result);
+        phiInstMap.get(block).put(allocInst, new PhiInst(block, new LinkedHashSet<>(), result));
     }
 
     private void loadInstElimination(LLVMfunction function) {
@@ -108,22 +116,24 @@ public class SSAConstructor extends IRPass {
         }
     }
 
-    private void rename(Block block, Block predecessor) {
+    private void rename(Block block, Block predecessor, Set<Block> visit) {
         Map<AllocInst, PhiInst> map = phiInstMap.get(block);
-        for (AllocInst alloca : map.keySet()) {
-            PhiInst phiInst = map.get(alloca);
+        for (AllocInst allocInst : map.keySet()) {
+            PhiInst phiInst = map.get(allocInst);
             Operand value;
-            if (!renameTable.get(predecessor).containsKey(alloca)
-                    || renameTable.get(predecessor).get(alloca) == null) {
-                value = alloca.getLlvMtype().DefaultValue();
-            } else
-                value = renameTable.get(predecessor).get(alloca);
-            phiInst.addBranch(value, predecessor);
+            if(renameTable.get(predecessor).containsKey(allocInst)){
+                assert renameTable.get(predecessor).get(allocInst) != null;
+                value = renameTable.get(predecessor).get(allocInst);
+                phiInst.addBranch(value, predecessor);
+            }else{
+                throw new RuntimeException();
+            }
         }
+
         if (predecessor != null) {
-            for (AllocInst alloca : allocaInst) {
-                if (!map.containsKey(alloca))
-                    renameTable.get(block).put(alloca, renameTable.get(predecessor).get(alloca));
+            for (AllocInst allocInst : allocaInsts) {
+                if (!map.containsKey(allocInst))
+                    renameTable.get(block).put(allocInst, renameTable.get(predecessor).get(allocInst));
             }
         }
 
@@ -131,30 +141,33 @@ public class SSAConstructor extends IRPass {
             return;
         visit.add(block);
 
-        for (AllocInst alloca : map.keySet())
-            renameTable.get(block).put(alloca, map.get(alloca).getResult());
+        for (AllocInst allocInst : map.keySet())
+            renameTable.get(block).put(allocInst, map.get(allocInst).getResult());
 
         ArrayList<LLVMInstruction> instructions = block.getInstructions();
         for (LLVMInstruction instruction : instructions) {
             if (instruction instanceof LoadInst && useAlloca.containsKey(instruction)) {
-                AllocInst alloca = useAlloca.get(instruction);
+                AllocInst allocInst = useAlloca.get(instruction);
                 assert renameTable.containsKey(block);
-                assert renameTable.get(block).containsKey(alloca);
-                Operand value = renameTable.get(block).get(alloca);
+                assert renameTable.get(block).containsKey(allocInst);
+                Operand value = renameTable.get(block).get(allocInst);
                 ((LoadInst) instruction).getResult().beOverriden(value);
                 instruction.removeFromBlock();
             } else if (instruction instanceof StoreInst && defAlloca.containsKey(instruction)) {
-                AllocInst alloca = defAlloca.get(instruction);
-                if (!renameTable.get(block).containsKey(alloca))
-                    renameTable.get(block).put(alloca, ((StoreInst) instruction).getValue());
-                else
-                    renameTable.get(block).replace(alloca, ((StoreInst) instruction).getValue());
+                AllocInst allocInst = defAlloca.get(instruction);
+                if (!renameTable.get(block).containsKey(allocInst)){
+                    Operand newdef = ((StoreInst) instruction).getValue();
+                    renameTable.get(block).put(allocInst, newdef);
+                } else{
+                    Operand newdef = ((StoreInst) instruction).getValue();
+                    renameTable.get(block).replace(allocInst, newdef);
+                }
                 instruction.removeFromBlock();
             }
         }
 
         for (Block successor : block.getSuccessors())
-            rename(successor, block);
+            rename(successor, block, visit);
 
         for (PhiInst phiInst : map.values())
             block.addInstFront(phiInst);

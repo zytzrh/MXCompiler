@@ -32,12 +32,17 @@ public class SideEffectChecker extends IRPass {
     @Override
     public boolean run() {
         if(!module.checkNormalFunctional()) return false;
-        computeScope();
+        operandScopeMap = new HashMap<>();
+        returnValueScope = new HashMap<>();
+
+        roughComputeScope();
+        preciseComputeScope();
         checkSideEffect();
         return false;
     }
 
     private void checkSideEffect() {
+        checkNoProblem();
         sideEffectFunctions = new HashSet<>();
         Queue<LLVMfunction> queue = new LinkedList<>();
 
@@ -101,9 +106,7 @@ public class SideEffectChecker extends IRPass {
             return Scope.localVar;
     }
 
-    private void computeScope() {
-        operandScopeMap = new HashMap<>();
-        returnValueScope = new HashMap<>();
+    private void roughComputeScope() {
         //globalVar outer
         for (DefineGlobal defineGlobal : module.getDefineGlobals()){
             GlobalVar globalVar = defineGlobal.getGlobalVar();
@@ -129,7 +132,6 @@ public class SideEffectChecker extends IRPass {
             }
         }
 
-
         for(LLVMfunction mfunction : module.getFunctionMap().values()){
             if (mfunction.getResultType() instanceof LLVMPointerType)
                 returnValueScope.put(mfunction, Scope.outerVar);
@@ -141,6 +143,10 @@ public class SideEffectChecker extends IRPass {
 
 
 
+
+    }
+
+    private void preciseComputeScope(){
         Queue<LLVMfunction> queue = new LinkedList<>();
         Set<LLVMfunction> isInQueue = new HashSet<>();
         for(LLVMfunction mfunction : module.getFunctionMap().values()){
@@ -171,18 +177,7 @@ public class SideEffectChecker extends IRPass {
                 }
             }
         }
-
-        for (LLVMfunction function : module.getFunctionMap().values()) {
-            for (Block block : function.getBlocks()) {
-                LLVMInstruction ptr = block.getInstHead();
-                while (ptr != null) {
-                    assert !ptr.hasResult() || operandScopeMap.get(ptr.getResult()) != Scope.undefined;
-                    ptr = ptr.getPostInst();
-                }
-            }
-        }
     }
-
 
     private void computeScopeInFunction(LLVMfunction function) {
         Queue<Block> queue = new LinkedList<>();
@@ -214,6 +209,18 @@ public class SideEffectChecker extends IRPass {
                         visit.add(branchInst.getIfFalseBlock());
                     } else if (changed)
                         queue.offer(branchInst.getIfFalseBlock());
+                }
+            }
+        }
+    }
+
+    private void checkNoProblem(){
+        for (LLVMfunction function : module.getFunctionMap().values()) {
+            for (Block block : function.getBlocks()) {
+                LLVMInstruction ptr = block.getInstHead();
+                while (ptr != null) {
+                    assert !ptr.hasResult() || operandScopeMap.get(ptr.getResult()) != Scope.undefined;
+                    ptr = ptr.getPostInst();
                 }
             }
         }

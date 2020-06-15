@@ -13,8 +13,6 @@ import java.util.Map;
 
 public class DTreeConstructor extends IRPass {
     private Map<Block, Pair<Block, Block>> disjointSet;
-    // first for father
-    // second for the min semi dom dfn node.
 
     public DTreeConstructor(Module module) {
         super(module);
@@ -31,7 +29,6 @@ public class DTreeConstructor extends IRPass {
             constructPostDTree(function);
             constructPostDFrontier(function);
         }
-//        print();
         return true;
     }
 
