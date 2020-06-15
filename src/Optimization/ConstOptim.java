@@ -11,7 +11,7 @@ import Utility.Pair;
 
 import java.util.*;
 
-public class ConstOptim extends Pass implements IRVisitor {
+public class ConstOptim extends IRPass implements IRVisitor {
     public static class Status {
         public enum OperandStatus {
             undefined, constant, multiDefined

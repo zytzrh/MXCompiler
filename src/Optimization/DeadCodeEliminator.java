@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-public class DeadCodeEliminator extends Pass {
+public class DeadCodeEliminator extends IRPass {
     private SideEffectChecker sideEffectChecker;
     private LoopAnalysis loopAnalysis;
 

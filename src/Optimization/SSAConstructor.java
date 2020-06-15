@@ -9,7 +9,7 @@ import IR.Module;
 
 import java.util.*;
 
-public class SSAConstructor extends Pass {
+public class SSAConstructor extends IRPass {
     private ArrayList<AllocInst> allocaInst;
     private Map<Block, Map<AllocInst, PhiInst>> phiInstMap;
     private Map<LoadInst, AllocInst> useAlloca;

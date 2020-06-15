@@ -6,8 +6,6 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMtype;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
@@ -40,6 +38,17 @@ public class AllocInst extends LLVMInstruction {
         visitor.visit(this);
     }
 
+    @Override
+    public boolean replaceResultWithConstant(ConstOptim constOptim) {
+        ConstOptim.Status status = constOptim.getStatus(result);
+        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
+            result.beOverriden(status.getOperand());
+            this.removeFromBlock();
+            return true;
+        } else
+            return false;
+    }
+
     public Register getResult() {
         return result;
     }
@@ -56,25 +65,6 @@ public class AllocInst extends LLVMInstruction {
         this.llvMtype = llvMtype;
     }
 
-    @Override
-    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
-        assert nodeMap.containsKey(result);
-        PointerAnalysis.Node pointer = nodeMap.get(result);
-        PointerAnalysis.Node pointTo = new PointerAnalysis.Node(pointer.getName() + ".alloca");
-        pointer.getPointsTo().add(pointTo);
-        nodes.add(pointTo);
-    }
-
-    @Override
-    public boolean replaceResultWithConstant(ConstOptim constOptim) {
-        ConstOptim.Status status = constOptim.getStatus(result);
-        if (status.getOperandStatus() == ConstOptim.Status.OperandStatus.constant) {
-            result.beOverriden(status.getOperand());
-            this.removeFromBlock();
-            return true;
-        } else
-            return false;
-    }
 
     @Override
     public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap,
@@ -103,11 +93,6 @@ public class AllocInst extends LLVMInstruction {
         //do nothing
     }
 
-    @Override
-    public CSE.Expression convertToExpression() {
-        assert false;
-        return null;
-    }
 
     @Override
     public Object clone() {

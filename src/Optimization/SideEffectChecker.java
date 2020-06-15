@@ -13,7 +13,7 @@ import IR.TypeSystem.LLVMVoidType;
 
 import java.util.*;
 
-public class SideEffectChecker extends Pass {
+public class SideEffectChecker extends IRPass {
     public enum Scope {
         undefined, local, outer
     }

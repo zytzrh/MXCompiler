@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.Set;
 
-public class CFGSimplifier extends Pass{
+public class CFGSimplifier extends IRPass {
     public CFGSimplifier(Module module) {
         super(module);
         this.setChanged(false);

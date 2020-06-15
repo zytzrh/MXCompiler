@@ -5,8 +5,6 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
@@ -95,16 +93,6 @@ public class ParallelCopyInst extends LLVMInstruction{
     @Override
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         // Do nothing.
-    }
-
-    @Override
-    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
-
-    }
-
-    @Override
-    public CSE.Expression convertToExpression() {
-        return null;
     }
 
     @Override

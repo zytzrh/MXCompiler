@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SSADestructor extends Pass {
+public class SSADestructor extends IRPass {
     public SSADestructor(Module module) {
         super(module);
     }

@@ -11,8 +11,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-public class DTreeConstructor extends Pass {
-    private Map<Block, Pair<Block, Block>> disjointSet; // first for father
+public class DTreeConstructor extends IRPass {
+    private Map<Block, Pair<Block, Block>> disjointSet;
+    // first for father
     // second for the min semi dom dfn node.
 
     public DTreeConstructor(Module module) {
@@ -21,11 +22,7 @@ public class DTreeConstructor extends Pass {
 
     @Override
     public boolean run() {
-        for (LLVMfunction function : module.getFunctionMap().values()) {
-            if (!function.isFunctional())
-                return false;
-        }
-
+        if(!module.checkNormalFunctional()) return false;
         for (LLVMfunction function : module.getFunctionMap().values()) {
             constructDTree(function);
             constructDFrontier(function);

@@ -11,7 +11,7 @@ import Utility.Pair;
 
 import java.util.*;
 
-public class InlineExpander extends Pass {
+public class InlineExpander extends IRPass {
     private final int instructionLimit = 100;
     private final int inlineDepth = 3;
     private Map<LLVMfunction, Integer> instructionCnt;

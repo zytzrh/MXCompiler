@@ -7,8 +7,6 @@ import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMVoidType;
 import IR.TypeSystem.LLVMtype;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
@@ -82,17 +80,6 @@ public class ReturnInst extends LLVMInstruction{
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         if (returnValue != null)
             returnValue.markBaseAsLive(live, queue);
-    }
-
-    @Override
-    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
-
-    }
-
-    @Override
-    public CSE.Expression convertToExpression() {
-        assert false;
-        return null;
     }
 
     @Override

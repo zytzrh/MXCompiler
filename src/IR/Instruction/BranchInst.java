@@ -5,8 +5,6 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
@@ -134,16 +132,7 @@ public class BranchInst extends LLVMInstruction{
             condition.markBaseAsLive(live, queue);
     }
 
-    @Override
-    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
 
-    }
-
-    @Override
-    public CSE.Expression convertToExpression() {
-        assert false;
-        return null;
-    }
 
     @Override
     public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {

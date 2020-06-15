@@ -2,11 +2,11 @@ package Optimization;
 
 import IR.Module;
 
-abstract public class Pass {
+abstract public class IRPass {
     protected Module module;
     protected boolean changed;
 
-    public Pass(Module module) {        //gugu changed: the para of constructor
+    public IRPass(Module module) {        //gugu changed: the para of constructor
         this.module = module;
     }
 

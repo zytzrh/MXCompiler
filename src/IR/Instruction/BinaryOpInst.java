@@ -7,12 +7,9 @@ import IR.LLVMoperand.ConstInt;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMIntType;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -155,20 +152,6 @@ public class BinaryOpInst extends LLVMInstruction{
         BinaryOpInst binaryOpInst =  new BinaryOpInst(this.getBlock(), this.op, this.lhs, this.rhs, this.result);
         binaryOpInst.result.setDef(binaryOpInst);
         return binaryOpInst;
-    }
-
-    @Override
-    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
-
-    }
-
-    @Override
-    public CSE.Expression convertToExpression() {
-        String instructionName = op.name();
-        ArrayList<String> operands = new ArrayList<>();
-        operands.add(lhs.toString());
-        operands.add(rhs.toString());
-        return new CSE.Expression(instructionName, operands);
     }
 
     @Override

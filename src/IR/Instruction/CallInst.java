@@ -3,12 +3,8 @@ package IR.Instruction;
 import IR.Block;
 import IR.IRVisitor;
 import IR.LLVMfunction;
-import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import IR.TypeSystem.LLVMPointerType;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
@@ -140,50 +136,6 @@ public class CallInst extends LLVMInstruction {
     public void markUseAsLive(Set<LLVMInstruction> live, Queue<LLVMInstruction> queue) {
         for (Operand parameter : paras)
             parameter.markBaseAsLive(live, queue);
-    }
-
-    @Override
-    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
-        if (this.llvMfunction.isBuiltIn()) {
-            if (!isVoidCall() && result.getLlvMtype() instanceof LLVMPointerType) {
-                assert nodeMap.containsKey(result);
-                PointerAnalysis.Node pointer = nodeMap.get(result);
-                PointerAnalysis.Node pointTo = new PointerAnalysis.Node(pointer.getName()
-                        + ".returnValue:" + llvMfunction.getFunctionName());
-                pointer.getPointsTo().add(pointTo);
-                nodes.add(pointTo);
-            }
-        } else {
-            for (int i = 0; i < paras.size(); i++) {
-                Register formal = llvMfunction.getParas().get(i);
-                Operand actual = paras.get(i);
-                if (actual.getLlvMtype() instanceof LLVMPointerType) {
-                    assert formal.getLlvMtype() instanceof LLVMPointerType;
-                    if (!(actual instanceof ConstNull)) {
-                        assert nodeMap.containsKey(actual);
-                        assert nodeMap.containsKey(formal);
-                        nodeMap.get(actual).getInclusiveEdge().add(nodeMap.get(formal));
-                    }
-                } else
-                    assert !(formal.getLlvMtype() instanceof LLVMPointerType);
-            }
-
-            if (!isVoidCall() && result.getLlvMtype() instanceof LLVMPointerType) {
-                Operand returnValue = llvMfunction.getActualReturnValue();
-                assert returnValue != null && returnValue.getLlvMtype() instanceof LLVMPointerType;
-                if (!(returnValue instanceof ConstNull)) {
-                    assert nodeMap.containsKey(result);
-                    assert nodeMap.containsKey(returnValue);
-                    nodeMap.get(returnValue).getInclusiveEdge().add(nodeMap.get(result));
-                }
-            }
-        }
-    }
-
-    @Override
-    public CSE.Expression convertToExpression() {
-        assert false;
-        return null;
     }
 
     @Override

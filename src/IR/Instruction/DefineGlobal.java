@@ -8,8 +8,6 @@ import IR.LLVMoperand.GlobalVar;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
 import IR.TypeSystem.LLVMPointerType;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
@@ -109,13 +107,4 @@ public class DefineGlobal extends LLVMInstruction {
         assert false;
     }
 
-    @Override
-    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
-        assert false;
-    }
-
-    @Override
-    public CSE.Expression convertToExpression() {
-        return null;
-    }
 }

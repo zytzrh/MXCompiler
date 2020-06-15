@@ -5,11 +5,11 @@ import IR.Block;
 import IR.Instruction.BranchInst;
 import IR.LLVMfunction;
 import IR.Module;
-import Optimization.Pass;
+import Optimization.IRPass;
 
 import java.util.*;
 
-public class LoopAnalysis extends Pass {
+public class LoopAnalysis extends IRPass {
 
     //************************************************************//
 

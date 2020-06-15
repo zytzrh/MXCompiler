@@ -5,8 +5,6 @@ import IR.IRVisitor;
 import IR.LLVMfunction;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.Loop.LoopAnalysis;
 import Optimization.SideEffectChecker;
@@ -106,19 +104,6 @@ abstract public class LLVMInstruction implements Cloneable{
         removeFromBlock();
         return true;
     }
-
-    abstract public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes);
-
-    public boolean canConvertToExpression() {
-        assert !(this instanceof AllocInst);
-        return this instanceof BinaryOpInst
-                || this instanceof BitCastInst
-                || this instanceof GEPInst
-                || this instanceof IcmpInst
-                || this instanceof LoadInst;
-    }
-
-    abstract public CSE.Expression convertToExpression();
 
     abstract public LLVMInstruction makeCopy();
 

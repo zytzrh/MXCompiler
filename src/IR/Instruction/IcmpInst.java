@@ -6,12 +6,9 @@ import IR.LLVMfunction;
 import IR.LLVMoperand.*;
 import IR.TypeSystem.LLVMIntType;
 import IR.TypeSystem.LLVMtype;
-import Optimization.PointerAnalysis;
-import Optimization.CSE;
 import Optimization.ConstOptim;
 import Optimization.SideEffectChecker;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -178,11 +175,6 @@ public class IcmpInst extends LLVMInstruction{
     }
 
     @Override
-    public void addConstraintsForAndersen(Map<Operand, PointerAnalysis.Node> nodeMap, Set<PointerAnalysis.Node> nodes) {
-
-    }
-
-    @Override
     public LLVMInstruction makeCopy() {
         IcmpInst icmpInst = new IcmpInst(this.getBlock(), this.operator, this.compareType,
                 this.op1, this.op2, this.result.makeCopy());
@@ -202,15 +194,6 @@ public class IcmpInst extends LLVMInstruction{
         }
         op1.addUse(this);
         op2.addUse(this);
-    }
-
-    @Override
-    public CSE.Expression convertToExpression() {
-        String instructionName = operator.name();
-        ArrayList<String> operands = new ArrayList<>();
-        operands.add(op1.toString());
-        operands.add(op2.toString());
-        return new CSE.Expression(instructionName, operands);
     }
 
     @Override
