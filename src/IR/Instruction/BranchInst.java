@@ -135,7 +135,7 @@ public class BranchInst extends LLVMInstruction{
 
 
     @Override
-    public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {
+    public boolean dceRemoveFromBlock(LoopAnalysis loopAnalysis) {          //gugu changed
         if (this.condition != null)
             this.reset2Unconditional(this.ifFalseBlock);
         if (loopAnalysis.isPreHeader(this.getBlock()))

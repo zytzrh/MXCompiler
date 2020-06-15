@@ -109,8 +109,8 @@ public class GEPInst extends LLVMInstruction{
     @Override
     public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
         if (pointer instanceof ConstNull) {
-            if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
-                scopeMap.replace(result, SideEffectChecker.Scope.local);
+            if (scopeMap.get(result) != SideEffectChecker.Scope.localVar) {
+                scopeMap.replace(result, SideEffectChecker.Scope.localVar);
                 return true;
             } else
                 return false;

@@ -116,9 +116,9 @@ public class CallInst extends LLVMInstruction {
     public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
         if (isVoidCall())
             return false;
-        if (SideEffectChecker.getOperandScope(result) == SideEffectChecker.Scope.local) {
-            if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
-                scopeMap.replace(result, SideEffectChecker.Scope.local);
+        if (SideEffectChecker.getOperandScope(result) == SideEffectChecker.Scope.localVar) {
+            if (scopeMap.get(result) != SideEffectChecker.Scope.localVar) {
+                scopeMap.replace(result, SideEffectChecker.Scope.localVar);
                 return true;
             } else
                 return false;

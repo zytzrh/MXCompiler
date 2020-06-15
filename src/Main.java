@@ -66,35 +66,34 @@ public class Main {
 
         if(args[args.length-1].equals("codegen")){
             try{
-                CFGSimplifier cfgOptimizer = new CFGSimplifier(module);
-                cfgOptimizer.run();
+                CFGSimplifier cfgOptim = new CFGSimplifier(module);
+                cfgOptim.run();
                 DTreeConstructor dTreeConstructor = new DTreeConstructor(module);
                 dTreeConstructor.run();
                 SSAConstructor ssaConstructor = new SSAConstructor(module);
                 ssaConstructor.run();
 
-                SideEffectChecker sideEffectChecker = new SideEffectChecker(module);
-                DeadCodeEliminator deadCodeEliminator = new DeadCodeEliminator(module, sideEffectChecker);
+                DCE DCE = new DCE(module);
                 ConstOptim constOptim = new ConstOptim(module);
-                InlineExpander inlineExpander = new InlineExpander(module);
+                InlineExpansion inlineExpansion = new InlineExpansion(module);
                 int optimizeCnt = 0;
                 while(true){
                     optimizeCnt++;
                     boolean changed = false;
                     dTreeConstructor.run();
                     changed |= constOptim.run();
-                    changed |= deadCodeEliminator.run();
-                    changed |= cfgOptimizer.run();
+                    changed |= DCE.run();
+                    changed |= cfgOptim.run();
 //                    if(optimizeCnt == 1){
 //                        IRPrinter irPrinter = new IRPrinter("preInline.txt");
 //                        irPrinter.visit(module);
 //                    }
-                    changed |= inlineExpander.run();
+//                    changed |= inlineExpansion.run();
 //                    if(optimizeCnt == 1){
 //                        IRPrinter irPrinter = new IRPrinter("afterInline.txt");
 //                        irPrinter.visit(module);
 //                    }
-                    changed |= cfgOptimizer.run();
+                    changed |= cfgOptim.run();
                     if (!changed)
                         break;
                 }

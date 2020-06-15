@@ -135,9 +135,9 @@ public class PhiInst extends LLVMInstruction {
 
     @Override
     public boolean updateResultScope(Map<Operand, SideEffectChecker.Scope> scopeMap, Map<LLVMfunction, SideEffectChecker.Scope> returnValueScope) {
-        if (SideEffectChecker.getOperandScope(result) == SideEffectChecker.Scope.local) {
-            if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
-                scopeMap.replace(result, SideEffectChecker.Scope.local);
+        if (SideEffectChecker.getOperandScope(result) == SideEffectChecker.Scope.localVar) {
+            if (scopeMap.get(result) != SideEffectChecker.Scope.localVar) {
+                scopeMap.replace(result, SideEffectChecker.Scope.localVar);
                 return true;
             } else
                 return false;
@@ -149,16 +149,16 @@ public class PhiInst extends LLVMInstruction {
             SideEffectChecker.Scope scope = scopeMap.get(pair.getFirst());
             if (scope == SideEffectChecker.Scope.undefined)
                 continue;
-            if (scope == SideEffectChecker.Scope.outer) {
-                if (scopeMap.get(result) != SideEffectChecker.Scope.outer) {
-                    scopeMap.replace(result, SideEffectChecker.Scope.outer);
+            if (scope == SideEffectChecker.Scope.outerVar) {
+                if (scopeMap.get(result) != SideEffectChecker.Scope.outerVar) {
+                    scopeMap.replace(result, SideEffectChecker.Scope.outerVar);
                     return true;
                 } else
                     return false;
             }
         }
-        if (scopeMap.get(result) != SideEffectChecker.Scope.local) {
-            scopeMap.replace(result, SideEffectChecker.Scope.local);
+        if (scopeMap.get(result) != SideEffectChecker.Scope.localVar) {
+            scopeMap.replace(result, SideEffectChecker.Scope.localVar);
             return true;
         } else
             return false;

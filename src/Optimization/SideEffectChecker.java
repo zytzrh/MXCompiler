@@ -3,7 +3,6 @@ package Optimization;
 import IR.Block;
 import IR.Instruction.*;
 import IR.LLVMfunction;
-import IR.LLVMoperand.ConstNull;
 import IR.LLVMoperand.GlobalVar;
 import IR.LLVMoperand.Operand;
 import IR.LLVMoperand.Register;
@@ -15,120 +14,159 @@ import java.util.*;
 
 public class SideEffectChecker extends IRPass {
     public enum Scope {
-        undefined, local, outer
+        undefined, localVar, outerVar
     }
 
-    private Set<LLVMfunction> sideEffect;
-    private Map<Operand, Scope> scopeMap;
-    private Map<LLVMfunction, Scope> returnValueScope;
-    private Boolean ignoreIO;
-    private Boolean ignoreLoad;
+    private Set<LLVMfunction> sideEffectFunctions;
+    private Map<Operand, Scope> operandScopeMap;
 
     public SideEffectChecker(Module module) {
         super(module);
     }
 
-    public void setIgnoreIO(boolean ignoreIO) {
-        this.ignoreIO = ignoreIO;
-    }
 
-    public void setIgnoreLoad(boolean ignoreLoad) {
-        this.ignoreLoad = ignoreLoad;
-    }
-
-    public boolean hasSideEffect(LLVMfunction function) {
-        return sideEffect.contains(function);
-    }
-
-    public boolean isOuterScope(Operand operand) {
-        if (operand instanceof ConstNull)
-            return false;
-        return scopeMap.get(operand) == Scope.outer;
+    public boolean checkSideEffect(LLVMfunction function) {
+        return sideEffectFunctions.contains(function);
     }
 
     @Override
     public boolean run() {
-        for (LLVMfunction function : module.getFunctionMap().values()) {
-            if (!function.isFunctional())
-                return false;
-        }
-
-        assert ignoreIO != null;
-        assert ignoreLoad != null;
+        if(!module.checkNormalFunctional()) return false;
         computeScope();
         checkSideEffect();
-        ignoreIO = null;
-        ignoreLoad = null;
         return false;
     }
+
+    private void checkSideEffect() {
+        sideEffectFunctions = new HashSet<>();
+        Queue<LLVMfunction> queue = new LinkedList<>();
+
+        for (LLVMfunction externalFunction : module.getBuiltInFunctionMap().values()) {
+            if (externalFunction.hasSideEffect()) {
+                sideEffectFunctions.add(externalFunction);
+                queue.offer(externalFunction);
+            }
+        }
+        for (LLVMfunction function : module.getFunctionMap().values()) {
+            boolean hasSideEffect = false;
+            for (Block block : function.getBlocks()) {
+                if (checkBlockEffect(block)) {
+                    sideEffectFunctions.add(function);
+                    queue.offer(function);
+                    break;
+                }
+            }
+        }
+        checkRecursive(queue);
+    }
+
+    private boolean checkBlockEffect(Block block){
+        LLVMInstruction currentInst = block.getInstHead();
+        while (currentInst != null) {
+            if (currentInst instanceof StoreInst) {
+                StoreInst storeInst = (StoreInst) currentInst;
+                Operand addr = storeInst.getAddr();
+                if (operandScopeMap.get(addr) == Scope.outerVar) {
+                    return true;
+                }
+            }
+            currentInst = currentInst.getPostInst();
+        }
+        return false;
+    }
+
+    private void checkRecursive(Queue<LLVMfunction> queue){
+        while (!queue.isEmpty()) {
+            LLVMfunction function = queue.poll();
+            for (LLVMInstruction callInst : function.getUse().keySet()) {
+                assert callInst instanceof CallInst;
+                LLVMfunction caller = callInst.getBlock().getFunction();
+                if (!sideEffectFunctions.contains(caller)) {
+                    sideEffectFunctions.add(caller);
+                    queue.offer(caller);
+                }
+            }
+        }
+    }
+
+
+
+    private Map<LLVMfunction, Scope> returnValueScope;
 
     static public Scope getOperandScope(Operand operand) {
         assert operand instanceof Register;
         if (operand.getLlvMtype() instanceof LLVMPointerType)
-            return Scope.outer;
+            return Scope.outerVar;
         else
-            return Scope.local;
+            return Scope.localVar;
     }
 
     private void computeScope() {
-        scopeMap = new HashMap<>();
+        operandScopeMap = new HashMap<>();
         returnValueScope = new HashMap<>();
-        Queue<LLVMfunction> queue = new LinkedList<>();
-        Set<LLVMfunction> inQueue = new HashSet<>();
-
+        //globalVar outer
         for (DefineGlobal defineGlobal : module.getDefineGlobals()){
             GlobalVar globalVar = defineGlobal.getGlobalVar();
-            scopeMap.put(globalVar, Scope.outer);
+            operandScopeMap.put(globalVar, Scope.outerVar);
         }
+
         for (LLVMfunction function : module.getFunctionMap().values()) {
             for (Register parameter : function.getParas())
-                scopeMap.put(parameter, getOperandScope(parameter));
+                operandScopeMap.put(parameter, getOperandScope(parameter));
             for (Block block : function.getBlocks()) {
-                LLVMInstruction ptr = block.getInstHead();
-                while (ptr != null) {
-                    if (ptr.hasResult()) {
-                        Register result = ptr.getResult();
-                        if (getOperandScope(result) == Scope.local)
-                            scopeMap.put(result, Scope.local);
+                LLVMInstruction currentInst = block.getInstHead();
+                while (currentInst != null) {
+                    LLVMInstruction nextInst = currentInst.getPostInst();
+                    if (currentInst.hasResult()) {
+                        Register result = currentInst.getResult();
+                        if (getOperandScope(result) == Scope.localVar)
+                            operandScopeMap.put(result, Scope.localVar);
                         else
-                            scopeMap.put(result, Scope.undefined);
+                            operandScopeMap.put(result, Scope.undefined);
                     }
-                    ptr = ptr.getPostInst();
+                    currentInst = nextInst;
                 }
             }
+        }
 
-            if (function.getResultType() instanceof LLVMPointerType)
-                returnValueScope.put(function, Scope.outer);
+
+        for(LLVMfunction mfunction : module.getFunctionMap().values()){
+            if (mfunction.getResultType() instanceof LLVMPointerType)
+                returnValueScope.put(mfunction, Scope.outerVar);
             else
-                returnValueScope.put(function, Scope.local);
-            queue.offer(function);
-            inQueue.add(function);
+                returnValueScope.put(mfunction, Scope.localVar);
         }
         for (LLVMfunction function : module.getBuiltInFunctionMap().values())
-            returnValueScope.put(function, Scope.local);
+            returnValueScope.put(function, Scope.localVar);
 
+
+
+        Queue<LLVMfunction> queue = new LinkedList<>();
+        Set<LLVMfunction> isInQueue = new HashSet<>();
+        for(LLVMfunction mfunction : module.getFunctionMap().values()){
+            queue.offer(mfunction);
+            isInQueue.add(mfunction);
+        }
         while (!queue.isEmpty()) {
             LLVMfunction function = queue.poll();
-            inQueue.remove(function);
+            isInQueue.remove(function);
             computeScopeInFunction(function);
-
             boolean local = false;
             if (function.getResultType() instanceof LLVMVoidType)
                 local = true;
             else {
                 ReturnInst returnInst = ((ReturnInst) function.getExitBlock().getInstTail());
-                if (scopeMap.get(returnInst.getReturnValue()) == Scope.local)
+                if (operandScopeMap.get(returnInst.getReturnValue()) == Scope.localVar)
                     local = true;
             }
-
-            if (local && returnValueScope.get(function) != Scope.local) {
-                returnValueScope.replace(function, Scope.local);
+            if (local && returnValueScope.get(function) != Scope.localVar) {
+                returnValueScope.replace(function, Scope.localVar);     //object
                 for (LLVMInstruction callInst : function.getUse().keySet()) {
                     assert callInst instanceof CallInst;
                     LLVMfunction caller = callInst.getBlock().getFunction();
-                    if (!inQueue.contains(caller)) {
+                    if (!isInQueue.contains(caller)) {
                         queue.offer(caller);
-                        inQueue.add(caller);
+                        isInQueue.add(caller);
                     }
                 }
             }
@@ -138,12 +176,13 @@ public class SideEffectChecker extends IRPass {
             for (Block block : function.getBlocks()) {
                 LLVMInstruction ptr = block.getInstHead();
                 while (ptr != null) {
-                    assert !ptr.hasResult() || scopeMap.get(ptr.getResult()) != Scope.undefined;
+                    assert !ptr.hasResult() || operandScopeMap.get(ptr.getResult()) != Scope.undefined;
                     ptr = ptr.getPostInst();
                 }
             }
         }
     }
+
 
     private void computeScopeInFunction(LLVMfunction function) {
         Queue<Block> queue = new LinkedList<>();
@@ -152,17 +191,17 @@ public class SideEffectChecker extends IRPass {
         queue.offer(function.getInitBlock());
         visit.add(function.getInitBlock());
         while (!queue.isEmpty()) {
-            Block block = queue.poll();
+            Block currentBlock = queue.poll();
             boolean changed = false;
 
-            LLVMInstruction ptr = block.getInstHead();
+            LLVMInstruction ptr = currentBlock.getInstHead();
             while (ptr != null) {
-                changed |= ptr.updateResultScope(scopeMap, returnValueScope);
+                changed |= ptr.updateResultScope(operandScopeMap, returnValueScope);
                 ptr = ptr.getPostInst();
             }
 
-            if (block.getInstTail() instanceof BranchInst) {
-                BranchInst branchInst = ((BranchInst) block.getInstTail());
+            if (currentBlock.getInstTail() instanceof BranchInst) {
+                BranchInst branchInst = ((BranchInst) currentBlock.getInstTail());
                 if (!visit.contains(branchInst.getIfTrueBlock())) {
                     queue.offer(branchInst.getIfTrueBlock());
                     visit.add(branchInst.getIfTrueBlock());
@@ -180,52 +219,4 @@ public class SideEffectChecker extends IRPass {
         }
     }
 
-    private void checkSideEffect() {
-        sideEffect = new HashSet<>();
-        Queue<LLVMfunction> queue = new LinkedList<>();
-
-        if (!ignoreIO) {
-            for (LLVMfunction externalFunction : module.getBuiltInFunctionMap().values()) {
-                if (externalFunction.hasSideEffect()) {
-                    sideEffect.add(externalFunction);
-                    queue.offer(externalFunction);
-                }
-            }
-        }
-        for (LLVMfunction function : module.getFunctionMap().values()) {
-            boolean hasSideEffect = false;
-            for (Block block : function.getBlocks()) {
-                LLVMInstruction ptr = block.getInstHead();
-                while (ptr != null) {
-                    if (ptr instanceof StoreInst && scopeMap.get(((StoreInst) ptr).getAddr()) == Scope.outer) {
-                        hasSideEffect = true;
-                        break;
-                    }
-                    if (!ignoreLoad && ptr instanceof LoadInst
-                            && scopeMap.get(((LoadInst) ptr).getAddr()) == Scope.outer) {
-                        hasSideEffect = true;
-                        break;
-                    }
-                    ptr = ptr.getPostInst();
-                }
-                if (hasSideEffect) {
-                    sideEffect.add(function);
-                    queue.offer(function);
-                    break;
-                }
-            }
-        }
-
-        while (!queue.isEmpty()) {
-            LLVMfunction function = queue.poll();
-            for (LLVMInstruction callInst : function.getUse().keySet()) {
-                assert callInst instanceof CallInst;
-                LLVMfunction caller = callInst.getBlock().getFunction();
-                if (!sideEffect.contains(caller)) {
-                    sideEffect.add(caller);
-                    queue.offer(caller);
-                }
-            }
-        }
-    }
 }
