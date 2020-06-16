@@ -118,7 +118,8 @@ public class RISCVFunction {
                     if (!(ptr instanceof MoveInst)) {
                         VirtualASMRegister vr = new VirtualASMRegister(registerName);
                         registerVR(vr);
-                    } else { // "Move" is special.
+                    } else {
+                        //for Move
                         if (!contains(registerName)) {
                             VirtualASMRegister vr = new VirtualASMRegister(registerName);
                             registerVR(vr);
@@ -174,35 +175,6 @@ public class RISCVFunction {
         exitBlock = block;
     }
 
-    public void addBasicBlockNext(ASMBlock block1, ASMBlock block2) {
-        // It is ensured that block1 is in this function.
-        if (block1 == exitBlock) {
-            block2.setNextBlock(null);
-            block2.setPrevBlock(block1);
-            block1.setNextBlock(block2);
-            exitBlock = block2;
-        } else {
-            block2.setNextBlock(block1.getNextBlock());
-            block2.setPrevBlock(block1);
-            block1.getNextBlock().setPrevBlock(block2);
-            block1.setNextBlock(block2);
-        }
-    }
-
-    public void splitBlockFromFunction(ASMBlock block) {
-        // It is ensured that block is in this function.
-        if (block.getPrevBlock() == null)
-            entranceBlock = block.getNextBlock();
-        else
-            block.getPrevBlock().setNextBlock(block.getNextBlock());
-        if (block.getNextBlock() == null)
-            exitBlock = block.getPrevBlock();
-        else
-            block.getNextBlock().setPrevBlock(block.getPrevBlock());
-
-        block.setPrevBlock(null);
-        block.setNextBlock(null);
-    }
 
     private void dfsBasicBlocks(ASMBlock block, ArrayList<ASMBlock> dfsOrder, Set<ASMBlock> dfsVisit) {
         dfsOrder.add(block);

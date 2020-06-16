@@ -157,7 +157,6 @@ public class ASMBlock {
     }
 
     public void addInstructionNext(ASMInstruction inst1, ASMInstruction inst2) {
-        // It is ensured that inst1 is in this block.
         if (inst1 == instTail) {
             inst2.setPrevInst(inst1);
             inst2.setNextInst(null);
@@ -172,7 +171,6 @@ public class ASMBlock {
     }
 
     public void addInstructionPrev(ASMInstruction inst1, ASMInstruction inst2) {
-        // It is ensured that inst1 is in this block.
         if (inst1 == instHead) {
             inst2.setNextInst(inst1);
             inst2.setPrevInst(null);

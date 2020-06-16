@@ -16,7 +16,7 @@ public class StackFrame {
     private Map<VirtualASMRegister, StackLocation> spillLocations;
 
 
-    private ArrayList<StackLocation> formalParaLocs; // Fetch from caller's stack frame.
+    private ArrayList<StackLocation> formalParaLocs;
 
 
     private Map<RISCVFunction, ArrayList<StackLocation>> parameterLocation;       //gugu changed:??
