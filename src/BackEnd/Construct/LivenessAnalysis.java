@@ -22,8 +22,19 @@ public class LivenessAnalysis extends ASMPass {
 
     private void computeLiveOutSet(RISCVFunction RISCVFunction) {
         ArrayList<ASMBlock> dfsOrder = RISCVFunction.getDFSOrder();
-        for (ASMBlock block : dfsOrder)
-            computeUEVarAndVarKill(block);
+        for (ASMBlock block : dfsOrder){
+            Set<VirtualASMRegister> UEVar = new HashSet<>();
+            Set<VirtualASMRegister> varKill = new HashSet<>();
+
+            ASMInstruction ptr = block.getInstHead();
+            while (ptr != null) {
+                ptr.addToUEVarAndVarKill(UEVar, varKill);
+                ptr = ptr.getNextInst();
+            }
+
+            block.setUEVar(UEVar);
+            block.setVarKill(varKill);
+        }
 
         for (int i = dfsOrder.size() - 1; i >= 0; i--) {
             ASMBlock block = dfsOrder.get(i);
@@ -35,7 +46,16 @@ public class LivenessAnalysis extends ASMPass {
             changed = false;
             for (int i = dfsOrder.size() - 1; i >= 0; i--) {
                 ASMBlock block = dfsOrder.get(i);
-                Set<VirtualASMRegister> liveOut = computeLiveOutSet(block);
+                Set<VirtualASMRegister> liveOut = new HashSet<>();
+                for (ASMBlock successor : block.getSuccessors()) {
+                    Set<VirtualASMRegister> intersection = new HashSet<>(successor.getLiveOut());
+                    intersection.removeAll(successor.getVarKill());
+
+                    Set<VirtualASMRegister> union = new HashSet<>(successor.getUEVar());
+                    union.addAll(intersection);
+
+                    liveOut.addAll(union);
+                }
                 if (!block.getLiveOut().equals(liveOut)) {
                     block.setLiveOut(liveOut);
                     changed = true;
@@ -44,32 +64,7 @@ public class LivenessAnalysis extends ASMPass {
         }
     }
 
-    private void computeUEVarAndVarKill(ASMBlock block) {
-        Set<VirtualASMRegister> UEVar = new HashSet<>();
-        Set<VirtualASMRegister> varKill = new HashSet<>();
 
-        ASMInstruction ptr = block.getInstHead();
-        while (ptr != null) {
-            ptr.addToUEVarAndVarKill(UEVar, varKill);
-            ptr = ptr.getNextInst();
-        }
 
-        block.setUEVar(UEVar);
-        block.setVarKill(varKill);
-    }
-
-    private Set<VirtualASMRegister> computeLiveOutSet(ASMBlock block) {
-        Set<VirtualASMRegister> liveOut = new HashSet<>();
-        for (ASMBlock successor : block.getSuccessors()) {
-            Set<VirtualASMRegister> intersection = new HashSet<>(successor.getLiveOut());
-            intersection.removeAll(successor.getVarKill());
-
-            Set<VirtualASMRegister> union = new HashSet<>(successor.getUEVar());
-            union.addAll(intersection);
-
-            liveOut.addAll(union);
-        }
-        return liveOut;
-    }
 }
 
