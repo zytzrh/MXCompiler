@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class StackFrame {
-    private RISCVFunction RISCVFunction;
+    private ASMFunction ASMFunction;
 
     int size;
 
@@ -19,10 +19,10 @@ public class StackFrame {
     private ArrayList<StackLocation> formalParaLocs;
 
 
-    private Map<RISCVFunction, ArrayList<StackLocation>> parameterLocation;       //gugu changed:??
+    private Map<ASMFunction, ArrayList<StackLocation>> parameterLocation;       //gugu changed:??
 
-    public StackFrame(RISCVFunction RISCVFunction) {
-        this.RISCVFunction = RISCVFunction;
+    public StackFrame(ASMFunction ASMFunction) {
+        this.ASMFunction = ASMFunction;
         size = 0;
 
         spillLocations = new LinkedHashMap<>();
@@ -42,7 +42,7 @@ public class StackFrame {
         formalParaLocs.add(stackLocation);
     }
 
-    public Map<RISCVFunction, ArrayList<StackLocation>> getParameterLocation() {
+    public Map<ASMFunction, ArrayList<StackLocation>> getParameterLocation() {
         return parameterLocation;
     }
 

@@ -2,12 +2,12 @@ package BackEnd.Instruction;
 
 import BackEnd.ASMVisitor;
 import BackEnd.Operand.ASMRegister.PhysicalASMRegister;
-import BackEnd.RISCVFunction;
+import BackEnd.ASMFunction;
 
 public class ASMCallInst extends ASMInstruction {
-    private RISCVFunction callee;
+    private ASMFunction callee;
 
-    public ASMCallInst(BackEnd.ASMBlock ASMBlock, RISCVFunction callee) {
+    public ASMCallInst(BackEnd.ASMBlock ASMBlock, ASMFunction callee) {
         super(ASMBlock);
         this.callee = callee;
 

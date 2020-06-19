@@ -8,7 +8,7 @@ public class IntImmediate extends Immediate {
         this.value = ((int) value);
     }
 
-    public void minusImmediate() {
+    public void becomeMinusImmediate() {
         this.value = -this.value;
     }
 

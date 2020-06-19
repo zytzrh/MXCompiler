@@ -1,12 +1,12 @@
 package BackEnd.Construct;
 
-import BackEnd.RISCVModule;
+import BackEnd.ASMModule;
 
 abstract public class ASMPass {
-    protected RISCVModule RISCVModule;
+    protected ASMModule ASMModule;
 
-    public ASMPass(BackEnd.RISCVModule RISCVModule) {
-        this.RISCVModule = RISCVModule;
+    public ASMPass(ASMModule ASMModule) {
+        this.ASMModule = ASMModule;
     }
 
     abstract public void run();

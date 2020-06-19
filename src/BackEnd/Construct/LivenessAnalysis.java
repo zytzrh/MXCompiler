@@ -1,27 +1,28 @@
 package BackEnd.Construct;
 
 import BackEnd.ASMBlock;
+import BackEnd.ASMModule;
 import BackEnd.Instruction.ASMInstruction;
 import BackEnd.Operand.ASMRegister.VirtualASMRegister;
-import BackEnd.RISCVFunction;
+import BackEnd.ASMFunction;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 public class LivenessAnalysis extends ASMPass {
-    public LivenessAnalysis(BackEnd.RISCVModule RISCVModule) {
-        super(RISCVModule);
+    public LivenessAnalysis(ASMModule ASMModule) {
+        super(ASMModule);
     }
 
     @Override
     public void run() {
-        for (BackEnd.RISCVFunction RISCVFunction : RISCVModule.getFunctionMap().values())
-            computeLiveOutSet(RISCVFunction);
+        for (ASMFunction ASMFunction : ASMModule.getFunctionMap().values())
+            computeLiveOutSet(ASMFunction);
     }
 
-    private void computeLiveOutSet(RISCVFunction RISCVFunction) {
-        ArrayList<ASMBlock> dfsOrder = RISCVFunction.getDFSOrder();
+    private void computeLiveOutSet(ASMFunction ASMFunction) {
+        ArrayList<ASMBlock> dfsOrder = ASMFunction.getDFSOrder();
         for (ASMBlock block : dfsOrder){
             Set<VirtualASMRegister> UEVar = new HashSet<>();
             Set<VirtualASMRegister> varKill = new HashSet<>();

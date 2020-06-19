@@ -34,39 +34,39 @@ public class ASMPrinter implements ASMVisitor{
             System.out.println(string);
     }
 
-    public void run(RISCVModule RISCVModule) {
+    public void run(ASMModule ASMModule) {
         System.setOut(newout);
-        RISCVModule.accept(this);
+        ASMModule.accept(this);
         System.setOut(stdout);
     }
 
     @Override
-    public void visit(RISCVModule RISCVModule) {
+    public void visit(ASMModule ASMModule) {
         println(indent + ".text");
         println("");
 
         functionCnt = 0;
-        for (BackEnd.RISCVFunction RISCVFunction : RISCVModule.getFunctionMap().values())
-            RISCVFunction.accept(this);
+        for (ASMFunction ASMFunction : ASMModule.getFunctionMap().values())
+            ASMFunction.accept(this);
 
         println("");
 
         println(indent + ".section\t.sdata,\"aw\",@progbits");
-        for (ASMGlobalVar gv : RISCVModule.getGlobalVariableMap().values())
+        for (ASMGlobalVar gv : ASMModule.getGlobalVariableMap().values())
             gv.accept(this);
     }
 
     @Override
-    public void visit(RISCVFunction RISCVFunction) {
-        print(indent + ".globl" + indent + RISCVFunction.getName());
-        print(" ".repeat(Integer.max(1, 24 - RISCVFunction.getName().length())));
-        println("# -- Begin function " + RISCVFunction.getName());
+    public void visit(ASMFunction ASMFunction) {
+        print(indent + ".globl" + indent + ASMFunction.getName());
+        print(" ".repeat(Integer.max(1, 24 - ASMFunction.getName().length())));
+        println("# -- Begin function " + ASMFunction.getName());
         println(indent + ".p2align" + indent + "2");
 
-        print(RISCVFunction.getName() + ":" + " ".repeat(Integer.max(1, 31 - RISCVFunction.getName().length())));
-        println("# @" + RISCVFunction.getName());
+        print(ASMFunction.getName() + ":" + " ".repeat(Integer.max(1, 31 - ASMFunction.getName().length())));
+        println("# @" + ASMFunction.getName());
 
-        ArrayList<ASMBlock> blocks = RISCVFunction.getBlocks();
+        ArrayList<ASMBlock> blocks = ASMFunction.getBlocks();
         for (ASMBlock block : blocks)
             block.accept(this);
 

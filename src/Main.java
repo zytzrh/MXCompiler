@@ -3,7 +3,7 @@ import AST.Visit.ASTBuilder;
 import BackEnd.ASMPrinter;
 import BackEnd.Construct.InstructionSelector;
 import BackEnd.Construct.RegisterAllocate.RegisterAllocator;
-import BackEnd.RISCVModule;
+import BackEnd.ASMModule;
 import IR.IRBuilder;
 import IR.Module;
 import Optimization.*;
@@ -104,7 +104,7 @@ public class Main {
                 new SSADestructor(module).run();
                 InstructionSelector instructionSelector = new InstructionSelector();
                 module.accept(instructionSelector);
-                RISCVModule ASMRISCVModule = instructionSelector.getASMRISCVModule();
+                ASMModule ASMRISCVModule = instructionSelector.getASMRISCVModule();
 
                 dTreeConstructor.run();
 

@@ -5,23 +5,23 @@ import BackEnd.Operand.ASMGlobalVar;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class RISCVModule {
-    private Map<String, RISCVFunction> functionMap;
-    private Map<String, RISCVFunction> builtInFunctionMap;
+public class ASMModule {
+    private Map<String, ASMFunction> functionMap;
+    private Map<String, ASMFunction> builtInFunctionMap;
     private Map<String, ASMGlobalVar> globalVariableMap;
 
-    public RISCVModule() {
+    public ASMModule() {
         functionMap = new LinkedHashMap<>();
         builtInFunctionMap = new LinkedHashMap<>();
         globalVariableMap = new LinkedHashMap<>();
     }
 
-    public Map<String, RISCVFunction> getFunctionMap() {
+    public Map<String, ASMFunction> getFunctionMap() {
         return functionMap;
     }
 
-    public RISCVFunction getFunction(String funcName){
-        RISCVFunction callee;
+    public ASMFunction getFunction(String funcName){
+        ASMFunction callee;
         if (functionMap.containsKey(funcName))
             callee = functionMap.get(funcName);
         else{
@@ -30,7 +30,7 @@ public class RISCVModule {
         }
         return callee;
     }
-    public Map<String, RISCVFunction> getBuiltInFunctionMap() {
+    public Map<String, ASMFunction> getBuiltInFunctionMap() {
         return builtInFunctionMap;
     }
 

@@ -14,12 +14,12 @@ import java.util.*;
 public class InlineExpansion extends IRPass {
     private final int instructionLimit = 100;
     private final int inlineDepth = 3;
-    private Map<LLVMfunction, Integer> instructionCnt;
+    private Map<LLVMfunction, Integer> instructionCount;
     private Map<LLVMfunction, Set<LLVMfunction>> recursiveCalleeMap;
 
     public InlineExpansion(Module module) {
         super(module);
-        instructionCnt = new HashMap<>();
+        instructionCount = new HashMap<>();
         recursiveCalleeMap = new HashMap<>();
     }
 
@@ -35,7 +35,7 @@ public class InlineExpansion extends IRPass {
     }
 
     public void initMap(){
-        instructionCnt = new HashMap<>();
+        instructionCount = new HashMap<>();
         recursiveCalleeMap = new HashMap<>();
         for (LLVMfunction function : module.getFunctionMap().values())
             recursiveCalleeMap.put(function, new HashSet<>());
@@ -56,7 +56,7 @@ public class InlineExpansion extends IRPass {
                     currentInst = currentInst.getPostInst();
                 }
             }
-            this.instructionCnt.put(function, instructionCount);
+            this.instructionCount.put(function, instructionCount);
         }
         for (LLVMfunction function : module.getFunctionMap().values()){
             //init recursive function relationship
@@ -80,13 +80,13 @@ public class InlineExpansion extends IRPass {
     private boolean shouldNormalInlined(LLVMfunction callee, LLVMfunction caller) {
         if (!caller.isFunctional() || !callee.isFunctional())
             return false;
-        return instructionCnt.get(callee) < instructionLimit && callee != caller && !recursiveCalleeMap.get(callee).contains(callee);
+        return instructionCount.get(callee) < instructionLimit && callee != caller && !recursiveCalleeMap.get(callee).contains(callee);
     }
 
     private boolean shouldRecursiveInlined(LLVMfunction callee, LLVMfunction caller) {
         if (!caller.isFunctional() || !callee.isFunctional())
             return false;
-        return instructionCnt.get(callee) < instructionLimit && callee == caller;
+        return instructionCount.get(callee) < instructionLimit && callee == caller;
     }
 
     private Pair<ArrayList<Block>, ReturnInst> cloneCallee(LLVMfunction caller,
@@ -221,8 +221,8 @@ public class InlineExpansion extends IRPass {
                             if (module.getFunctionMap().containsValue(callee)
                                     && shouldNormalInlined(callee, function)) {
                                 next = inlineFunction(((CallInst) ptr));
-                                instructionCnt.replace(function,
-                                        instructionCnt.get(function) + instructionCnt.get(callee) - 2);
+                                instructionCount.replace(function,
+                                        instructionCount.get(function) + instructionCount.get(callee) - 2);
                                 loopChanged = true;
                             }
                         }
@@ -251,8 +251,8 @@ public class InlineExpansion extends IRPass {
                             if (module.getFunctionMap().containsValue(callee)
                                     && shouldRecursiveInlined(callee, function)) {
                                 next = inlineFunction(((CallInst) ptr));
-                                instructionCnt.replace(function,
-                                        instructionCnt.get(function) + instructionCnt.get(callee) - 2);
+                                instructionCount.replace(function,
+                                        instructionCount.get(function) + instructionCount.get(callee) - 2);
                                 changed = true;
                             }
                         }

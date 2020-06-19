@@ -9,7 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class ASMBlock {
-    private RISCVFunction RISCVFunction;
+    private ASMFunction ASMFunction;
     private String name;
     private String asmName;
 
@@ -27,8 +27,8 @@ public class ASMBlock {
     private Set<VirtualASMRegister> UEVar;
     private Set<VirtualASMRegister> varKill;
 
-    public ASMBlock(RISCVFunction RISCVFunction, Block irBlock, String name, String asmName) {
-        this.RISCVFunction = RISCVFunction;
+    public ASMBlock(ASMFunction ASMFunction, Block irBlock, String name, String asmName) {
+        this.ASMFunction = ASMFunction;
         this.name = name;
         this.asmName = asmName;
 
@@ -43,8 +43,8 @@ public class ASMBlock {
         successors = new LinkedHashSet<>();
     }
 
-    public RISCVFunction getRISCVFunction() {
-        return RISCVFunction;
+    public ASMFunction getASMFunction() {
+        return ASMFunction;
     }
 
     public String getName() {

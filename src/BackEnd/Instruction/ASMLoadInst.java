@@ -7,18 +7,18 @@ import BackEnd.Operand.Address.Address;
 import java.util.Set;
 
 public class ASMLoadInst extends ASMInstruction {
-    public enum ByteSize {
+    public enum ByteType {
         lb, lw
     }
 
     private VirtualASMRegister rd;
-    private ByteSize byteSize;
+    private ByteType byteType;
     private Address addr;
 
-    public ASMLoadInst(BackEnd.ASMBlock ASMBlock, VirtualASMRegister rd, ByteSize byteSize, Address addr) {
+    public ASMLoadInst(BackEnd.ASMBlock ASMBlock, VirtualASMRegister rd, ByteType byteType, Address addr) {
         super(ASMBlock);
         this.rd = rd;
-        this.byteSize = byteSize;
+        this.byteType = byteType;
         this.addr = addr;
 
         this.rd.addDef(this);
@@ -72,12 +72,12 @@ public class ASMLoadInst extends ASMInstruction {
 
     @Override
     public String emitCode() {
-        return "\t" + byteSize.name() + "\t" + rd.emitCode() + ", " + addr.emitCode();
+        return "\t" + byteType.name() + "\t" + rd.emitCode() + ", " + addr.emitCode();
     }
 
     @Override
     public String toString() {
-        return byteSize + " " + rd + ", " + addr;
+        return byteType + " " + rd + ", " + addr;
     }
 
     @Override

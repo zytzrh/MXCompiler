@@ -8,8 +8,8 @@ import BackEnd.Instruction.*;
 import BackEnd.Operand.ASMGlobalVar;
 
 public interface ASMVisitor {
-    void visit(RISCVModule RISCVModule);
-    void visit(RISCVFunction RISCVFunction);
+    void visit(ASMModule ASMModule);
+    void visit(ASMFunction ASMFunction);
     void visit(ASMBlock block);
 
     void visit(ASMGlobalVar gv);

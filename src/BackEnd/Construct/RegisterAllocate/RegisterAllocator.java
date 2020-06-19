@@ -1,6 +1,7 @@
 package BackEnd.Construct.RegisterAllocate;
 
 import BackEnd.ASMBlock;
+import BackEnd.ASMModule;
 import BackEnd.Construct.ASMPass;
 import BackEnd.Construct.LivenessAnalysis;
 import BackEnd.Instruction.*;
@@ -9,7 +10,7 @@ import BackEnd.Operand.ASMRegister.PhysicalASMRegister;
 import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 import BackEnd.Operand.Address.StackLocation;
 import BackEnd.Operand.Immediate.IntImmediate;
-import BackEnd.RISCVFunction;
+import BackEnd.ASMFunction;
 import IR.Module;
 import Optimization.Loop.LoopAnalysis;
 
@@ -19,12 +20,12 @@ public class RegisterAllocator extends ASMPass {
     final static int inf = 99999999;
     final private int K = PhysicalASMRegister.allocatablePRs.size();
 
-    private BackEnd.RISCVFunction RISCVFunction;
+    private ASMFunction ASMFunction;
     private final LoopAnalysis loopAnalysis;
 
 
-    public RegisterAllocator(BackEnd.RISCVModule RISCVModule, Module module) {
-        super(RISCVModule);
+    public RegisterAllocator(ASMModule ASMModule, Module module) {
+        super(ASMModule);
         this.loopAnalysis = new LoopAnalysis(module);
     }
     private Set<VirtualASMRegister> preColoredNode;
@@ -48,8 +49,8 @@ public class RegisterAllocator extends ASMPass {
     @Override
     public void run() {
         loopAnalysis.run();
-        for (RISCVFunction RISCVFunction : RISCVModule.getFunctionMap().values())
-            GraphColoring(RISCVFunction);
+        for (ASMFunction ASMFunction : ASMModule.getFunctionMap().values())
+            GraphColoring(ASMFunction);
     }
 
     private boolean shouldAssignColor(){
@@ -57,12 +58,12 @@ public class RegisterAllocator extends ASMPass {
                 && freezeWorkList.isEmpty() && spillWorkList.isEmpty();
     }
 
-    private void GraphColoring(RISCVFunction RISCVFunction) {
-        this.RISCVFunction = RISCVFunction;
+    private void GraphColoring(ASMFunction ASMFunction) {
+        this.ASMFunction = ASMFunction;
         while (true) {
             initializeDataStructures();
             computeSpillCost();
-            new LivenessAnalysis(RISCVModule).run();
+            new LivenessAnalysis(ASMModule).run();
             constructInterferenceGraph();
             makeWorkList();
 
@@ -86,7 +87,7 @@ public class RegisterAllocator extends ASMPass {
 
         checkEveryVRHasAColor();
         removeRedundantMoveInst();
-        RISCVFunction.getStackFrame().computeFrameSize();
+        ASMFunction.getStackFrame().computeFrameSize();
         moveStackPointer();
     }
 
@@ -110,7 +111,7 @@ public class RegisterAllocator extends ASMPass {
         adjacentSet = new HashSet<>();
 
 
-        initial.addAll(RISCVFunction.getAllVRSet());
+        initial.addAll(ASMFunction.getAllVRSet());
         preColoredNode.addAll(PhysicalASMRegister.vrs.values());
         initial.removeAll(preColoredNode);
 
@@ -123,7 +124,7 @@ public class RegisterAllocator extends ASMPass {
 
     private void computeSpillCost() {
         // \sum (10^depth * number of defs/uses).
-        ArrayList<ASMBlock> dfsOrder = RISCVFunction.getDFSOrder();
+        ArrayList<ASMBlock> dfsOrder = ASMFunction.getDFSOrder();
         for (ASMBlock block : dfsOrder) {
             int depth = loopAnalysis.getBlockDepth(block);
             ASMInstruction ptr = block.getInstHead();
@@ -139,7 +140,7 @@ public class RegisterAllocator extends ASMPass {
 
 
     private void constructInterferenceGraph() {
-        ArrayList<ASMBlock> dfsOrder = RISCVFunction.getDFSOrder();
+        ArrayList<ASMBlock> dfsOrder = ASMFunction.getDFSOrder();
         for (ASMBlock block : dfsOrder) {
             Set<VirtualASMRegister> live = block.getLiveOut();
             ASMInstruction ptr = block.getInstTail();
@@ -399,7 +400,7 @@ public class RegisterAllocator extends ASMPass {
                 Set<VirtualASMRegister> union = new HashSet<>(coloredNodes);
                 union.addAll(preColoredNode);
                 if (union.contains(getAlias(w)))
-                    okColors.remove(getAlias(w).getColorPR());
+                    okColors.remove(getAlias(w).getColoredPR());
             }
 
             if (okColors.isEmpty())
@@ -407,11 +408,11 @@ public class RegisterAllocator extends ASMPass {
             else {
                 coloredNodes.add(n);
                 PhysicalASMRegister c = selectColor(okColors);
-                n.setColorPR(c);
+                n.setColoredPR(c);
             }
         }
         for (VirtualASMRegister n : coalescedNodes)
-            n.setColorPR(getAlias(n).getColorPR());
+            n.setColoredPR(getAlias(n).getColoredPR());
     }
 
     // caller-save registers being selected first.
@@ -427,14 +428,14 @@ public class RegisterAllocator extends ASMPass {
     private void rewriteProgram() {
         for (VirtualASMRegister vr : spilledNodes) {
             StackLocation stackLocation = new StackLocation(vr.getName());
-            RISCVFunction.getStackFrame().getSpillLocations().put(vr, stackLocation);
+            ASMFunction.getStackFrame().getSpillLocations().put(vr, stackLocation);
             Set<ASMInstruction> defs = new HashSet<>(vr.getDef().keySet());
             Set<ASMInstruction> uses = new HashSet<>(vr.getUse().keySet());
 
             int cnt = 0;
             for (ASMInstruction inst : defs) {
                 VirtualASMRegister spilledVR = new VirtualASMRegister(vr.getName() + ".spill" + cnt);
-                RISCVFunction.registerVRDuplicateName(spilledVR);
+                ASMFunction.registerVRDuplicateName(spilledVR);
                 cnt++;
 
                 ASMBlock block = inst.getASMBlock();
@@ -443,20 +444,20 @@ public class RegisterAllocator extends ASMPass {
             }
             for (ASMInstruction inst : uses) {
                 VirtualASMRegister spilledVR = new VirtualASMRegister(vr.getName() + ".spill" + cnt);
-                RISCVFunction.registerVRDuplicateName(spilledVR);
+                ASMFunction.registerVRDuplicateName(spilledVR);
                 cnt++;
 
                 ASMBlock block = inst.getASMBlock();
                 inst.replaceUse(vr, spilledVR);
-                block.addInstructionPrev(inst, new ASMLoadInst(block, spilledVR, ASMLoadInst.ByteSize.lw, stackLocation));
+                block.addInstructionPrev(inst, new ASMLoadInst(block, spilledVR, ASMLoadInst.ByteType.lw, stackLocation));
             }
             assert vr.getDef().isEmpty() && vr.getUse().isEmpty();
-            RISCVFunction.removeVR(vr);
+            ASMFunction.removeVR(vr);
         }
     }
 
     private void checkEveryVRHasAColor() {
-        ArrayList<ASMBlock> dfsOrder = RISCVFunction.getDFSOrder();
+        ArrayList<ASMBlock> dfsOrder = ASMFunction.getDFSOrder();
         for (ASMBlock block : dfsOrder) {
             ASMInstruction ptr = block.getInstHead();
             while (ptr != null) {
@@ -470,13 +471,13 @@ public class RegisterAllocator extends ASMPass {
     }
 
     private void removeRedundantMoveInst() {
-        ArrayList<ASMBlock> dfsOrder = RISCVFunction.getDFSOrder();
+        ArrayList<ASMBlock> dfsOrder = ASMFunction.getDFSOrder();
         for (ASMBlock block : dfsOrder) {
             ASMInstruction ptr = block.getInstHead();
             while (ptr != null) {
                 ASMInstruction next = ptr.getNextInst();
                 if (ptr instanceof ASMMoveInst
-                        && ((ASMMoveInst) ptr).getRd().getColorPR() == ((ASMMoveInst) ptr).getRs().getColorPR()) {
+                        && ((ASMMoveInst) ptr).getRd().getColoredPR() == ((ASMMoveInst) ptr).getRs().getColoredPR()) {
                     ((ASMMoveInst) ptr).removeFromBlock();
                 }
                 ptr = next;
@@ -485,15 +486,15 @@ public class RegisterAllocator extends ASMPass {
     }
 
     private void moveStackPointer() {
-        int frameSize = RISCVFunction.getStackFrame().getSize();
+        int frameSize = ASMFunction.getStackFrame().getSize();
         if (frameSize == 0)
             return;
 
         VirtualASMRegister sp = PhysicalASMRegister.vrs.get("sp");
-        RISCVFunction.getEntranceBlock().addInstructionAtFront(new ITypeBinaryInst(RISCVFunction.getEntranceBlock(),
+        ASMFunction.getEntranceBlock().addInstructionAtFront(new ITypeBinaryInst(ASMFunction.getEntranceBlock(),
                 ITypeBinaryInst.OpName.addi, sp, new IntImmediate(-frameSize * 4), sp));
 
-        for (ASMBlock block : RISCVFunction.getBlocks()) {
+        for (ASMBlock block : ASMFunction.getBlocks()) {
             if (block.getInstTail() instanceof ASMReturnInst) {
                 block.addInstructionPrev(block.getInstTail(), new ITypeBinaryInst(block,
                         ITypeBinaryInst.OpName.addi, sp, new IntImmediate(frameSize * 4), sp));

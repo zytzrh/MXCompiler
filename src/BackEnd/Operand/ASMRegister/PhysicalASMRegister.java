@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class PhysicalASMRegister extends ASMRegister {          //gugu changed: too beautiful
-    // ------ Static Member/Methods ------
     static public String[] prNames = {
             "zero", "ra", "sp", "gp", "tp",
             "t0", "t1", "t2", "s0", "s1",
@@ -18,7 +17,7 @@ public class PhysicalASMRegister extends ASMRegister {          //gugu changed: 
             "t3", "t4", "t5", "t6"
     };
     static public String[] calleeSavePRNames = {
-            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"        //so is also the fp
+            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"        //s0 is also the fp
     };
     static public String[] allocatablePRNames = {
             // Except zero, sp, gp and tp.
@@ -28,7 +27,7 @@ public class PhysicalASMRegister extends ASMRegister {          //gugu changed: 
             "ra"
     };
 
-    static public Map<String, PhysicalASMRegister> prs;
+    static public Map<String, PhysicalASMRegister> allPRs;
     static public Map<String, PhysicalASMRegister> callerSavePRs;
     static public Map<String, PhysicalASMRegister> calleeSavePRs;
     static public Map<String, PhysicalASMRegister> allocatablePRs;
@@ -41,24 +40,26 @@ public class PhysicalASMRegister extends ASMRegister {          //gugu changed: 
     static public ArrayList<VirtualASMRegister> calleeSaveVRs;
 
     static {
-        prs = new LinkedHashMap<>();
+        //init PR set
+        allPRs = new LinkedHashMap<>();
         callerSavePRs = new LinkedHashMap<>();
         calleeSavePRs = new LinkedHashMap<>();
         allocatablePRs = new LinkedHashMap<>();
         for (String name : prNames)
-            prs.put(name, new PhysicalASMRegister(name));
+            allPRs.put(name, new PhysicalASMRegister(name));
 
         for (String name : callerSavePRNames)
-            callerSavePRs.put(name, prs.get(name));
+            callerSavePRs.put(name, allPRs.get(name));
         for (String name : calleeSavePRNames)
-            calleeSavePRs.put(name, prs.get(name));
+            calleeSavePRs.put(name, allPRs.get(name));
         for (String name : allocatablePRNames)
-            allocatablePRs.put(name, prs.get(name));
+            allocatablePRs.put(name, allPRs.get(name));
 
+        //init VR set
         vrs = new LinkedHashMap<>();
         for (String name : prNames) {
             VirtualASMRegister vr = new VirtualASMRegister("." + name);
-            vr.fixColor(prs.get(name));
+            vr.fixColor(allPRs.get(name));
             vrs.put(name, vr);
         }
 
@@ -73,9 +74,8 @@ public class PhysicalASMRegister extends ASMRegister {          //gugu changed: 
             calleeSaveVRs.add(vrs.get(name));
     }
 
-    // ------ END ------
 
-    private String name;
+    private final String name;
 
     public PhysicalASMRegister(String name) {
         this.name = name;

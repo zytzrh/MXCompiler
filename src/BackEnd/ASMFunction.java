@@ -1,18 +1,13 @@
 package BackEnd;
 
-import BackEnd.Operand.ASMRegister.PhysicalASMRegister;
 import BackEnd.Operand.ASMRegister.VirtualASMRegister;
 import BackEnd.Operand.Address.BaseOffsetAddr;
-import IR.Block;
-import IR.Instruction.LLVMInstruction;
-import IR.Instruction.MoveInst;
 import IR.LLVMfunction;
-import IR.LLVMoperand.Register;
 
 import java.util.*;
 
-public class RISCVFunction {
-    private RISCVModule RISCVModule;
+public class ASMFunction {
+    private ASMModule ASMModule;
 
     private String name;
     private StackFrame stackFrame;
@@ -21,7 +16,6 @@ public class RISCVFunction {
     private ASMBlock exitBlock;
 
     private Map<String, ASMBlock> blockMap;
-    private Set<PhysicalASMRegister> usedCalleeRegister;
 
     private Map<VirtualASMRegister, BaseOffsetAddr> gepAddrMap;
 
@@ -68,71 +62,56 @@ public class RISCVFunction {
     }
 
     //
-    public RISCVFunction(RISCVModule RISCVModule, String name, LLVMfunction IRFunction) {
-        this.RISCVModule = RISCVModule;
+    public ASMFunction(ASMModule ASMModule, String name, LLVMfunction llvMfunction) {
+        this.ASMModule = ASMModule;
         this.name = name;
-        this.stackFrame = null;
-
-        if (IRFunction == null)
-            return;
-
-        usedCalleeRegister = new HashSet<>();
+        this.stackFrame = new StackFrame(this);
         gepAddrMap = new HashMap<>();
-
-
-        int functionCnt = RISCVModule.getFunctionMap().size();
-        int blockCnt = 0;
-        blockMap = new HashMap<>();
-        ArrayList<Block> IRBlocks = IRFunction.getBlocks();
-        for (Block IRBlock : IRBlocks) {
-            ASMBlock block = new ASMBlock(this, IRBlock, IRBlock.getName(),
-                    ".ASMBlock" + functionCnt + "_" + blockCnt);
-            this.addBasicBlock(block);
-            blockMap.put(block.getName(), block);
-            blockCnt++;
-        }
-        for (Block IRBlock : IRBlocks) {
-            ASMBlock block = blockMap.get(IRBlock.getName());
-            Set<ASMBlock> predecessors = block.getPredecessors();
-            Set<ASMBlock> successors = block.getSuccessors();
-
-            for (Block predecessor : IRBlock.getPredecessors())
-                predecessors.add(blockMap.get(predecessor.getName()));
-            for (Block successor : IRBlock.getSuccessors())
-                successors.add(blockMap.get(successor.getName()));
-        }
-        entranceBlock = blockMap.get(IRBlocks.get(0).getName());
-        exitBlock = blockMap.get(IRBlocks.get(IRBlocks.size() - 1).getName());
-
-
-        VRSymbolTable = new HashMap<>();
-        for (Register parameter : IRFunction.getParas()) {
-            VirtualASMRegister vr = new VirtualASMRegister(parameter.getName());
-            registerVR(vr);
-        }
-        for (Block IRBlock : IRBlocks) {
-            LLVMInstruction ptr = IRBlock.getInstHead();
-            while (ptr != null) {
-                if (ptr.hasResult()) {
-                    String registerName = ptr.getResult().getName();
-                    if (!(ptr instanceof MoveInst)) {
-                        VirtualASMRegister vr = new VirtualASMRegister(registerName);
-                        registerVR(vr);
-                    } else {
-                        //for Move
-                        if (!contains(registerName)) {
-                            VirtualASMRegister vr = new VirtualASMRegister(registerName);
-                            registerVR(vr);
-                        }
-                    }
-                }
-                ptr = ptr.getPostInst();
-            }
-        }
     }
+
 
     public String getName() {
         return name;
+    }
+
+    public BackEnd.ASMModule getASMModule() {
+        return ASMModule;
+    }
+
+    public void setASMModule(BackEnd.ASMModule ASMModule) {
+        this.ASMModule = ASMModule;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setEntranceBlock(ASMBlock entranceBlock) {
+        this.entranceBlock = entranceBlock;
+    }
+
+    public ASMBlock getExitBlock() {
+        return exitBlock;
+    }
+
+    public void setExitBlock(ASMBlock exitBlock) {
+        this.exitBlock = exitBlock;
+    }
+
+    public void setBlockMap(Map<String, ASMBlock> blockMap) {
+        this.blockMap = blockMap;
+    }
+
+    public void setGepAddrMap(Map<VirtualASMRegister, BaseOffsetAddr> gepAddrMap) {
+        this.gepAddrMap = gepAddrMap;
+    }
+
+    public Map<String, VirtualASMRegister> getVRSymbolTable() {
+        return VRSymbolTable;
+    }
+
+    public void setVRSymbolTable(Map<String, VirtualASMRegister> VRSymbolTable) {
+        this.VRSymbolTable = VRSymbolTable;
     }
 
     public StackFrame getStackFrame() {

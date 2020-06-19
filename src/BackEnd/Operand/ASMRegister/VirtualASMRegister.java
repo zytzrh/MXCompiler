@@ -14,27 +14,32 @@ public class VirtualASMRegister extends ASMRegister {
     private Map<ASMInstruction, Integer> def;
 
     // Register allocator
+    private boolean isColorFixed;
+    private PhysicalASMRegister coloredPR;
+
     private ArrayList<VirtualASMRegister> adjList;
     private int degree;
     private Set<ASMMoveInst> moveList;
     private VirtualASMRegister alias;
-    private boolean colorFixed;
-    private PhysicalASMRegister colorPR;
+
     private double spillCost;
 
     public VirtualASMRegister(String name) {
         this.name = name;
-
+        isColorFixed = false;
+        coloredPR = null;
         use = new HashMap<>();
         def = new HashMap<>();
-
         adjList = new ArrayList<>();
         degree = 0;
         moveList = new HashSet<>();
         alias = null;
-        colorFixed = false;
-        colorPR = null;
         spillCost = 0;
+    }
+
+    public void fixColor(PhysicalASMRegister pr) {
+        isColorFixed = true;
+        coloredPR = pr;
     }
 
 
@@ -84,19 +89,15 @@ public class VirtualASMRegister extends ASMRegister {
         return def;
     }
 
-    public void fixColor(PhysicalASMRegister pr) {
-        colorFixed = true;
-        colorPR = pr;
-    }
 
     public void clearColoringData() {
-        assert !colorFixed;
+        assert !isColorFixed;
 
         adjList = new ArrayList<>();
         degree = 0;
         moveList = new HashSet<>();
         alias = null;
-        colorPR = null;
+        coloredPR = null;
         spillCost = 0;
     }
 
@@ -128,18 +129,18 @@ public class VirtualASMRegister extends ASMRegister {
         this.alias = alias;
     }
 
-    public PhysicalASMRegister getColorPR() {
-        assert colorPR != null;
-        return colorPR;
+    public PhysicalASMRegister getColoredPR() {
+        assert coloredPR != null;
+        return coloredPR;
     }
 
     public boolean hasAColor() {
-        return colorPR != null;
+        return coloredPR != null;
     }
 
-    public void setColorPR(PhysicalASMRegister colorPR) {
-        assert colorPR != null;
-        this.colorPR = colorPR;
+    public void setColoredPR(PhysicalASMRegister coloredPR) {
+        assert coloredPR != null;
+        this.coloredPR = coloredPR;
     }
 
     public void increaseSpillCost(double cost) {
@@ -173,7 +174,7 @@ public class VirtualASMRegister extends ASMRegister {
     @Override
     public String emitCode() {
         assert hasAColor();
-        return colorPR.getName();
+        return coloredPR.getName();
     }
 
     @Override
